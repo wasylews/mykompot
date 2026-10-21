@@ -1,30 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path android:pathData="M31,63.928c0,0 6.4,-11 12.1,-13.1c7.2,-2.6 26,-1.4 26,-1.4l38.1,38.1L107,108.928l-32,-1L31,63.928z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:endX="85.84757"
-                android:endY="92.4963"
-                android:startX="42.9492"
-                android:startY="49.59793"
-                android:type="linear">
-                <item
-                    android:color="#44000000"
-                    android:offset="0.0" />
-                <item
-                    android:color="#00000000"
-                    android:offset="1.0" />
-            </gradient>
-        </aapt:attr>
-    </path>
-    <path
-        android:fillColor="#FFFFFF"
-        android:fillType="nonZero"
-        android:pathData="M65.3,45.828l3.8,-6.6c0.2,-0.4 0.1,-0.9 -0.3,-1.1c-0.4,-0.2 -0.9,-0.1 -1.1,0.3l-3.9,6.7c-6.3,-2.8 -13.4,-2.8 -19.7,0l-3.9,-6.7c-0.2,-0.4 -0.7,-0.5 -1.1,-0.3C38.8,38.328 38.7,38.828 38.9,39.228l3.8,6.6C36.2,49.428 31.7,56.028 31,63.928h46C76.3,56.028 71.8,49.428 65.3,45.828zM43.4,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2c-0.3,-0.7 -0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C45.3,56.528 44.5,57.328 43.4,57.328L43.4,57.328zM64.6,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2s-0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C66.5,56.528 65.6,57.328 64.6,57.328L64.6,57.328z"
-        android:strokeWidth="1"
-        android:strokeColor="#00000000" />
+    <group
+        android:scaleX="0.80"
+        android:scaleY="0.80"
+        android:pivotX="54"
+        android:pivotY="54">
+        <!-- Signal arcs -->
+        <path
+            android:fillColor="@android:color/transparent"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeWidth="4.2"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:pathData="M66,20 C75,20 82,24 87,30" />
+        <path
+            android:fillColor="@android:color/transparent"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeWidth="4.2"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:pathData="M65,30 C72,30 77,33 81,38" />
+        <path
+            android:fillColor="@android:color/transparent"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeWidth="4.2"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:pathData="M64,40 C68,40 71,42 73,45" />
+
+        <!-- Jar silhouette -->
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M35,30 L56,30 L56,35 C56,38 58,41 61,44 C65,48 67,53 67,59 L67,77 C67,84 62,89 55,89 L32,89 C25,89 20,84 20,77 L20,59 C20,53 22,48 26,44 C29,41 31,38 31,35 L31,30 Z" />
+        <!-- Inner glass area -->
+        <path
+            android:fillColor="#5535D9"
+            android:pathData="M35,38 L52,38 C53,43 57,47 59,50 C61,53 62,56 62,60 L62,77 C62,81 59,84 55,84 L32,84 C28,84 25,81 25,77 L25,60 C25,56 26,53 28,50 C31,47 34,43 35,38 Z" />
+        <!-- Liquid -->
+        <path
+            android:fillColor="#9D8BFF"
+            android:pathData="M25,63 C31,60 36,65 42,63 C49,60 54,64 62,61 L62,77 C62,81 59,84 55,84 L32,84 C28,84 25,81 25,77 Z" />
+        <!-- Fruit: round fruit and leaf -->
+        <path
+            android:fillColor="#F5A4E8"
+            android:pathData="M34,68 C30,68 28,71 28,74 C28,78 31,80 34,80 C38,80 40,77 40,74 C40,71 37,68 34,68 Z" />
+        <path
+            android:fillColor="#F5A4E8"
+            android:pathData="M48,70 C44,70 42,73 42,76 C42,80 45,82 48,82 C52,82 54,79 54,76 C54,73 51,70 48,70 Z" />
+        <path
+            android:fillColor="#E77BD7"
+            android:pathData="M43,62 C44,56 50,54 55,55 C54,61 50,64 43,62 Z" />
+        <!-- Lid and highlight -->
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M30,25 C30,22 32,20 35,20 L56,20 C59,20 61,22 61,25 L61,32 C61,35 59,37 56,37 L35,37 C32,37 30,35 30,32 Z" />
+        <path
+            android:fillColor="#5535D9"
+            android:pathData="M35,25 L56,25 L56,32 L35,32 Z" />
+    </group>
 </vector>

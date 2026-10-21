@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Connectivity arcs -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M66,20 C75,20 82,24 87,30
+            L82,35 C78,30 72,27 66,27 Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M65,30 C72,30 77,33 81,38
+            L76,43 C73,39 69,37 65,37 Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M64,40 C68,40 71,42 73,45
+            L68,49 C67,47 65,46 63,46 Z" />
+
+    <!-- Jar lid -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M30,25 C30,22 32,20 35,20
+            L56,20 C59,20 61,22 61,25
+            L61,32 C61,35 59,37 56,37
+            L35,37 C32,37 30,35 30,32 Z" />
+
+    <!-- Jar body -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M35,30 L56,30 L56,35
+            C56,38 58,41 61,44
+            C65,48 67,53 67,59
+            L67,77 C67,84 62,89 55,89
+            L32,89 C25,89 20,84 20,77
+            L20,59 C20,53 22,48 26,44
+            C29,41 31,38 31,35 L31,30 Z" />
+</vector>
