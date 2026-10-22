@@ -1,3 +1,13 @@
 <resources>
     <string name="app_name">My Kompot</string>
+    <string name="welcome_back">Welcome back.</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="log_in">Log in</string>
+    <string name="all_good">All Good</string>
+    <string name="your_internet">Your internet</string>
+    <string name="next_charge">Next charge</string>
+    <string name="tariff">Tariff</string>
+    <string name="everything_is_working">Everything is working.</string>
+    <string name="account_is_active">Your account is active.</string>
 </resources>
