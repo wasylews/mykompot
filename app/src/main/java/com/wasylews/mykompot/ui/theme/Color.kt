@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 Vasyl Sabov
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.wasylews.mykompot.ui.theme
 
 import androidx.compose.runtime.compositionLocalOf
@@ -75,19 +90,21 @@ val InversePrimaryDark = Color(0xFF6650E5)
 data class StatusColors(
     val container: Color,
     val on: Color,
-    val accent: Color
+    val accent: Color,
 )
 
-val StatusColorsLight = StatusColors(
-    container = Color(0xFFD7F3DD),
-    on = Color(0xFF0E5A2A),
-    accent = Color(0xFF2FB257)
-)
+val StatusColorsLight =
+    StatusColors(
+        container = Color(0xFFD7F3DD),
+        on = Color(0xFF0E5A2A),
+        accent = Color(0xFF2FB257),
+    )
 
-val StatusColorsDark = StatusColors(
-    container = Color(0xFF103520),
-    on = Color(0xFFB9F7CA),
-    accent = Color(0xFF51D97C)
-)
+val StatusColorsDark =
+    StatusColors(
+        container = Color(0xFF103520),
+        on = Color(0xFFB9F7CA),
+        accent = Color(0xFF51D97C),
+    )
 
 val LocalStatusColors = compositionLocalOf { StatusColorsLight }
