@@ -21,4 +21,5 @@ plugins {
     alias(libs.plugins.spotless) apply false
     alias(libs.plugins.mykompot.spotless)
     alias(libs.plugins.mykompot.detekt)
+    alias(libs.plugins.koin.compiler.plugin) apply false
 }

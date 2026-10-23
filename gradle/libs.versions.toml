@@ -9,7 +9,9 @@ lifecycleRuntimeKtx = "2.11.0"
 lifecycleViewmodel = "2.11.0"
 turbine = "1.2.0"
 activityCompose = "1.13.0"
-kotlin = "2.2.10"
+kotlin = "2.3.20"
+koin = "4.2.2"
+koinCompilerPlugin = "1.2.1"
 composeBom = "2026.02.01"
 detekt = "2.0.0-alpha.6"
 spotless = "8.10.0"
@@ -35,12 +37,19 @@ androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-te
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-compose-material-icons-core = { group = "androidx.compose.material", name = "material-icons-core" }
 
+koin-core = { group = "io.insert-koin", name = "koin-core", version.ref = "koin" }
+koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = "koin" }
+koin-compose = { group = "io.insert-koin", name = "koin-compose", version.ref = "koin" }
+koin-compose-viewmodel = { group = "io.insert-koin", name = "koin-compose-viewmodel", version.ref = "koin" }
+koin-annotations = { group = "io.insert-koin", name = "koin-annotations", version.ref = "koin" }
+
 detekt-gradlePlugin = { group = "dev.detekt", name = "detekt-gradle-plugin", version.ref = "detekt" }
 spotless-gradlePlugin = { group = "com.diffplug.spotless", name = "spotless-plugin-gradle", version.ref = "spotless" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+koin-compiler-plugin = { id = "io.insert-koin.compiler.plugin", version.ref = "koinCompilerPlugin" }
 detekt = { id = "dev.detekt", version.ref = "detekt" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 mykompot-detekt = { id = "mykompot.detekt" }
