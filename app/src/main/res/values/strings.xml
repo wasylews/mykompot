@@ -10,7 +10,7 @@
     <string name="tariff">Tariff</string>
     <string name="everything_is_working">Everything is working.</string>
     <string name="account_is_active">Your account is active.</string>
-    <string name="error_invalid_credentials">Invalid email or password. Please try again.</string>
+    <string name="error_invalid_credentials">Invalid username or password. Please try again.</string>
     <string name="error_no_connection">Couldn\'t reach the server. Check your connection.</string>
     <string name="error_server">Something went wrong. Try again later.</string>
 </resources>

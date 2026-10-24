@@ -17,6 +17,7 @@
 package com.wasylews.mykompot
 
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -25,6 +26,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.SocketEffect
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -53,14 +55,65 @@ class LoginAndSeeStatusTest {
         server.enqueue(MockResponse(body = HtmlFixtures.profile()))
 
         // WHEN I log in
-        composeRule.onNodeWithText("Username").performTextInput("user")
-        composeRule.onNodeWithText("Password").performTextInput("pass")
-        composeRule.onNodeWithText("Log in").performClick()
+        performLogin()
 
         // THEN I see the status
-        composeRule.waitUntilExactlyOneExists(
-            hasText("All Good"),
-        )
-        composeRule.onNodeWithText("All Good").assertIsDisplayed()
+        waitForNodeWithStringRes(R.string.all_good).assertIsDisplayed()
+    }
+
+    @Test
+    fun loginFailed() {
+        // GIVEN server is up
+        server.enqueue(MockResponse(body = HtmlFixtures.loginFailed()))
+
+        // WHEN I log in with wrong credentials
+        performLogin()
+
+        // THEN I see the error message
+        waitForNodeWithStringRes(R.string.error_invalid_credentials).assertIsDisplayed()
+    }
+
+    @Test
+    fun connectionIssues() {
+        // GIVEN no connection
+        val response = MockResponse.Builder()
+            .body(HtmlFixtures.profile())
+            .onResponseBody(SocketEffect.ShutdownConnection)
+            .build()
+        server.enqueue(response)
+
+        // WHEN I try to log in
+        performLogin()
+
+        // THEN I see the error message
+        waitForNodeWithStringRes(R.string.error_no_connection).assertIsDisplayed()
+    }
+
+    @Test
+    fun serverIssues() {
+        // GIVEN server is down
+        server.enqueue(MockResponse(502))
+
+        // WHEN I try to log in
+        performLogin()
+
+        // THEN I see the error message
+        waitForNodeWithStringRes(R.string.error_server).assertIsDisplayed()
+
+    }
+
+    private fun performLogin() {
+        waitForNodeWithStringRes(R.string.username).performTextInput("user")
+        waitForNodeWithStringRes(R.string.password).performTextInput("pass")
+        waitForNodeWithStringRes(R.string.log_in).performClick()
+    }
+
+    private fun waitForNodeWithStringRes(
+        res: Int,
+        timeoutMillis: Long = 5_000,
+    ): SemanticsNodeInteraction {
+        val string = composeRule.activity.getString(res)
+        composeRule.waitUntilExactlyOneExists(hasText(string), timeoutMillis)
+        return composeRule.onNodeWithText(string)
     }
 }

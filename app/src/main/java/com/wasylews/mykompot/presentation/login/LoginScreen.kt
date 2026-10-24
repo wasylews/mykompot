@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedSecureTextField
 import androidx.compose.material3.OutlinedTextField
@@ -94,8 +95,7 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 if (uiState.isLoading) {
-                    androidx.compose.material3.CircularProgressIndicator(
-                        modifier = Modifier.height(Spacing.md),
+                    CircularProgressIndicator(
                         strokeWidth = 2.dp,
                         color = MaterialTheme.colorScheme.onPrimary,
                     )
