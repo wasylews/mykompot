@@ -48,7 +48,7 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("String", "BASE_URL", "\"https://127.0.0.1:8080\"")
+            buildConfigField("String", "BASE_URL", "\"http://127.0.0.1:8080\"")
         }
 
         release {
@@ -92,6 +92,7 @@ dependencies {
     implementation(libs.koin.annotations)
 
     implementation(libs.retrofit)
+    implementation(libs.okhttp)
     implementation(libs.kspoon)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.retrofit.converter.kotlinx.serialization)
@@ -100,6 +101,7 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
     androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.mockwebserver)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)

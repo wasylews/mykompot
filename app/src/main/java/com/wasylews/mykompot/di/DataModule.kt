@@ -18,13 +18,16 @@ package com.wasylews.mykompot.di
 
 import com.wasylews.mykompot.BuildConfig
 import com.wasylews.mykompot.data.PortalApi
+import dev.burnoo.kspoon.Kspoon
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import okhttp3.MediaType.Companion.toMediaType
 import org.koin.core.annotation.ComponentScan
 import org.koin.core.annotation.Configuration
 import org.koin.core.annotation.Module
 import org.koin.core.annotation.Singleton
 import retrofit2.Retrofit
+import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import retrofit2.create
 
 @Module
@@ -38,7 +41,9 @@ class DataModule {
     fun provideRetrofit() =
         Retrofit
             .Builder()
-            .baseUrl(BuildConfig.BASE_URL)
+            .addConverterFactory(
+                Kspoon.toFormat().asConverterFactory("text/html; charset=UTF8".toMediaType()),
+            ).baseUrl(BuildConfig.BASE_URL)
             .build()
 
     @Singleton
