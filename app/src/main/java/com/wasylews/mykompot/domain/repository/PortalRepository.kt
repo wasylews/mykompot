@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.wasylews.mykompot.domain.repository
 
 import com.wasylews.mykompot.domain.model.LoginResult
 
 interface PortalRepository {
-    fun login(
+    suspend fun login(
         username: String,
         password: String,
     ): LoginResult

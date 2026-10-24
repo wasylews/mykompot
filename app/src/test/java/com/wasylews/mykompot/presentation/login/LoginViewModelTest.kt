@@ -19,16 +19,18 @@ package com.wasylews.mykompot.presentation.login
 import app.cash.turbine.test
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.model.LoginResult
+import com.wasylews.mykompot.domain.model.TariffPlan
 import com.wasylews.mykompot.domain.repository.PortalRepository
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Test
+import java.time.LocalDate
 
 class FakeLoginRepository(
-    private val result: LoginResult = LoginResult.Success,
+    private val result: LoginResult,
 ) : PortalRepository {
-    override fun login(
+    override suspend fun login(
         username: String,
         password: String,
     ): LoginResult = result
@@ -37,7 +39,7 @@ class FakeLoginRepository(
 class LoginViewModelTest {
     @Test
     fun `can login with correct credentials`() {
-        val vm = LoginViewModel(FakeLoginRepository(LoginResult.Success))
+        val vm = LoginViewModel(FakeLoginRepository(successLogin()))
         vm.usernameState.edit { replace(0, length, "user") }
         vm.passwordState.edit { replace(0, length, "pass") }
 
@@ -48,7 +50,7 @@ class LoginViewModelTest {
 
     @Test
     fun `empty credentials are validated`() {
-        val vm = LoginViewModel(FakeLoginRepository())
+        val vm = LoginViewModel(FakeLoginRepository(LoginResult.InvalidCredentials))
         vm.usernameState.edit { replace(0, length, "") }
         vm.passwordState.edit { replace(0, length, "") }
 
@@ -61,7 +63,7 @@ class LoginViewModelTest {
     @Test
     fun `login emits loading then logged in`() =
         runTest {
-            val vm = LoginViewModel(FakeLoginRepository(LoginResult.Success))
+            val vm = LoginViewModel(FakeLoginRepository(successLogin()))
             vm.usernameState.edit { replace(0, length, "user") }
             vm.passwordState.edit { replace(0, length, "pass") }
 
@@ -108,4 +110,11 @@ class LoginViewModelTest {
         val state = vm.loginState.value as LoginState.Error
         assertEquals(R.string.error_server, state.errorId)
     }
+
+    private fun successLogin(active: Boolean = true) =
+        LoginResult.Success(
+            isActive = active,
+            tariffPlan = TariffPlan("300GRN_100mb", 100, 300),
+            nextPayment = LocalDate.of(2026, 11, 1),
+        )
 }

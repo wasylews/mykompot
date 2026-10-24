@@ -16,8 +16,14 @@
 
 package com.wasylews.mykompot.domain.model
 
+import java.time.LocalDate
+
 sealed interface LoginResult {
-    data object Success : LoginResult
+    data class Success(
+        val isActive: Boolean,
+        val tariffPlan: TariffPlan?,
+        val nextPayment: LocalDate?,
+    ) : LoginResult
 
     data object InvalidCredentials : LoginResult
 

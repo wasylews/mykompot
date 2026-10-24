@@ -4,17 +4,20 @@ coreKtx = "1.19.1"
 junit = "4.13.2"
 junitVersion = "1.3.0"
 espressoCore = "3.7.0"
-coroutines = "1.10.2"
+coroutines = "1.11.0"
 lifecycleRuntimeKtx = "2.11.0"
 lifecycleViewmodel = "2.11.0"
-turbine = "1.2.0"
+turbine = "1.2.1"
 activityCompose = "1.13.0"
-kotlin = "2.3.20"
+kotlin = "2.4.20"
 koin = "4.2.2"
 koinCompilerPlugin = "1.2.1"
-composeBom = "2026.02.01"
+retrofit = "3.0.0"
+kspoon = "0.2.4"
+kotlinx-serialization = "1.9.0"
+composeBom = "2026.09.00"
 detekt = "2.0.0-alpha.6"
-spotless = "8.10.0"
+spotless = "8.10.4"
 ktlint = "1.8.0"
 
 [libraries]
@@ -43,6 +46,11 @@ koin-compose = { group = "io.insert-koin", name = "koin-compose", version.ref = 
 koin-compose-viewmodel = { group = "io.insert-koin", name = "koin-compose-viewmodel", version.ref = "koin" }
 koin-annotations = { group = "io.insert-koin", name = "koin-annotations", version.ref = "koin" }
 
+retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
+kspoon = { module = "dev.burnoo.kspoon:kspoon", version.ref = "kspoon" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+retrofit-converter-kotlinx-serialization = { module = "com.squareup.retrofit2:converter-kotlinx-serialization", version.ref = "retrofit" }
+
 detekt-gradlePlugin = { group = "dev.detekt", name = "detekt-gradle-plugin", version.ref = "detekt" }
 spotless-gradlePlugin = { group = "com.diffplug.spotless", name = "spotless-plugin-gradle", version.ref = "spotless" }
 
@@ -52,6 +60,7 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 koin-compiler-plugin = { id = "io.insert-koin.compiler.plugin", version.ref = "koinCompilerPlugin" }
 detekt = { id = "dev.detekt", version.ref = "detekt" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 mykompot-detekt = { id = "mykompot.detekt" }
 mykompot-spotless = { id = "mykompot.spotless" }
 

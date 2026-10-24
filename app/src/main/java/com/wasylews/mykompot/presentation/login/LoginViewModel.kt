@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
 
 @KoinViewModel
@@ -63,15 +64,16 @@ class LoginViewModel(
                 )
             }.stateIn(viewModelScope, SharingStarted.Eagerly, LoginUiState(usernameState, passwordState))
 
-    fun login() {
-        if (!isUsernameValid || !isPasswordValid) return
+    fun login() =
+        viewModelScope.launch {
+            if (!isUsernameValid || !isPasswordValid) return@launch
 
-        _loginState.value = LoginState.Loading
-        when (repository.login(usernameState.text.toString(), passwordState.text.toString())) {
-            LoginResult.Success -> _loginState.value = LoginState.LoggedIn
-            LoginResult.InvalidCredentials -> _loginState.value = LoginState.Error(R.string.error_invalid_credentials)
-            LoginResult.NetworkError -> _loginState.value = LoginState.Error(R.string.error_no_connection)
-            LoginResult.ServerError -> _loginState.value = LoginState.Error(R.string.error_server)
+            _loginState.value = LoginState.Loading
+            when (repository.login(usernameState.text.toString(), passwordState.text.toString())) {
+                is LoginResult.Success -> _loginState.value = LoginState.LoggedIn
+                LoginResult.InvalidCredentials -> _loginState.value = LoginState.Error(R.string.error_invalid_credentials)
+                LoginResult.NetworkError -> _loginState.value = LoginState.Error(R.string.error_no_connection)
+                LoginResult.ServerError -> _loginState.value = LoginState.Error(R.string.error_server)
+            }
         }
-    }
 }

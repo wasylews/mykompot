@@ -20,6 +20,7 @@ plugins {
     alias(libs.plugins.mykompot.spotless)
     alias(libs.plugins.mykompot.detekt)
     alias(libs.plugins.koin.compiler.plugin)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 koinCompiler {
@@ -37,7 +38,7 @@ android {
 
     defaultConfig {
         applicationId = "com.wasylews.mykompot"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 37
         versionCode = 1
         versionName = "1.0"
@@ -46,19 +47,29 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("String", "BASE_URL", "\"https://127.0.0.1:8080\"")
+        }
+
         release {
             optimization {
                 enable = true
                 packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
             }
+            buildConfigField("String", "BASE_URL", "\"https://kompot.uz.ua:9443\"")
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
     buildFeatures {
         compose = true
+        buildConfig = true
+    }
+
+    testFixtures {
+        enable = true
     }
 }
 
@@ -79,6 +90,11 @@ dependencies {
     implementation(libs.koin.compose)
     implementation(libs.koin.compose.viewmodel)
     implementation(libs.koin.annotations)
+
+    implementation(libs.retrofit)
+    implementation(libs.kspoon)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.retrofit.converter.kotlinx.serialization)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
