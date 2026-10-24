@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Vasyl Sabov
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.wasylews.mykompot.presentation.login
 
 import androidx.compose.foundation.layout.Arrangement
@@ -31,7 +47,7 @@ import com.wasylews.mykompot.ui.theme.Spacing
 fun LoginScreen(
     uiState: LoginUiState,
     onLoginClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val error = uiState.errorId?.let { stringResource(it) }.orEmpty()
@@ -43,44 +59,45 @@ fun LoginScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         modifier = modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.surface
+        containerColor = MaterialTheme.colorScheme.surface,
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(Spacing.lg),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(Spacing.lg),
             verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
                 text = stringResource(R.string.welcome_back),
-                style = MaterialTheme.typography.headlineMedium
+                style = MaterialTheme.typography.headlineMedium,
             )
             Spacer(modifier = Modifier.height(Spacing.lg))
             OutlinedTextField(
                 state = uiState.usernameState,
                 label = { Text(stringResource(R.string.username)) },
                 isError = false,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
             Spacer(modifier = Modifier.height(Spacing.md))
             OutlinedSecureTextField(
                 state = uiState.passwordState,
                 label = { Text(stringResource(R.string.password)) },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
             Spacer(modifier = Modifier.height(Spacing.lg))
             Button(
                 onClick = onLoginClick,
                 enabled = !uiState.isLoading,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 if (uiState.isLoading) {
                     androidx.compose.material3.CircularProgressIndicator(
                         modifier = Modifier.height(Spacing.md),
                         strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.onPrimary
+                        color = MaterialTheme.colorScheme.onPrimary,
                     )
                 } else {
                     Text(stringResource(R.string.log_in))
@@ -94,25 +111,26 @@ fun LoginScreen(
     name = "Light",
     showBackground = true,
     backgroundColor = 0xFFF4F3FB,
-    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_NO
+    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_NO,
 )
 @androidx.compose.ui.tooling.preview.Preview(
     name = "Dark",
     showBackground = true,
     backgroundColor = 0xFF0E0D13,
-    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES
+    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES,
 )
 @Composable
 fun LoginScreenPreview() {
     MyKompotTheme {
         LoginScreen(
-            uiState = LoginUiState(
-                usernameState = TextFieldState("user"),
-                passwordState = TextFieldState("pass"),
-                isLoading = false,
-                errorId = null
-            ),
-            onLoginClick = {}
+            uiState =
+                LoginUiState(
+                    usernameState = TextFieldState("user"),
+                    passwordState = TextFieldState("pass"),
+                    isLoading = false,
+                    errorId = null,
+                ),
+            onLoginClick = {},
         )
     }
 }

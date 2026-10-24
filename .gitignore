@@ -16,5 +16,6 @@ local.properties
 .cxx/
 
 # IDE
-.idea/
+.idea/*
+!.idea/copyright/
 *.iml
