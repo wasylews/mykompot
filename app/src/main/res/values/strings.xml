@@ -13,4 +13,5 @@
     <string name="error_invalid_credentials">Invalid username or password. Please try again.</string>
     <string name="error_no_connection">Couldn\'t reach the server. Check your connection.</string>
     <string name="error_server">Something went wrong. Try again later.</string>
+    <string name="payment_due">Payment due</string>
 </resources>

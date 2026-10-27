@@ -31,16 +31,29 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.koin.core.context.loadKoinModules
+import org.koin.dsl.module
+import org.koin.test.KoinTest
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Instant
 
 @OptIn(ExperimentalTestApi::class)
-class LoginAndSeeStatusTest {
+class LoginAndSeeStatusTest: KoinTest {
+
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     private val server = MockWebServer()
 
+    private val clock = MutableClock(Instant.parse("2026-11-01T10:00:00Z"))
+    private val testModule = module {
+        single<Clock> { clock }
+    }
+
     @Before
     fun setup() {
+        loadKoinModules(testModule)
         server.start(8080)
     }
 
@@ -59,6 +72,20 @@ class LoginAndSeeStatusTest {
 
         // THEN I see the status
         waitForNodeWithStringRes(R.string.all_good).assertIsDisplayed()
+    }
+
+    @Test
+    fun loginAndSeePaymentDue() {
+        // GIVEN server is up
+        server.enqueue(MockResponse(body = HtmlFixtures.profile()))
+        // AND current date set past due date
+        clock.advanceBy(10.days)
+
+        // WHEN I log in
+        performLogin()
+
+        // THEN I see the payment due
+        waitForNodeWithStringRes(R.string.payment_due).assertIsDisplayed()
     }
 
     @Test
@@ -99,7 +126,6 @@ class LoginAndSeeStatusTest {
 
         // THEN I see the error message
         waitForNodeWithStringRes(R.string.error_server).assertIsDisplayed()
-
     }
 
     private fun performLogin() {

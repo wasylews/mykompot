@@ -47,6 +47,7 @@ koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = 
 koin-compose = { group = "io.insert-koin", name = "koin-compose", version.ref = "koin" }
 koin-compose-viewmodel = { group = "io.insert-koin", name = "koin-compose-viewmodel", version.ref = "koin" }
 koin-annotations = { group = "io.insert-koin", name = "koin-annotations", version.ref = "koin" }
+koin-test-junit4 = { group = "io.insert-koin", name = "koin-test-junit4", version.ref = "koin" }
 
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver3", version.ref = "mockwebserver" }
