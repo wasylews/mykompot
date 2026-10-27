@@ -19,8 +19,14 @@ package com.wasylews.mykompot.di
 import org.koin.core.annotation.ComponentScan
 import org.koin.core.annotation.Configuration
 import org.koin.core.annotation.Module
+import org.koin.core.annotation.Singleton
+import kotlin.time.Clock
 
 @Module(includes = [DataModule::class])
 @ComponentScan("com.wasylews.mykompot")
 @Configuration
-class AppModule
+class AppModule {
+
+    @Singleton
+    fun provideClock(): Clock = Clock.System
+}

@@ -17,10 +17,13 @@
 package com.wasylews.mykompot.domain.repository
 
 import com.wasylews.mykompot.domain.model.LoginResult
+import com.wasylews.mykompot.domain.model.Profile
 
 interface PortalRepository {
     suspend fun login(
         username: String,
         password: String,
     ): LoginResult
+
+    suspend fun loadProfile(): Profile
 }

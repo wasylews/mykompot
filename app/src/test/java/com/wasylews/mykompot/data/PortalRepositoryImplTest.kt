@@ -46,13 +46,9 @@ class PortalRepositoryImplTest {
         runTest {
             val dispatcher = StandardTestDispatcher(testScheduler)
             val repo = PortalRepositoryImpl(dispatcher, FakePortalApi(activeProfile()))
-            val result = repo.login("user", "pass") as LoginResult.Success
+            val result = repo.login("user", "pass")
 
-            assertTrue(result.isActive)
-            assertEquals(300, result.tariffPlan?.price)
-            assertEquals(100, result.tariffPlan?.speed)
-            assertEquals("300GRN_100mb", result.tariffPlan?.name)
-            assertEquals(LocalDate.of(2026, 11, 1), result.nextPayment)
+            assertEquals(LoginResult.Success, result)
         }
 
     @Test

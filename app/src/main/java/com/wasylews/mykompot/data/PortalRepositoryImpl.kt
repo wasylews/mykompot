@@ -17,6 +17,7 @@
 package com.wasylews.mykompot.data
 
 import com.wasylews.mykompot.domain.model.LoginResult
+import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.TariffPlan
 import com.wasylews.mykompot.domain.repository.PortalRepository
 import kotlinx.coroutines.CoroutineDispatcher
@@ -41,11 +42,7 @@ class PortalRepositoryImpl(
                 if (page.error != null) {
                     LoginResult.InvalidCredentials
                 } else {
-                    LoginResult.Success(
-                        isActive = page.status == "Enable",
-                        tariffPlan = getTariffPlan(page.plan),
-                        nextPayment = getPaymentDate(page.nextPayment),
-                    )
+                    LoginResult.Success
                 }
             } catch (_: HttpException) {
                 LoginResult.ServerError
@@ -71,4 +68,8 @@ class PortalRepositoryImpl(
                 price = 300,
             )
         }
+
+    override suspend fun loadProfile(): Profile {
+        TODO("Not yet implemented")
+    }
 }
