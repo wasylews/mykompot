@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.wasylews.mykompot.presentation.status
+package com.wasylews.mykompot.presentation.home
 
-import android.content.res.Configuration
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,7 +34,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -43,17 +42,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.ui.theme.LocalStatusColors
-import com.wasylews.mykompot.ui.theme.MyKompotTheme
 import com.wasylews.mykompot.ui.theme.Spacing
 
 @Composable
 fun StatusCard(
-    state: StatusCardState,
+    state: HomeUiState,
     modifier: Modifier = Modifier,
 ) {
     val statusColors = LocalStatusColors.current
@@ -77,7 +74,7 @@ fun StatusCard(
 
 @Composable
 private fun StatusChip(
-    status: String,
+    @StringRes status: Int,
     onColor: Color,
 ) {
     Row(
@@ -97,7 +94,7 @@ private fun StatusChip(
                     .background(onColor),
         )
         Text(
-            text = status.uppercase(),
+            text = stringResource(status).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Bold,
             letterSpacing = 0.66.sp,
@@ -108,22 +105,22 @@ private fun StatusChip(
 
 @Composable
 private fun StatusWordAndReason(
-    state: StatusCardState,
+    state: HomeUiState,
     onColor: Color,
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(
-            text = state.status,
+            text = stringResource(state.status),
             style = MaterialTheme.typography.displaySmall,
             color = onColor,
         )
         Text(
             text =
                 buildString {
-                    append(state.reason)
-                    if (state.note.isNotEmpty()) append(" ${state.note}")
+                    append(stringResource(state.reason))
+                    if (state.note != 0) append(" ${stringResource(state.note)}")
                 },
             style = MaterialTheme.typography.bodyMedium,
             color = onColor.copy(alpha = 0.88f),
@@ -133,7 +130,7 @@ private fun StatusWordAndReason(
 
 @Composable
 private fun NextChargeBlock(
-    state: StatusCardState,
+    state: HomeUiState,
     onColor: Color,
 ) {
     Column(
@@ -214,14 +211,14 @@ fun StatusCardPreview() {
     com.wasylews.mykompot.ui.theme.MyKompotTheme {
         androidx.compose.material3.Scaffold(
             modifier = Modifier.fillMaxSize(),
-            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surface,
+            containerColor = MaterialTheme.colorScheme.surface,
         ) { innerPadding ->
             StatusCard(
                 state =
-                    StatusCardState(
-                        status = "All Good",
-                        reason = "Everything is working.",
-                        note = "Your account is active.",
+                    HomeUiState(
+                        status = R.string.all_good,
+                        reason = R.string.everything_is_working,
+                        note = R.string.account_is_active,
                         nextChargeDate = "1 Nov",
                         countdown = "in 20 days",
                         tariffName = "Standart 100",
@@ -236,12 +233,3 @@ fun StatusCardPreview() {
     }
 }
 
-data class StatusCardState(
-    val status: String,
-    val reason: String,
-    val note: String,
-    val nextChargeDate: String,
-    val countdown: String,
-    val tariffName: String,
-    val tariffPrice: String,
-)

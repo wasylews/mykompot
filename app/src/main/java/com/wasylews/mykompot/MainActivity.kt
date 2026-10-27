@@ -27,10 +27,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import com.wasylews.mykompot.presentation.home.HomeScreen
 import com.wasylews.mykompot.presentation.login.LoginScreen
 import com.wasylews.mykompot.presentation.login.LoginState
 import com.wasylews.mykompot.presentation.login.LoginViewModel
-import com.wasylews.mykompot.presentation.status.HomeScreen
 import com.wasylews.mykompot.ui.theme.MyKompotTheme
 import org.koin.compose.viewmodel.koinViewModel
 

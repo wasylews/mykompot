@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.wasylews.mykompot.presentation.status
+package com.wasylews.mykompot.presentation.home
 
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
@@ -49,10 +49,10 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         )
         StatusCard(
             state =
-                StatusCardState(
-                    status = stringResource(R.string.all_good),
-                    reason = stringResource(R.string.everything_is_working),
-                    note = stringResource(R.string.account_is_active),
+                HomeUiState(
+                    status = R.string.all_good,
+                    reason = R.string.everything_is_working,
+                    note = R.string.account_is_active,
                     nextChargeDate = "1 Nov",
                     countdown = "in 20 days",
                     tariffName = "Standart 100",
