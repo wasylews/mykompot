@@ -16,6 +16,8 @@
 
 package com.wasylews.mykompot.presentation.login
 
+import androidx.annotation.StringRes
+
 sealed interface LoginState {
     data object Unknown : LoginState
 
@@ -24,6 +26,6 @@ sealed interface LoginState {
     data object LoggedIn : LoginState
 
     data class Error(
-        val errorId: Int,
+        @StringRes val errorId: Int,
     ) : LoginState
 }

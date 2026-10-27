@@ -19,8 +19,8 @@ package com.wasylews.mykompot.presentation.login
 import app.cash.turbine.test
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.model.LoginResult
-import com.wasylews.mykompot.domain.model.TariffPlan
-import com.wasylews.mykompot.domain.repository.PortalRepository
+import com.wasylews.mykompot.presentation.FakePortalRepository
+import com.wasylews.mykompot.presentation.successLogin
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -33,16 +33,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Test
-import java.time.LocalDate
-
-class FakeLoginRepository(
-    private val result: LoginResult,
-) : PortalRepository {
-    override suspend fun login(
-        username: String,
-        password: String,
-    ): LoginResult = result
-}
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class LoginViewModelTest {
@@ -62,7 +52,7 @@ class LoginViewModelTest {
     @Test
     fun `can login with correct credentials`() = runTest {
         // GIVEN a repository that returns a successful login
-        val vm = LoginViewModel(FakeLoginRepository(successLogin()))
+        val vm = LoginViewModel(FakePortalRepository(successLogin()))
 
         // WHEN valid credentials are entered and login is invoked
         vm.usernameState.edit { replace(0, length, "user") }
@@ -77,7 +67,7 @@ class LoginViewModelTest {
     @Test
     fun `empty credentials are validated`() {
         // GIVEN a view model with empty credentials
-        val vm = LoginViewModel(FakeLoginRepository(LoginResult.InvalidCredentials))
+        val vm = LoginViewModel(FakePortalRepository(LoginResult.InvalidCredentials))
         vm.usernameState.edit { replace(0, length, "") }
         vm.passwordState.edit { replace(0, length, "") }
 
@@ -93,7 +83,7 @@ class LoginViewModelTest {
     fun `login emits loading then logged in`() =
         runTest {
             // GIVEN a repository that returns a successful login
-            val vm = LoginViewModel(FakeLoginRepository(successLogin()))
+            val vm = LoginViewModel(FakePortalRepository(successLogin()))
             vm.usernameState.edit { replace(0, length, "user") }
             vm.passwordState.edit { replace(0, length, "pass") }
 
@@ -111,7 +101,7 @@ class LoginViewModelTest {
     @Test
     fun `invalid credentials set error state`() = runTest {
         // GIVEN a repository that returns invalid credentials
-        val vm = LoginViewModel(FakeLoginRepository(LoginResult.InvalidCredentials))
+        val vm = LoginViewModel(FakePortalRepository(LoginResult.InvalidCredentials))
         vm.usernameState.edit { replace(0, length, "user") }
         vm.passwordState.edit { replace(0, length, "pass") }
 
@@ -127,7 +117,7 @@ class LoginViewModelTest {
     @Test
     fun `network error sets error state`() = runTest {
         // GIVEN a repository that returns a network error
-        val vm = LoginViewModel(FakeLoginRepository(LoginResult.NetworkError))
+        val vm = LoginViewModel(FakePortalRepository(LoginResult.NetworkError))
         vm.usernameState.edit { replace(0, length, "user") }
         vm.passwordState.edit { replace(0, length, "pass") }
 
@@ -143,7 +133,7 @@ class LoginViewModelTest {
     @Test
     fun `server error sets error state`() = runTest {
         // GIVEN a repository that returns a server error
-        val vm = LoginViewModel(FakeLoginRepository(LoginResult.ServerError))
+        val vm = LoginViewModel(FakePortalRepository(LoginResult.ServerError))
         vm.usernameState.edit { replace(0, length, "user") }
         vm.passwordState.edit { replace(0, length, "pass") }
 
@@ -155,11 +145,4 @@ class LoginViewModelTest {
         val state = vm.loginState.value as LoginState.Error
         assertEquals(R.string.error_server, state.errorId)
     }
-
-    private fun successLogin() =
-        LoginResult.Success(
-            isActive = true,
-            tariffPlan = TariffPlan("300GRN_100mb", 100, 300),
-            nextPayment = LocalDate.of(2026, 11, 1),
-        )
 }
