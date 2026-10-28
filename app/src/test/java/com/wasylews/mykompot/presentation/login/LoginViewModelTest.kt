@@ -19,36 +19,18 @@ package com.wasylews.mykompot.presentation.login
 import app.cash.turbine.test
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.model.LoginResult
+import com.wasylews.mykompot.presentation.BaseViewModelTest
 import com.wasylews.mykompot.presentation.FakePortalRepository
 import com.wasylews.mykompot.presentation.successLogin
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Before
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class LoginViewModelTest {
-
-    private val testDispatcher = StandardTestDispatcher()
-
-    @Before
-    fun setup() {
-        Dispatchers.setMain(testDispatcher)
-    }
-
-    @After
-    fun teardown() {
-        Dispatchers.resetMain()
-    }
-
+class LoginViewModelTest : BaseViewModelTest() {
     @Test
     fun `can login with correct credentials`() = runTest {
         // GIVEN a repository that returns a successful login
@@ -80,23 +62,22 @@ class LoginViewModelTest {
     }
 
     @Test
-    fun `login emits loading then logged in`() =
-        runTest {
-            // GIVEN a repository that returns a successful login
-            val vm = LoginViewModel(FakePortalRepository(successLogin()))
-            vm.usernameState.edit { replace(0, length, "user") }
-            vm.passwordState.edit { replace(0, length, "pass") }
+    fun `login emits loading then logged in`() = runTest {
+        // GIVEN a repository that returns a successful login
+        val vm = LoginViewModel(FakePortalRepository(successLogin()))
+        vm.usernameState.edit { replace(0, length, "user") }
+        vm.passwordState.edit { replace(0, length, "pass") }
 
-            // WHEN login is invoked
-            vm.loginState.test {
-                assertEquals(LoginState.Unknown, awaitItem())
-                vm.login()
+        // WHEN login is invoked
+        vm.loginState.test {
+            assertEquals(LoginState.Unknown, awaitItem())
+            vm.login()
 
-                // THEN we transition from loading to logged in
-                assertEquals(LoginState.Loading, awaitItem())
-                assertEquals(LoginState.LoggedIn, awaitItem())
-            }
+            // THEN we transition from loading to logged in
+            assertEquals(LoginState.Loading, awaitItem())
+            assertEquals(LoginState.LoggedIn, awaitItem())
         }
+    }
 
     @Test
     fun `invalid credentials set error state`() = runTest {
