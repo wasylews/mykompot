@@ -63,11 +63,10 @@ fun LoginScreen(
         containerColor = MaterialTheme.colorScheme.surface,
     ) { innerPadding ->
         Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(Spacing.lg),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(Spacing.lg),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -123,13 +122,12 @@ fun LoginScreen(
 fun LoginScreenPreview() {
     MyKompotTheme {
         LoginScreen(
-            uiState =
-                LoginUiState(
-                    usernameState = TextFieldState("user"),
-                    passwordState = TextFieldState("pass"),
-                    isLoading = false,
-                    errorId = null,
-                ),
+            uiState = LoginUiState(
+                usernameState = TextFieldState("user"),
+                passwordState = TextFieldState("pass"),
+                isLoading = false,
+                errorId = null,
+            ),
             onLoginClick = {},
         )
     }

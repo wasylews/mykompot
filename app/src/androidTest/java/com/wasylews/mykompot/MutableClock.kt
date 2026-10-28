@@ -21,7 +21,7 @@ import kotlin.time.Duration
 import kotlin.time.Instant
 
 class MutableClock(
-    private var current: Instant
+    private var current: Instant,
 ) : Clock {
     override fun now(): Instant = current
 

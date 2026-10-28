@@ -39,8 +39,7 @@ import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
 
 @OptIn(ExperimentalTestApi::class)
-class LoginAndSeeStatusTest: KoinTest {
-
+class LoginAndSeeStatusTest : KoinTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
 

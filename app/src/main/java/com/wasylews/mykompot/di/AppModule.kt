@@ -26,7 +26,6 @@ import kotlin.time.Clock
 @ComponentScan("com.wasylews.mykompot")
 @Configuration
 class AppModule {
-
     @Singleton
     fun provideClock(): Clock = Clock.System
 }

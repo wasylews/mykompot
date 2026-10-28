@@ -38,13 +38,12 @@ class DataModule {
     fun providePortalApi(retrofit: Retrofit) = retrofit.create<PortalApi>()
 
     @Singleton
-    fun provideRetrofit() =
-        Retrofit
-            .Builder()
-            .addConverterFactory(
-                Kspoon.toFormat().asConverterFactory("text/html; charset=UTF8".toMediaType()),
-            ).baseUrl(BuildConfig.BASE_URL)
-            .build()
+    fun provideRetrofit() = Retrofit
+        .Builder()
+        .addConverterFactory(
+            Kspoon.toFormat().asConverterFactory("text/html; charset=UTF8".toMediaType()),
+        ).baseUrl(BuildConfig.BASE_URL)
+        .build()
 
     @Singleton
     fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO

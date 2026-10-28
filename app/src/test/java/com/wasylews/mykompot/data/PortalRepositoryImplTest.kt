@@ -23,74 +23,65 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
 import okio.IOException
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import retrofit2.HttpException
 import retrofit2.Response
-import java.time.LocalDate
 
 class PortalRepositoryImplTest {
     @Test
-    fun `login with wrong credentials`() =
-        runTest {
-            val dispatcher = StandardTestDispatcher(testScheduler)
-            val repo = PortalRepositoryImpl(dispatcher, FakePortalApi(failedLogin()))
+    fun `login with wrong credentials`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val repo = PortalRepositoryImpl(dispatcher, FakePortalApi(failedLogin()))
 
-            val result = repo.login("user", "pass")
+        val result = repo.login("user", "pass")
 
-            assertEquals(LoginResult.InvalidCredentials, result)
-        }
-
-    @Test
-    fun `login with valid credentials`() =
-        runTest {
-            val dispatcher = StandardTestDispatcher(testScheduler)
-            val repo = PortalRepositoryImpl(dispatcher, FakePortalApi(activeProfile()))
-            val result = repo.login("user", "pass")
-
-            assertEquals(LoginResult.Success, result)
-        }
+        assertEquals(LoginResult.InvalidCredentials, result)
+    }
 
     @Test
-    fun `network error`() =
-        runTest {
-            val dispatcher = StandardTestDispatcher(testScheduler)
-            val portalApi = FakePortalApi(activeProfile(), exception = IOException())
-            val repo = PortalRepositoryImpl(dispatcher, portalApi)
-            val result = repo.login("user", "pass")
+    fun `login with valid credentials`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val repo = PortalRepositoryImpl(dispatcher, FakePortalApi(activeProfile()))
+        val result = repo.login("user", "pass")
 
-            assertEquals(LoginResult.NetworkError, result)
-        }
+        assertEquals(LoginResult.Success, result)
+    }
 
     @Test
-    fun `server error`() =
-        runTest {
-            val dispatcher = StandardTestDispatcher(testScheduler)
-            val response =
-                Response.error<ProfilePageResponse>(
-                    500,
-                    "Server side issue".toResponseBody(
-                        "text/plain".toMediaType(),
-                    ),
-                )
-            val portalApi = FakePortalApi(activeProfile(), exception = HttpException(response))
-            val repo = PortalRepositoryImpl(dispatcher, portalApi)
-            val result = repo.login("user", "pass")
+    fun `network error`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val portalApi = FakePortalApi(activeProfile(), exception = IOException())
+        val repo = PortalRepositoryImpl(dispatcher, portalApi)
+        val result = repo.login("user", "pass")
 
-            assertEquals(LoginResult.ServerError, result)
-        }
+        assertEquals(LoginResult.NetworkError, result)
+    }
 
-    private fun activeProfile() =
-        ProfilePageResponse(
-            status = "Enable",
-            plan = "300GRN_100mb",
-            nextPayment = "Next periodic payments throught days (2026-11-01)",
+    @Test
+    fun `server error`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val response = Response.error<ProfilePageResponse>(
+            500,
+            "Server side issue".toResponseBody(
+                "text/plain".toMediaType(),
+            ),
         )
+        val portalApi = FakePortalApi(activeProfile(), exception = HttpException(response))
+        val repo = PortalRepositoryImpl(dispatcher, portalApi)
+        val result = repo.login("user", "pass")
 
-    private fun failedLogin() =
-        ProfilePageResponse(
-            error = "Wrong password",
-        )
+        assertEquals(LoginResult.ServerError, result)
+    }
+
+    private fun activeProfile() = ProfilePageResponse(
+        status = "Enable",
+        plan = "300GRN_100mb",
+        nextPayment = "Next periodic payments throught days (2026-11-01)",
+    )
+
+    private fun failedLogin() = ProfilePageResponse(
+        error = "Wrong password",
+    )
 }
 
 class FakePortalApi(

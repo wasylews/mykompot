@@ -35,39 +35,36 @@ class PortalRepositoryImpl(
     override suspend fun login(
         username: String,
         password: String,
-    ): LoginResult =
-        withContext(dispatcher) {
-            return@withContext try {
-                val page = api.login(username, password)
-                if (page.error != null) {
-                    LoginResult.InvalidCredentials
-                } else {
-                    LoginResult.Success
-                }
-            } catch (_: HttpException) {
-                LoginResult.ServerError
-            } catch (_: IOException) {
-                LoginResult.NetworkError
+    ): LoginResult = withContext(dispatcher) {
+        return@withContext try {
+            val page = api.login(username, password)
+            if (page.error != null) {
+                LoginResult.InvalidCredentials
+            } else {
+                LoginResult.Success
             }
+        } catch (_: HttpException) {
+            LoginResult.ServerError
+        } catch (_: IOException) {
+            LoginResult.NetworkError
         }
+    }
 
-    private fun getPaymentDate(text: String?) =
-        text?.let {
-            Regex("""\((\d{4}-\d{2}-\d{2})\)""")
-                .find(it)
-                ?.groupValues
-                ?.get(1)
-                ?.let(LocalDate::parse)
-        }
+    private fun getPaymentDate(text: String?) = text?.let {
+        Regex("""\((\d{4}-\d{2}-\d{2})\)""")
+            .find(it)
+            ?.groupValues
+            ?.get(1)
+            ?.let(LocalDate::parse)
+    }
 
-    private fun getTariffPlan(id: String?): TariffPlan? =
-        id?.let {
-            TariffPlan(
-                name = it,
-                speed = 100,
-                price = 300,
-            )
-        }
+    private fun getTariffPlan(id: String?): TariffPlan? = id?.let {
+        TariffPlan(
+            name = it,
+            speed = 100,
+            price = 300,
+        )
+    }
 
     override suspend fun loadProfile(): Profile {
         TODO("Not yet implemented")

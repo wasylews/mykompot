@@ -94,18 +94,16 @@ data class StatusColors(
     val accent: Color,
 )
 
-val StatusColorsLight =
-    StatusColors(
-        container = Color(0xFFD7F3DD),
-        on = Color(0xFF0E5A2A),
-        accent = Color(0xFF2FB257),
-    )
+val StatusColorsLight = StatusColors(
+    container = Color(0xFFD7F3DD),
+    on = Color(0xFF0E5A2A),
+    accent = Color(0xFF2FB257),
+)
 
-val StatusColorsDark =
-    StatusColors(
-        container = Color(0xFF103520),
-        on = Color(0xFFB9F7CA),
-        accent = Color(0xFF51D97C),
-    )
+val StatusColorsDark = StatusColors(
+    container = Color(0xFF103520),
+    on = Color(0xFFB9F7CA),
+    accent = Color(0xFF51D97C),
+)
 
 val LocalStatusColors = compositionLocalOf { StatusColorsLight }

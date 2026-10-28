@@ -21,10 +21,9 @@ object HtmlFixtures {
 
     fun loginFailed() = load("login-failed.html")
 
-    private fun load(name: String): String =
-        requireNotNull(
-            HtmlFixtures::class.java.getResourceAsStream("/html/$name"),
-        ) {
-            "Missing HTML fixture: $name"
-        }.bufferedReader().use { it.readText() }
+    private fun load(name: String): String = requireNotNull(
+        HtmlFixtures::class.java.getResourceAsStream("/html/$name"),
+    ) {
+        "Missing HTML fixture: $name"
+    }.bufferedReader().use { it.readText() }
 }

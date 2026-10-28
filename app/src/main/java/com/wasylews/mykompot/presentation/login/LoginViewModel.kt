@@ -53,27 +53,25 @@ class LoginViewModel(
     private val _loginState = MutableStateFlow<LoginState>(LoginState.Unknown)
     val loginState: StateFlow<LoginState> = _loginState.asStateFlow()
 
-    val uiState: StateFlow<LoginUiState> =
-        loginState
-            .map { state ->
-                LoginUiState(
-                    usernameState = usernameState,
-                    passwordState = passwordState,
-                    isLoading = state is LoginState.Loading,
-                    errorId = (state as? LoginState.Error)?.errorId,
-                )
-            }.stateIn(viewModelScope, SharingStarted.Eagerly, LoginUiState(usernameState, passwordState))
+    val uiState: StateFlow<LoginUiState> = loginState
+        .map { state ->
+            LoginUiState(
+                usernameState = usernameState,
+                passwordState = passwordState,
+                isLoading = state is LoginState.Loading,
+                errorId = (state as? LoginState.Error)?.errorId,
+            )
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, LoginUiState(usernameState, passwordState))
 
-    fun login() =
-        viewModelScope.launch {
-            if (!isUsernameValid || !isPasswordValid) return@launch
+    fun login() = viewModelScope.launch {
+        if (!isUsernameValid || !isPasswordValid) return@launch
 
-            _loginState.value = LoginState.Loading
-            when (repository.login(usernameState.text.toString(), passwordState.text.toString())) {
-                is LoginResult.Success -> _loginState.value = LoginState.LoggedIn
-                LoginResult.InvalidCredentials -> _loginState.value = LoginState.Error(R.string.error_invalid_credentials)
-                LoginResult.NetworkError -> _loginState.value = LoginState.Error(R.string.error_no_connection)
-                LoginResult.ServerError -> _loginState.value = LoginState.Error(R.string.error_server)
-            }
+        _loginState.value = LoginState.Loading
+        when (repository.login(usernameState.text.toString(), passwordState.text.toString())) {
+            is LoginResult.Success -> _loginState.value = LoginState.LoggedIn
+            LoginResult.InvalidCredentials -> _loginState.value = LoginState.Error(R.string.error_invalid_credentials)
+            LoginResult.NetworkError -> _loginState.value = LoginState.Error(R.string.error_no_connection)
+            LoginResult.ServerError -> _loginState.value = LoginState.Error(R.string.error_server)
         }
+    }
 }
