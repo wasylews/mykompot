@@ -16,18 +16,36 @@
 
 package com.wasylews.mykompot.domain
 
-import com.wasylews.mykompot.domain.model.Profile
+import com.wasylews.mykompot.domain.model.AccountStatus
 import com.wasylews.mykompot.domain.repository.PortalRepository
 import org.koin.core.annotation.Singleton
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import kotlin.time.Clock
 
 @Singleton
 class GetStatusUseCase(
     private val repository: PortalRepository,
-    private val clock: Clock
+    private val clock: Clock,
 ) {
+    suspend operator fun invoke(): AccountStatus {
+        val profile = repository.loadProfile()
+        val daysLeft = ChronoUnit.DAYS.between(clock.today(), profile.nextPaymentDate)
+        val state = when {
+            !profile.isActive -> AccountStatus.State.PAYMENT_DUE
+            daysLeft <= PAYMENT_DUE_WINDOW_DAYS -> AccountStatus.State.PAYMENT_DUE
+            else -> AccountStatus.State.ALL_GOOD
+        }
+        return AccountStatus(state, profile, daysLeft)
+    }
 
-    suspend operator fun invoke(): Profile {
-        return repository.loadProfile()
+    private fun Clock.today(): LocalDate = java.time.Instant
+        .ofEpochMilli(now().toEpochMilliseconds())
+        .atZone(ZoneId.systemDefault())
+        .toLocalDate()
+
+    private companion object {
+        const val PAYMENT_DUE_WINDOW_DAYS = 3L
     }
 }

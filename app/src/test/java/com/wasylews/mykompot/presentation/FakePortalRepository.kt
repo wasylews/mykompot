@@ -19,6 +19,7 @@ package com.wasylews.mykompot.presentation
 import com.wasylews.mykompot.domain.model.LoginResult
 import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.repository.PortalRepository
+import java.time.LocalDate
 
 class FakePortalRepository(
     private val result: LoginResult = successLogin(),
@@ -34,6 +35,7 @@ class FakePortalRepository(
 
 fun successLogin() = LoginResult.Success
 
-fun profile(isActive: Boolean = true) = Profile(
-    isActive = isActive
+fun profile() = Profile(
+    isActive = true,
+    nextPaymentDate = LocalDate.of(2026, 10, 27),
 )

@@ -16,17 +16,22 @@
 
 package com.wasylews.mykompot.domain
 
+import java.time.LocalDate
+import java.time.ZoneId
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Instant
 
 class MutableClock(
-    private var current: Instant
+    date: LocalDate,
+    private val zone: ZoneId = ZoneId.systemDefault(),
 ) : Clock {
+    private var current: Instant = Instant.fromEpochMilliseconds(date.atStartOfDay(zone).toInstant().toEpochMilli())
+
     override fun now(): Instant = current
 
-    fun set(instant: Instant) {
-        current = instant
+    fun set(date: LocalDate) {
+        current = Instant.fromEpochMilliseconds(date.atStartOfDay(zone).toInstant().toEpochMilli())
     }
 
     fun advanceBy(duration: Duration) {

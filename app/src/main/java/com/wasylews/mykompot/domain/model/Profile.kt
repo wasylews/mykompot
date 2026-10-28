@@ -16,6 +16,9 @@
 
 package com.wasylews.mykompot.domain.model
 
+import java.time.LocalDate
+
 data class Profile(
     val isActive: Boolean,
+    val nextPaymentDate: LocalDate,
 )

@@ -16,44 +16,45 @@
 
 package com.wasylews.mykompot.domain
 
+import com.wasylews.mykompot.domain.model.AccountStatus
 import com.wasylews.mykompot.presentation.FakePortalRepository
 import com.wasylews.mykompot.presentation.profile
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
+import org.junit.Assert.assertEquals
 import org.junit.Test
-import kotlin.time.Clock
+import java.time.LocalDate
 
 class GetStatusUseCaseTest {
-
     @Test
-    fun `load user profile`() = runTest {
+    fun `load account status`() = runTest {
         // GIVEN
+        val clock = MutableClock(LocalDate.of(2026, 10, 20))
         val useCase = GetStatusUseCase(
             repository = FakePortalRepository(),
-            clock = Clock.System
+            clock = clock,
         )
 
         // WHEN
-        val profile = useCase()
+        val accountStatus = useCase()
 
         // THEN
-        assertTrue(profile.isActive)
+        assertEquals(AccountStatus.State.ALL_GOOD, accountStatus.state)
     }
 
     @Test
     fun `load user profile 3 days before due date`() = runTest {
         // GIVEN
-        val clock = MutableClock(Clock.System.now())
+        val clock = MutableClock(LocalDate.of(2026, 10, 29))
         val useCase = GetStatusUseCase(
-            repository = FakePortalRepository(profile = profile(isActive = false)),
-            clock = clock
+            repository = FakePortalRepository(profile = profile()),
+            clock = clock,
         )
 
         // WHEN
-        val profile = useCase()
+        val accountStatus = useCase()
 
         // THEN
-        assertFalse(profile.isActive)
+        assertEquals(AccountStatus.State.PAYMENT_DUE, accountStatus.state)
+        assertEquals(-2, accountStatus.daysLeft)
     }
 }
