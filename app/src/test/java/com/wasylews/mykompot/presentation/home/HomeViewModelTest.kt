@@ -42,8 +42,8 @@ class HomeViewModelTest : BaseViewModelTest() {
         val state = vm.uiState.value
 
         // THEN
-        assertEquals(R.string.all_good, state.status)
-        assertEquals(R.string.all_good_message, state.message)
+        assertEquals(R.string.status_all_good, state.status)
+        assertEquals(R.string.status_all_good_message, state.message)
         assertEquals(LocalDate.of(2026, 10, 27), state.nextChargeDate)
         assertEquals(7L, state.daysUntilPayment)
         assertEquals("Standart 100", state.tariffName)

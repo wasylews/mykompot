@@ -69,8 +69,8 @@ fun HomeScreen(
 @Composable
 fun HomeScreenPreview() {
     val state = HomeUiState(
-        status = R.string.all_good,
-        message = R.string.all_good_message,
+        status = R.string.status_all_good,
+        message = R.string.status_all_good_message,
         nextChargeDate = LocalDate.of(2026, 11, 1),
         daysUntilPayment = 20,
         tariffName = "Standart 100",

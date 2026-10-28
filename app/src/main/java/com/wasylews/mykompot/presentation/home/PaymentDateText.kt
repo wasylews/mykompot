@@ -41,7 +41,7 @@ fun relativeDayLabel(daysUntil: Long): String = when {
 
     daysUntil > 1L -> {
         pluralStringResource(
-            R.plurals.in_days,
+            R.plurals.days_until_payment,
             daysUntil.toInt(),
             daysUntil,
         )
@@ -50,7 +50,7 @@ fun relativeDayLabel(daysUntil: Long): String = when {
     else -> {
         val daysAgo = -daysUntil
         pluralStringResource(
-            R.plurals.days_ago,
+            R.plurals.days_since_payment,
             daysAgo.toInt(),
             daysAgo,
         )

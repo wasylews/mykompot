@@ -1,31 +1,40 @@
 <resources>
+    <!-- App -->
     <string name="app_name">My Kompot</string>
-    <string name="welcome_back">Welcome back.</string>
-    <string name="username">Username</string>
-    <string name="password">Password</string>
+
+    <!-- Login -->
     <string name="log_in">Log in</string>
-    <string name="all_good">All Good</string>
-    <string name="your_internet">Your internet</string>
+    <string name="password">Password</string>
+    <string name="username">Username</string>
+    <string name="welcome_back">Welcome back.</string>
+
+    <!-- Home -->
     <string name="next_charge">Next charge</string>
+    <string name="status_all_good">All Good</string>
+    <string name="status_all_good_message">Everything is working. Your account is active.</string>
+    <string name="status_payment_due">Payment due</string>
+    <string name="status_payment_due_message">Payment is due. Top up to keep your internet on.</string>
+    <string name="status_unknown">Unknown</string>
+    <string name="status_unknown_message">Couldn\'t read your status. The account may still be fine.</string>
     <string name="tariff">Tariff</string>
-    <string name="all_good_message">Everything is working. Your account is active.</string>
+    <string name="your_internet">Your internet</string>
+
+    <!-- Errors -->
     <string name="error_invalid_credentials">Invalid username or password. Please try again.</string>
     <string name="error_no_connection">Couldn\'t reach the server. Check your connection.</string>
     <string name="error_server">Something went wrong. Try again later.</string>
-    <string name="payment_due">Payment due</string>
-    <string name="payment_due_message">Payment is due. Top up to keep your internet on.</string>
-    <string name="unknown">Unknown</string>
-    <string name="unknown_message">Couldn\'t read your status. The account may still be fine.</string>
+
+    <!-- Relative dates -->
     <string name="today">today</string>
     <string name="tomorrow">tomorrow</string>
     <string name="yesterday">yesterday</string>
 
-    <plurals name="in_days">
+    <plurals name="days_until_payment">
         <item quantity="one">in %1$d day</item>
         <item quantity="other">in %1$d days</item>
     </plurals>
 
-    <plurals name="days_ago">
+    <plurals name="days_since_payment">
         <item quantity="one">%1$d day ago</item>
         <item quantity="other">%1$d days ago</item>
     </plurals>

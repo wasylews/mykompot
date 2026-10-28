@@ -42,13 +42,13 @@ class HomeViewModel(
 
     private fun AccountStatus.toHomeUiState(): HomeUiState {
         val status = when (state) {
-            AccountStatus.State.ALL_GOOD -> R.string.all_good
-            AccountStatus.State.PAYMENT_DUE -> R.string.payment_due
+            AccountStatus.State.ALL_GOOD -> R.string.status_all_good
+            AccountStatus.State.PAYMENT_DUE -> R.string.status_payment_due
         }
 
         val message = when (state) {
-            AccountStatus.State.ALL_GOOD -> R.string.all_good_message
-            AccountStatus.State.PAYMENT_DUE -> R.string.payment_due_message
+            AccountStatus.State.ALL_GOOD -> R.string.status_all_good_message
+            AccountStatus.State.PAYMENT_DUE -> R.string.status_payment_due_message
         }
 
         return HomeUiState(

@@ -21,8 +21,8 @@ import com.wasylews.mykompot.R
 import java.time.LocalDate
 
 data class HomeUiState(
-    @StringRes val status: Int = R.string.unknown,
-    @StringRes val message: Int = R.string.unknown_message,
+    @StringRes val status: Int = R.string.status_unknown,
+    @StringRes val message: Int = R.string.status_unknown_message,
     val nextChargeDate: LocalDate? = null,
     val daysUntilPayment: Long? = null,
     val tariffName: String = "",

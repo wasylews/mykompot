@@ -70,7 +70,7 @@ class LoginAndSeeStatusTest : KoinTest {
         performLogin()
 
         // THEN I see the status
-        waitForNodeWithStringRes(R.string.all_good).assertIsDisplayed()
+        waitForNodeWithStringRes(R.string.status_all_good).assertIsDisplayed()
     }
 
     @Test
@@ -84,7 +84,7 @@ class LoginAndSeeStatusTest : KoinTest {
         performLogin()
 
         // THEN I see the payment due
-        waitForNodeWithStringRes(R.string.payment_due).assertIsDisplayed()
+        waitForNodeWithStringRes(R.string.status_payment_due).assertIsDisplayed()
     }
 
     @Test
