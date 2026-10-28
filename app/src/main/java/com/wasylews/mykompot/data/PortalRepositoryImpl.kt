@@ -31,6 +31,7 @@ import java.time.LocalDate
 class PortalRepositoryImpl(
     private val dispatcher: CoroutineDispatcher,
     private val api: PortalApi,
+    private val localStorage: LocalStorage
 ) : PortalRepository {
     override suspend fun login(
         username: String,
@@ -41,6 +42,7 @@ class PortalRepositoryImpl(
             if (page.error != null) {
                 LoginResult.InvalidCredentials
             } else {
+                localStorage.saveProfile(page.toProfile())
                 LoginResult.Success
             }
         } catch (_: HttpException) {
@@ -49,6 +51,11 @@ class PortalRepositoryImpl(
             LoginResult.NetworkError
         }
     }
+
+    private fun ProfilePageResponse.toProfile() = Profile(
+        isActive = status == STATUS_ACTIVE,
+        nextPaymentDate = getPaymentDate(nextPayment) ?: LocalDate.now(),
+    )
 
     private fun getPaymentDate(text: String?) = text?.let {
         Regex("""\((\d{4}-\d{2}-\d{2})\)""")
@@ -66,7 +73,9 @@ class PortalRepositoryImpl(
         )
     }
 
-    override suspend fun loadProfile(): Profile {
-        TODO("Not yet implemented")
+    override suspend fun loadProfile(): Profile = localStorage.loadProfile()
+
+    private companion object {
+        const val STATUS_ACTIVE = "Enable"
     }
 }

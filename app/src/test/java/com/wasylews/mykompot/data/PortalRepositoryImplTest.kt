@@ -17,12 +17,15 @@
 package com.wasylews.mykompot.data
 
 import com.wasylews.mykompot.domain.model.LoginResult
+import com.wasylews.mykompot.domain.model.Profile
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.runTest
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
 import okio.IOException
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import retrofit2.HttpException
 import retrofit2.Response
@@ -30,8 +33,7 @@ import retrofit2.Response
 class PortalRepositoryImplTest {
     @Test
     fun `login with wrong credentials`() = runTest {
-        val dispatcher = StandardTestDispatcher(testScheduler)
-        val repo = PortalRepositoryImpl(dispatcher, FakePortalApi(failedLogin()))
+        val repo = createPortalRepository(testScheduler, FakePortalApi(failedLogin()))
 
         val result = repo.login("user", "pass")
 
@@ -40,8 +42,8 @@ class PortalRepositoryImplTest {
 
     @Test
     fun `login with valid credentials`() = runTest {
-        val dispatcher = StandardTestDispatcher(testScheduler)
-        val repo = PortalRepositoryImpl(dispatcher, FakePortalApi(activeProfile()))
+        val repo = createPortalRepository(testScheduler, FakePortalApi(activeProfile()))
+
         val result = repo.login("user", "pass")
 
         assertEquals(LoginResult.Success, result)
@@ -49,9 +51,8 @@ class PortalRepositoryImplTest {
 
     @Test
     fun `network error`() = runTest {
-        val dispatcher = StandardTestDispatcher(testScheduler)
         val portalApi = FakePortalApi(activeProfile(), exception = IOException())
-        val repo = PortalRepositoryImpl(dispatcher, portalApi)
+        val repo = createPortalRepository(testScheduler, portalApi)
         val result = repo.login("user", "pass")
 
         assertEquals(LoginResult.NetworkError, result)
@@ -59,7 +60,6 @@ class PortalRepositoryImplTest {
 
     @Test
     fun `server error`() = runTest {
-        val dispatcher = StandardTestDispatcher(testScheduler)
         val response = Response.error<ProfilePageResponse>(
             500,
             "Server side issue".toResponseBody(
@@ -67,11 +67,29 @@ class PortalRepositoryImplTest {
             ),
         )
         val portalApi = FakePortalApi(activeProfile(), exception = HttpException(response))
-        val repo = PortalRepositoryImpl(dispatcher, portalApi)
+        val repo = createPortalRepository(testScheduler, portalApi)
         val result = repo.login("user", "pass")
 
         assertEquals(LoginResult.ServerError, result)
     }
+
+    @Test
+    fun `load saved profile`() = runTest {
+        val repo = createPortalRepository(testScheduler)
+        repo.login("user", "pass")
+
+        val profile = repo.loadProfile()
+        assertTrue(profile.isActive)
+    }
+
+    private fun createPortalRepository(
+        testScheduler: TestCoroutineScheduler,
+        portalApi: PortalApi = FakePortalApi(activeProfile()),
+    ): PortalRepositoryImpl = PortalRepositoryImpl(
+        dispatcher = StandardTestDispatcher(testScheduler),
+        api = portalApi,
+        localStorage = FakeLocalStorage(),
+    )
 
     private fun activeProfile() = ProfilePageResponse(
         status = "Enable",
@@ -84,7 +102,7 @@ class PortalRepositoryImplTest {
     )
 }
 
-class FakePortalApi(
+private class FakePortalApi(
     private val response: ProfilePageResponse,
     private val exception: Exception? = null,
 ) : PortalApi {
@@ -92,4 +110,14 @@ class FakePortalApi(
         username: String,
         password: String,
     ) = response.also { exception?.let { throw it } }
+}
+
+private class FakeLocalStorage : LocalStorage {
+    private var savedProfile: Profile? = null
+
+    override suspend fun saveProfile(profile: Profile) {
+        savedProfile = profile
+    }
+
+    override suspend fun loadProfile(): Profile = savedProfile ?: Profile.DEFAULT
 }

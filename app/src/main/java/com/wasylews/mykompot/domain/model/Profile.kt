@@ -21,4 +21,11 @@ import java.time.LocalDate
 data class Profile(
     val isActive: Boolean,
     val nextPaymentDate: LocalDate,
-)
+) {
+    companion object {
+        val DEFAULT = Profile(
+            isActive = false,
+            nextPaymentDate = LocalDate.now()
+        )
+    }
+}
