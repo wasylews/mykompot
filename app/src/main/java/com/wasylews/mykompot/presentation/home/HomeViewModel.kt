@@ -19,7 +19,7 @@ package com.wasylews.mykompot.presentation.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wasylews.mykompot.R
-import com.wasylews.mykompot.domain.GetStatusUseCase
+import com.wasylews.mykompot.domain.GetStatus
 import com.wasylews.mykompot.domain.model.AccountStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,7 +28,7 @@ import org.koin.core.annotation.KoinViewModel
 
 @KoinViewModel
 class HomeViewModel(
-    private val getStatusUseCase: GetStatusUseCase,
+    private val getStatusUseCase: GetStatus,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState

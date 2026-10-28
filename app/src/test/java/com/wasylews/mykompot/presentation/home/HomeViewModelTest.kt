@@ -17,10 +17,9 @@
 package com.wasylews.mykompot.presentation.home
 
 import com.wasylews.mykompot.R
-import com.wasylews.mykompot.domain.GetStatusUseCase
-import com.wasylews.mykompot.domain.MutableClock
+import com.wasylews.mykompot.domain.model.AccountStatus
 import com.wasylews.mykompot.presentation.BaseViewModelTest
-import com.wasylews.mykompot.presentation.FakePortalRepository
+import com.wasylews.mykompot.presentation.profile
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -33,8 +32,12 @@ class HomeViewModelTest : BaseViewModelTest() {
     @Test
     fun `get current state`() = runTest {
         // GIVEN
-        val clock = MutableClock(LocalDate.of(2026, 10, 20))
-        val useCase = GetStatusUseCase(FakePortalRepository(), clock)
+        val status = AccountStatus(
+            AccountStatus.State.ALL_GOOD,
+            profile(),
+            daysLeft = 7
+        )
+        val useCase = FakeGetStatusUseCase(status)
         val vm = HomeViewModel(useCase)
 
         // WHEN

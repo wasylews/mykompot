@@ -24,12 +24,16 @@ import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import kotlin.time.Clock
 
+interface GetStatus {
+    suspend operator fun invoke(): AccountStatus
+}
+
 @Singleton
 class GetStatusUseCase(
     private val repository: PortalRepository,
     private val clock: Clock,
-) {
-    suspend operator fun invoke(): AccountStatus {
+): GetStatus {
+    override suspend operator fun invoke(): AccountStatus {
         val profile = repository.loadProfile()
         val daysLeft = ChronoUnit.DAYS.between(clock.today(), profile.nextPaymentDate)
         val state = when {
