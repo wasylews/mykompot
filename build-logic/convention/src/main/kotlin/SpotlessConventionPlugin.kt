@@ -19,6 +19,17 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
 
+/**
+ * Spotless passes the project `.editorconfig` to ktlint as "defaults", which cannot
+ * override ktlint_official code-style defaults or disable rules. These overrides keep
+ * Spotless in sync with the settings in `.editorconfig` (used by IDEs and the ktlint CLI).
+ */
+private val editorConfigOverrides = mapOf(
+    "ktlint_standard_chain-method-continuation" to "disabled",
+    "ktlint_standard_multiline-expression-wrapping" to "disabled",
+    "ktlint_function_signature_body_expression_wrapping" to "default",
+)
+
 class SpotlessConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
@@ -38,6 +49,8 @@ class SpotlessConventionPlugin : Plugin<Project> {
                 target("src/**/*.kt")
                 // General style comes from the root .editorconfig (ktlint_official code style).
                 ktlint(libs.findVersion("ktlint").get().requiredVersion)
+                    .setEditorConfigPath(rootDir.resolve(".editorconfig"))
+                    .editorConfigOverride(editorConfigOverrides)
                 licenseHeaderFile(rootDir.resolve("spotless/copyright.kt"))
             }
             format("kts") {
@@ -54,6 +67,8 @@ class SpotlessConventionPlugin : Plugin<Project> {
             kotlin {
                 target("build-logic/convention/src/**/*.kt")
                 ktlint(libs.findVersion("ktlint").get().requiredVersion)
+                    .setEditorConfigPath(rootDir.resolve(".editorconfig"))
+                    .editorConfigOverride(editorConfigOverrides)
                 licenseHeaderFile(rootDir.resolve("spotless/copyright.kt"))
             }
             format("kts") {

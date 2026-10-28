@@ -24,5 +24,7 @@ ij_kotlin_packages_to_use_import_on_demand = unset
 ij_kotlin_imports_layout = *,java.**,javax.**,kotlin.**,^
 
 ktlint_function_naming_ignore_when_annotated_with = Composable
-
+ktlint_standard_chain-method-continuation = disabled
+ktlint_standard_multiline-expression-wrapping = disabled
+ktlint_function_signature_body_expression_wrapping = default
 ktlint_standard_no-unused-imports = enabled
