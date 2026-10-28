@@ -17,28 +17,47 @@
 package com.wasylews.mykompot.presentation.home
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.GetStatusUseCase
+import com.wasylews.mykompot.domain.model.AccountStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
 
 @KoinViewModel
 class HomeViewModel(
     private val getStatusUseCase: GetStatusUseCase,
-): ViewModel() {
-
-    private val _uiState =
-        MutableStateFlow(
-            HomeUiState(
-                status = R.string.all_good,
-                reason = R.string.everything_is_working,
-                note = R.string.account_is_active,
-                nextChargeDate = "1 Nov",
-                countdown = "in 20 days",
-                tariffName = "Standart 100",
-                tariffPrice = "300 ₴",
-            ),
-        )
+) : ViewModel() {
+    private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState
+
+    init {
+        viewModelScope.launch {
+            val status = getStatusUseCase()
+            _uiState.value = status.toHomeUiState()
+        }
+    }
+
+    private fun AccountStatus.toHomeUiState(): HomeUiState {
+        val status = when (state) {
+            AccountStatus.State.ALL_GOOD -> R.string.all_good
+            AccountStatus.State.PAYMENT_DUE -> R.string.payment_due
+        }
+
+        val message = when (state) {
+            AccountStatus.State.ALL_GOOD -> R.string.all_good_message
+            AccountStatus.State.PAYMENT_DUE -> R.string.payment_due_message
+        }
+
+        return HomeUiState(
+            status = status,
+            message = message,
+            nextChargeDate = profile.nextPaymentDate,
+            daysUntilPayment = daysLeft,
+            tariffName = "Standart 100",
+            tariffPrice = "300 ₴",
+        )
+    }
 }

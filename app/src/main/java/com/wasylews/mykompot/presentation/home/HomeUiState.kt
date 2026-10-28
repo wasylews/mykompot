@@ -17,13 +17,14 @@
 package com.wasylews.mykompot.presentation.home
 
 import androidx.annotation.StringRes
+import com.wasylews.mykompot.R
+import java.time.LocalDate
 
 data class HomeUiState(
-    @StringRes val status: Int,
-    @StringRes val reason: Int,
-    @StringRes val note: Int,
-    val nextChargeDate: String,
-    val countdown: String,
-    val tariffName: String,
-    val tariffPrice: String,
+    @StringRes val status: Int = R.string.unknown,
+    @StringRes val message: Int = R.string.unknown_message,
+    val nextChargeDate: LocalDate? = null,
+    val daysUntilPayment: Long? = null,
+    val tariffName: String = "",
+    val tariffPrice: String = "",
 )

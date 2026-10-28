@@ -8,10 +8,25 @@
     <string name="your_internet">Your internet</string>
     <string name="next_charge">Next charge</string>
     <string name="tariff">Tariff</string>
-    <string name="everything_is_working">Everything is working.</string>
-    <string name="account_is_active">Your account is active.</string>
+    <string name="all_good_message">Everything is working. Your account is active.</string>
     <string name="error_invalid_credentials">Invalid username or password. Please try again.</string>
     <string name="error_no_connection">Couldn\'t reach the server. Check your connection.</string>
     <string name="error_server">Something went wrong. Try again later.</string>
     <string name="payment_due">Payment due</string>
+    <string name="payment_due_message">Payment is due. Top up to keep your internet on.</string>
+    <string name="unknown">Unknown</string>
+    <string name="unknown_message">Couldn\'t read your status. The account may still be fine.</string>
+    <string name="today">today</string>
+    <string name="tomorrow">tomorrow</string>
+    <string name="yesterday">yesterday</string>
+
+    <plurals name="in_days">
+        <item quantity="one">in %1$d day</item>
+        <item quantity="other">in %1$d days</item>
+    </plurals>
+
+    <plurals name="days_ago">
+        <item quantity="one">%1$d day ago</item>
+        <item quantity="other">%1$d days ago</item>
+    </plurals>
 </resources>

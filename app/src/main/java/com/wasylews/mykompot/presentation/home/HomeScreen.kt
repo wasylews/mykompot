@@ -32,14 +32,17 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.ui.theme.MyKompotTheme
 import com.wasylews.mykompot.ui.theme.Spacing
+import java.time.LocalDate
 
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier) {
+fun HomeScreen(
+    state: HomeUiState,
+    modifier: Modifier = Modifier,
+) {
     Column(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .padding(Spacing.lg),
+        modifier = modifier
+            .fillMaxSize()
+            .padding(Spacing.lg),
         verticalArrangement = Arrangement.spacedBy(Spacing.lg),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -47,18 +50,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             text = stringResource(R.string.your_internet),
             style = MaterialTheme.typography.titleLarge,
         )
-        StatusCard(
-            state =
-                HomeUiState(
-                    status = R.string.all_good,
-                    reason = R.string.everything_is_working,
-                    note = R.string.account_is_active,
-                    nextChargeDate = "1 Nov",
-                    countdown = "in 20 days",
-                    tariffName = "Standart 100",
-                    tariffPrice = "300 ₴",
-                ),
-        )
+        StatusCard(state)
     }
 }
 
@@ -76,16 +68,25 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 )
 @Composable
 fun HomeScreenPreview() {
+    val state = HomeUiState(
+        status = R.string.all_good,
+        message = R.string.all_good_message,
+        nextChargeDate = LocalDate.of(2026, 11, 1),
+        daysUntilPayment = 20,
+        tariffName = "Standart 100",
+        tariffPrice = "300 ₴",
+    )
+
     MyKompotTheme {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             containerColor = MaterialTheme.colorScheme.surface,
         ) { innerPadding ->
             HomeScreen(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
+                state,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
             )
         }
     }

@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.sp
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.ui.theme.LocalStatusColors
 import com.wasylews.mykompot.ui.theme.Spacing
+import java.time.LocalDate
 
 @Composable
 fun StatusCard(
@@ -66,7 +67,7 @@ fun StatusCard(
             verticalArrangement = Arrangement.spacedBy(Spacing.md),
         ) {
             StatusChip(status = state.status, onColor = statusColors.on)
-            StatusWordAndReason(state = state, onColor = statusColors.on)
+            StatusWordAndMessage(state = state, onColor = statusColors.on)
             NextChargeBlock(state = state, onColor = statusColors.on)
         }
     }
@@ -78,20 +79,18 @@ private fun StatusChip(
     onColor: Color,
 ) {
     Row(
-        modifier =
-            Modifier
-                .clip(RoundedCornerShape(999.dp))
-                .background(Color.Black.copy(alpha = 0.12f))
-                .padding(horizontal = 11.dp, vertical = 5.dp),
+        modifier = Modifier
+            .clip(RoundedCornerShape(999.dp))
+            .background(Color.Black.copy(alpha = 0.12f))
+            .padding(horizontal = 11.dp, vertical = 5.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Box(
-            modifier =
-                Modifier
-                    .size(8.dp)
-                    .clip(CircleShape)
-                    .background(onColor),
+            modifier = Modifier
+                .size(8.dp)
+                .clip(CircleShape)
+                .background(onColor),
         )
         Text(
             text = stringResource(status).uppercase(),
@@ -104,7 +103,7 @@ private fun StatusChip(
 }
 
 @Composable
-private fun StatusWordAndReason(
+private fun StatusWordAndMessage(
     state: HomeUiState,
     onColor: Color,
 ) {
@@ -117,11 +116,7 @@ private fun StatusWordAndReason(
             color = onColor,
         )
         Text(
-            text =
-                buildString {
-                    append(stringResource(state.reason))
-                    if (state.note != 0) append(" ${stringResource(state.note)}")
-                },
+            text = stringResource(state.message),
             style = MaterialTheme.typography.bodyMedium,
             color = onColor.copy(alpha = 0.88f),
         )
@@ -150,17 +145,21 @@ private fun NextChargeBlock(
                 verticalAlignment = Alignment.Bottom,
                 horizontalArrangement = Arrangement.spacedBy(9.dp),
             ) {
-                Text(
-                    text = state.nextChargeDate,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = onColor,
-                )
-                Text(
-                    text = state.countdown,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = onColor.copy(alpha = 0.62f),
-                )
+                state.nextChargeDate?.let { date ->
+                    Text(
+                        text = chargeDateLabel(date),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = onColor,
+                    )
+                    state.daysUntilPayment?.let { days ->
+                        Text(
+                            text = relativeDayLabel(days),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = onColor.copy(alpha = 0.62f),
+                        )
+                    }
+                }
             }
         }
         // Tariff link
@@ -214,22 +213,18 @@ fun StatusCardPreview() {
             containerColor = MaterialTheme.colorScheme.surface,
         ) { innerPadding ->
             StatusCard(
-                state =
-                    HomeUiState(
-                        status = R.string.all_good,
-                        reason = R.string.everything_is_working,
-                        note = R.string.account_is_active,
-                        nextChargeDate = "1 Nov",
-                        countdown = "in 20 days",
-                        tariffName = "Standart 100",
-                        tariffPrice = "300 ₴",
-                    ),
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(innerPadding),
+                state = HomeUiState(
+                    status = R.string.all_good,
+                    message = R.string.all_good_message,
+                    nextChargeDate = LocalDate.of(2026, 11, 1),
+                    daysUntilPayment = 20,
+                    tariffName = "Standart 100",
+                    tariffPrice = "300 ₴",
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(innerPadding),
             )
         }
     }
 }
-

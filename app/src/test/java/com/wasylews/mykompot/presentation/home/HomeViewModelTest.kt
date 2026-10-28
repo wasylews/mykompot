@@ -18,28 +18,34 @@ package com.wasylews.mykompot.presentation.home
 
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.GetStatusUseCase
+import com.wasylews.mykompot.domain.MutableClock
+import com.wasylews.mykompot.presentation.BaseViewModelTest
 import com.wasylews.mykompot.presentation.FakePortalRepository
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import kotlin.time.Clock
+import java.time.LocalDate
 
-class HomeViewModelTest {
-
+@OptIn(ExperimentalCoroutinesApi::class)
+class HomeViewModelTest : BaseViewModelTest() {
     @Test
-    fun `get current state`() {
+    fun `get current state`() = runTest {
         // GIVEN
-        val useCase = GetStatusUseCase(FakePortalRepository(), Clock.System)
+        val clock = MutableClock(LocalDate.of(2026, 10, 20))
+        val useCase = GetStatusUseCase(FakePortalRepository(), clock)
         val vm = HomeViewModel(useCase)
 
         // WHEN
+        advanceUntilIdle()
         val state = vm.uiState.value
 
         // THEN
         assertEquals(R.string.all_good, state.status)
-        assertEquals(R.string.everything_is_working, state.reason)
-        assertEquals(R.string.account_is_active, state.note)
-        assertEquals("1 Nov", state.nextChargeDate)
-        assertEquals("in 20 days", state.countdown)
+        assertEquals(R.string.all_good_message, state.message)
+        assertEquals(LocalDate.of(2026, 10, 27), state.nextChargeDate)
+        assertEquals(7L, state.daysUntilPayment)
         assertEquals("Standart 100", state.tariffName)
         assertEquals("300 ₴", state.tariffPrice)
     }
