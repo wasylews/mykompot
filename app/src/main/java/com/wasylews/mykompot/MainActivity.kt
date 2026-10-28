@@ -28,6 +28,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.wasylews.mykompot.presentation.home.HomeScreen
+import com.wasylews.mykompot.presentation.home.HomeViewModel
 import com.wasylews.mykompot.presentation.login.LoginScreen
 import com.wasylews.mykompot.presentation.login.LoginState
 import com.wasylews.mykompot.presentation.login.LoginViewModel
@@ -45,25 +46,27 @@ class MainActivity : ComponentActivity() {
                 val uiState by loginViewModel.uiState.collectAsState()
                 val isLoggedIn = loginState == LoginState.LoggedIn
 
+                val homeViewModel = koinViewModel<HomeViewModel>()
+                val homeUiState by homeViewModel.uiState.collectAsState()
+
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     containerColor = MaterialTheme.colorScheme.surface,
                 ) { innerPadding ->
                     if (isLoggedIn) {
                         HomeScreen(
-                            modifier =
-                                Modifier
-                                    .fillMaxSize()
-                                    .padding(innerPadding),
+                            homeUiState,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(innerPadding),
                         )
                     } else {
                         LoginScreen(
                             uiState = uiState,
                             onLoginClick = { loginViewModel.login() },
-                            modifier =
-                                Modifier
-                                    .fillMaxSize()
-                                    .padding(innerPadding),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(innerPadding),
                         )
                     }
                 }
