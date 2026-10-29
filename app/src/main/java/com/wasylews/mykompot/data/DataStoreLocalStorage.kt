@@ -16,16 +16,61 @@
 
 package com.wasylews.mykompot.data
 
+import androidx.datastore.core.DataStore
 import com.wasylews.mykompot.domain.model.Profile
+import com.wasylews.mykompot.domain.model.TariffPlan
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.serialization.Serializable
 import org.koin.core.annotation.Singleton
+import java.time.LocalDate
 
 @Singleton
-class DataStoreLocalStorage : LocalStorage {
+class DataStoreLocalStorage(
+    private val profileDataStore: DataStore<ProfileEntity?>
+) : LocalStorage {
     override suspend fun saveProfile(profile: Profile) {
-        TODO("Not yet implemented")
+        profileDataStore.updateData { profile.toEntity() }
     }
 
     override suspend fun loadProfile(): Profile {
-        TODO("Not yet implemented")
+        return profileDataStore.data.firstOrNull()?.toDomain() ?: Profile.DEFAULT
     }
 }
+
+@Serializable
+data class ProfileEntity(
+    val isActive: Boolean,
+    val nextPaymentDate: String,
+    val tariffPlan: TariffPlanEntity,
+)
+
+@Serializable
+data class TariffPlanEntity(
+    val name: String,
+    val speed: Int,
+    val price: Int,
+)
+
+private fun Profile.toEntity() = ProfileEntity(
+    isActive = isActive,
+    nextPaymentDate = nextPaymentDate.toString(),
+    tariffPlan = tariffPlan.toEntity(),
+)
+
+private fun ProfileEntity.toDomain() = Profile(
+    isActive = isActive,
+    nextPaymentDate = LocalDate.parse(nextPaymentDate),
+    tariffPlan = tariffPlan.toDomain(),
+)
+
+private fun TariffPlan.toEntity() = TariffPlanEntity(
+    name = name,
+    speed = speed,
+    price = price,
+)
+
+private fun TariffPlanEntity.toDomain() = TariffPlan(
+    name = name,
+    speed = speed,
+    price = price,
+)

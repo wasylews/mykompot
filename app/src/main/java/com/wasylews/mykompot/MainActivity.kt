@@ -46,14 +46,14 @@ class MainActivity : ComponentActivity() {
                 val uiState by loginViewModel.uiState.collectAsState()
                 val isLoggedIn = loginState == LoginState.LoggedIn
 
-                val homeViewModel = koinViewModel<HomeViewModel>()
-                val homeUiState by homeViewModel.uiState.collectAsState()
-
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     containerColor = MaterialTheme.colorScheme.surface,
                 ) { innerPadding ->
                     if (isLoggedIn) {
+                        val homeViewModel = koinViewModel<HomeViewModel>()
+                        val homeUiState by homeViewModel.uiState.collectAsState()
+
                         HomeScreen(
                             homeUiState,
                             modifier = Modifier

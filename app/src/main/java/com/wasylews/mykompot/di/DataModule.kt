@@ -16,8 +16,14 @@
 
 package com.wasylews.mykompot.di
 
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.core.DataStoreFactory
+import androidx.datastore.dataStoreFile
 import com.wasylews.mykompot.BuildConfig
 import com.wasylews.mykompot.data.PortalApi
+import com.wasylews.mykompot.data.ProfileEntity
+import com.wasylews.mykompot.data.ProfileEntitySerializer
 import dev.burnoo.kspoon.Kspoon
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -47,4 +53,10 @@ class DataModule {
 
     @Singleton
     fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
+
+    @Singleton
+    fun provideProfileDataStore(context: Context): DataStore<ProfileEntity?> = DataStoreFactory.create(
+        serializer = ProfileEntitySerializer,
+        produceFile = { context.dataStoreFile("profile.json") },
+    )
 }

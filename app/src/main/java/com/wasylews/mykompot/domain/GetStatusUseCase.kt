@@ -18,7 +18,7 @@ package com.wasylews.mykompot.domain
 
 import com.wasylews.mykompot.domain.model.AccountStatus
 import com.wasylews.mykompot.domain.repository.PortalRepository
-import org.koin.core.annotation.Singleton
+import org.koin.core.annotation.Factory
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
@@ -28,7 +28,7 @@ interface GetStatus {
     suspend operator fun invoke(): AccountStatus
 }
 
-@Singleton
+@Factory
 class GetStatusUseCase(
     private val repository: PortalRepository,
     private val clock: Clock,

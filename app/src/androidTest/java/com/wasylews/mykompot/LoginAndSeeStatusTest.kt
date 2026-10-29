@@ -32,6 +32,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.koin.core.context.loadKoinModules
+import org.koin.core.context.unloadKoinModules
 import org.koin.dsl.module
 import org.koin.test.KoinTest
 import kotlin.time.Clock
@@ -45,7 +46,7 @@ class LoginAndSeeStatusTest : KoinTest {
 
     private val server = MockWebServer()
 
-    private val clock = MutableClock(Instant.parse("2026-11-01T10:00:00Z"))
+    private val clock = MutableClock(Instant.parse("2026-10-01T10:00:00Z"))
     private val testModule = module {
         single<Clock> { clock }
     }
@@ -59,6 +60,7 @@ class LoginAndSeeStatusTest : KoinTest {
     @After
     fun teardown() {
         server.close()
+        unloadKoinModules(testModule)
     }
 
     @Test
@@ -78,7 +80,7 @@ class LoginAndSeeStatusTest : KoinTest {
         // GIVEN server is up
         server.enqueue(MockResponse(body = HtmlFixtures.profile()))
         // AND current date set past due date
-        clock.advanceBy(10.days)
+        clock.advanceBy(30.days)
 
         // WHEN I log in
         performLogin()
