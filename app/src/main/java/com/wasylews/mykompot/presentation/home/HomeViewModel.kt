@@ -56,8 +56,8 @@ class HomeViewModel(
             message = message,
             nextChargeDate = profile.nextPaymentDate,
             daysUntilPayment = daysLeft,
-            tariffName = "Standart 100",
-            tariffPrice = "300 ₴",
+            tariffName = profile.tariffPlan.name,
+            tariffPrice = profile.tariffPlan.price,
         )
     }
 }

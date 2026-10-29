@@ -26,5 +26,5 @@ data class HomeUiState(
     val nextChargeDate: LocalDate? = null,
     val daysUntilPayment: Long? = null,
     val tariffName: String = "",
-    val tariffPrice: String = "",
+    val tariffPrice: Int = 0,
 )

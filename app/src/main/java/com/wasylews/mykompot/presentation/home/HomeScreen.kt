@@ -74,7 +74,7 @@ fun HomeScreenPreview() {
         nextChargeDate = LocalDate.of(2026, 11, 1),
         daysUntilPayment = 20,
         tariffName = "Standart 100",
-        tariffPrice = "300 ₴",
+        tariffPrice = 300,
     )
 
     MyKompotTheme {

@@ -188,7 +188,7 @@ private fun TariffBlock(
             color = onColor,
         )
         Text(
-            text = state.tariffPrice,
+            text = stringResource(R.string.tariff_price, state.tariffPrice),
             style = MaterialTheme.typography.bodySmall,
             color = onColor.copy(alpha = 0.68f),
         )
@@ -227,7 +227,7 @@ fun StatusCardPreview() {
                     nextChargeDate = LocalDate.of(2026, 11, 1),
                     daysUntilPayment = 20,
                     tariffName = "Standart 100",
-                    tariffPrice = "300 ₴",
+                    tariffPrice = 300,
                 ),
                 modifier = Modifier
                     .fillMaxWidth()

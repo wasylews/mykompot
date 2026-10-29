@@ -49,7 +49,7 @@ class HomeViewModelTest : BaseViewModelTest() {
         assertEquals(R.string.status_all_good_message, state.message)
         assertEquals(LocalDate.of(2026, 10, 27), state.nextChargeDate)
         assertEquals(7L, state.daysUntilPayment)
-        assertEquals("Standart 100", state.tariffName)
-        assertEquals("300 ₴", state.tariffPrice)
+        assertEquals("Standart", state.tariffName)
+        assertEquals(300, state.tariffPrice)
     }
 }

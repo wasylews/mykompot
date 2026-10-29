@@ -17,6 +17,7 @@
     <string name="status_unknown">Unknown</string>
     <string name="status_unknown_message">Couldn\'t read your status. The account may still be fine.</string>
     <string name="tariff">Tariff</string>
+    <string name="tariff_price">%1$d ₴</string>
     <string name="your_internet">Your internet</string>
 
     <!-- Errors -->
