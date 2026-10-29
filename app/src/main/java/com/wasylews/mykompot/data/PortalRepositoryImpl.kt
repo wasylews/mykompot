@@ -42,7 +42,8 @@ class PortalRepositoryImpl(
             if (page.error != null) {
                 LoginResult.InvalidCredentials
             } else {
-                localStorage.saveProfile(page.toProfile())
+                val profile = page.toProfile() ?: return@withContext LoginResult.ParsingError
+                localStorage.saveProfile(profile)
                 LoginResult.Success
             }
         } catch (_: HttpException) {
@@ -52,9 +53,10 @@ class PortalRepositoryImpl(
         }
     }
 
-    private fun ProfilePageResponse.toProfile() = Profile(
+    private fun ProfilePageResponse.toProfile(): Profile? = Profile(
         isActive = status == STATUS_ACTIVE,
-        nextPaymentDate = getPaymentDate(nextPayment) ?: LocalDate.now(),
+        nextPaymentDate = getPaymentDate(nextPayment) ?: return null,
+        tariffPlan = getTariffPlan(plan) ?: return null
     )
 
     private fun getPaymentDate(text: String?) = text?.let {

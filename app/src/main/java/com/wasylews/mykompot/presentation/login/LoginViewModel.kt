@@ -72,6 +72,7 @@ class LoginViewModel(
             LoginResult.InvalidCredentials -> _loginState.value = LoginState.Error(R.string.error_invalid_credentials)
             LoginResult.NetworkError -> _loginState.value = LoginState.Error(R.string.error_no_connection)
             LoginResult.ServerError -> _loginState.value = LoginState.Error(R.string.error_server)
+            LoginResult.ParsingError -> _loginState.value = LoginState.Error(R.string.error_parsing)
         }
     }
 }

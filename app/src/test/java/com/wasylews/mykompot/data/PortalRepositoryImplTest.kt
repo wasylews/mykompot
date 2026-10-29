@@ -80,6 +80,7 @@ class PortalRepositoryImplTest {
 
         val profile = repo.loadProfile()
         assertTrue(profile.isActive)
+        assertEquals("300GRN_100mb", profile.tariffPlan.name)
     }
 
     private fun createPortalRepository(

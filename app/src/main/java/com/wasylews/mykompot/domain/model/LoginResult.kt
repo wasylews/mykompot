@@ -24,4 +24,6 @@ sealed interface LoginResult {
     data object NetworkError : LoginResult
 
     data object ServerError : LoginResult
+
+    data object ParsingError : LoginResult
 }
