@@ -26,7 +26,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class DataStoreLocalStorageTest {
-
     @Test
     fun `load saved profile`() = runTest {
         val dataStore = FakeDataStore()
@@ -40,7 +39,7 @@ class DataStoreLocalStorageTest {
     }
 }
 
-class FakeDataStore: DataStore<ProfileEntity?> {
+class FakeDataStore : DataStore<ProfileEntity?> {
     private val savedProfileFlow = MutableStateFlow<ProfileEntity?>(null)
 
     override val data: Flow<ProfileEntity?> = savedProfileFlow
@@ -49,5 +48,4 @@ class FakeDataStore: DataStore<ProfileEntity?> {
         savedProfileFlow.update { transform(it) }
         return savedProfileFlow.value
     }
-
 }

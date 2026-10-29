@@ -163,33 +163,41 @@ private fun NextChargeBlock(
             }
         }
         // Tariff link
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(
-                text = stringResource(R.string.tariff),
-                style = MaterialTheme.typography.bodySmall,
-                color = onColor.copy(alpha = 0.68f),
-            )
-            Text(
-                text = state.tariffName,
-                style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.Bold,
-                color = onColor,
-            )
-            Text(
-                text = state.tariffPrice,
-                style = MaterialTheme.typography.bodySmall,
-                color = onColor.copy(alpha = 0.68f),
-            )
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = null,
-                modifier = Modifier.size(16.dp),
-                tint = onColor.copy(alpha = 0.6f),
-            )
-        }
+        TariffBlock(onColor, state)
+    }
+}
+
+@Composable
+private fun TariffBlock(
+    onColor: Color,
+    state: HomeUiState,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.tariff),
+            style = MaterialTheme.typography.bodySmall,
+            color = onColor.copy(alpha = 0.68f),
+        )
+        Text(
+            text = state.tariffName,
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Bold,
+            color = onColor,
+        )
+        Text(
+            text = state.tariffPrice,
+            style = MaterialTheme.typography.bodySmall,
+            color = onColor.copy(alpha = 0.68f),
+        )
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+            tint = onColor.copy(alpha = 0.6f),
+        )
     }
 }
 

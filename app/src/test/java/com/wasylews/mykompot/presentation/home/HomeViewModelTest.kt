@@ -35,7 +35,7 @@ class HomeViewModelTest : BaseViewModelTest() {
         val status = AccountStatus(
             AccountStatus.State.ALL_GOOD,
             profile(),
-            daysLeft = 7
+            daysLeft = 7,
         )
         val useCase = FakeGetStatusUseCase(status)
         val vm = HomeViewModel(useCase)

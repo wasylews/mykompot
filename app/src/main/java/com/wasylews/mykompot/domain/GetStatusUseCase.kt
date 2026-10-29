@@ -32,7 +32,7 @@ interface GetStatus {
 class GetStatusUseCase(
     private val repository: PortalRepository,
     private val clock: Clock,
-): GetStatus {
+) : GetStatus {
     override suspend operator fun invoke(): AccountStatus {
         val profile = repository.loadProfile()
         val daysLeft = ChronoUnit.DAYS.between(clock.today(), profile.nextPaymentDate)

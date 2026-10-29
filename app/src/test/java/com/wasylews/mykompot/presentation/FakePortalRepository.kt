@@ -39,5 +39,5 @@ fun successLogin() = LoginResult.Success
 fun profile() = Profile(
     isActive = true,
     nextPaymentDate = LocalDate.of(2026, 10, 27),
-    tariffPlan = TariffPlan("Standart", 100, 300)
+    tariffPlan = TariffPlan("Standart", 100, 300),
 )

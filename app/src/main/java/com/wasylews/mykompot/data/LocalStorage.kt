@@ -19,7 +19,6 @@ package com.wasylews.mykompot.data
 import com.wasylews.mykompot.domain.model.Profile
 
 interface LocalStorage {
-
     suspend fun saveProfile(profile: Profile)
 
     /**

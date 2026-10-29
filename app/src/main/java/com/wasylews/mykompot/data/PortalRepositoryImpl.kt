@@ -31,7 +31,7 @@ import java.time.LocalDate
 class PortalRepositoryImpl(
     private val dispatcher: CoroutineDispatcher,
     private val api: PortalApi,
-    private val localStorage: LocalStorage
+    private val localStorage: LocalStorage,
 ) : PortalRepository {
     override suspend fun login(
         username: String,
@@ -56,7 +56,7 @@ class PortalRepositoryImpl(
     private fun ProfilePageResponse.toProfile(): Profile? = Profile(
         isActive = status == STATUS_ACTIVE,
         nextPaymentDate = getPaymentDate(nextPayment) ?: return null,
-        tariffPlan = getTariffPlan(plan) ?: return null
+        tariffPlan = getTariffPlan(plan) ?: return null,
     )
 
     private fun getPaymentDate(text: String?) = text?.let {

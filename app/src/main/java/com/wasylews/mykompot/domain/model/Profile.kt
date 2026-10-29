@@ -27,7 +27,7 @@ data class Profile(
         val DEFAULT = Profile(
             isActive = false,
             nextPaymentDate = LocalDate.now(),
-            tariffPlan = TariffPlan("", 0, 0)
+            tariffPlan = TariffPlan("", 0, 0),
         )
     }
 }

@@ -26,15 +26,13 @@ import java.time.LocalDate
 
 @Singleton
 class DataStoreLocalStorage(
-    private val profileDataStore: DataStore<ProfileEntity?>
+    private val profileDataStore: DataStore<ProfileEntity?>,
 ) : LocalStorage {
     override suspend fun saveProfile(profile: Profile) {
         profileDataStore.updateData { profile.toEntity() }
     }
 
-    override suspend fun loadProfile(): Profile {
-        return profileDataStore.data.firstOrNull()?.toDomain() ?: Profile.DEFAULT
-    }
+    override suspend fun loadProfile(): Profile = profileDataStore.data.firstOrNull()?.toDomain() ?: Profile.DEFAULT
 }
 
 @Serializable

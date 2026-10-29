@@ -26,14 +26,16 @@ import java.io.OutputStream
 object ProfileEntitySerializer : Serializer<ProfileEntity?> {
     override val defaultValue: ProfileEntity? = null
 
-    override suspend fun readFrom(input: InputStream): ProfileEntity? =
-        try {
-            Json.decodeFromString<ProfileEntity?>(input.readBytes().decodeToString())
-        } catch (e: SerializationException) {
-            throw CorruptionException("Unable to read the stored profile.", e)
-        }
+    override suspend fun readFrom(input: InputStream): ProfileEntity? = try {
+        Json.decodeFromString<ProfileEntity?>(input.readBytes().decodeToString())
+    } catch (e: SerializationException) {
+        throw CorruptionException("Unable to read the stored profile.", e)
+    }
 
-    override suspend fun writeTo(t: ProfileEntity?, output: OutputStream) {
+    override suspend fun writeTo(
+        t: ProfileEntity?,
+        output: OutputStream,
+    ) {
         @Suppress("BlockingMethodInNonBlockingContext") // DataStore calls this on its IO scope
         output.write(Json.encodeToString<ProfileEntity?>(t).encodeToByteArray())
     }
