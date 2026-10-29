@@ -16,7 +16,7 @@
 
 package com.wasylews.mykompot.ui.theme
 
-import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 // Light
@@ -94,16 +94,58 @@ data class StatusColors(
     val accent: Color,
 )
 
-val StatusColorsLight = StatusColors(
+val StatusColorsAllGoodLight = StatusColors(
     container = Color(0xFFD7F3DD),
     on = Color(0xFF0E5A2A),
     accent = Color(0xFF2FB257),
 )
 
-val StatusColorsDark = StatusColors(
+val StatusColorsAllGoodDark = StatusColors(
     container = Color(0xFF103520),
     on = Color(0xFFB9F7CA),
     accent = Color(0xFF51D97C),
 )
 
-val LocalStatusColors = compositionLocalOf { StatusColorsLight }
+val StatusColorsPaymentDueLight = StatusColors(
+    container = Color(0xFFFFE8C9),
+    on = Color(0xFF7A4A00),
+    accent = Color(0xFFF79B1B),
+)
+
+val StatusColorsPaymentDueDark = StatusColors(
+    container = Color(0xFF3A2A06),
+    on = Color(0xFFFFD896),
+    accent = Color(0xFFF7A712),
+)
+
+val StatusColorsUnknownLight = StatusColors(
+    container = Color(0xFFE9E6F5),
+    on = Color(0xFF4A4458),
+    accent = Color(0xFF8E879F),
+)
+
+val StatusColorsUnknownDark = StatusColors(
+    container = Color(0xFF2B2740),
+    on = Color(0xFFCEC5E8),
+    accent = Color(0xFF9C93BA),
+)
+
+data class StatusPalettes(
+    val allGood: StatusColors,
+    val paymentDue: StatusColors,
+    val unknown: StatusColors,
+)
+
+val StatusPalettesLight = StatusPalettes(
+    allGood = StatusColorsAllGoodLight,
+    paymentDue = StatusColorsPaymentDueLight,
+    unknown = StatusColorsUnknownLight,
+)
+
+val StatusPalettesDark = StatusPalettes(
+    allGood = StatusColorsAllGoodDark,
+    paymentDue = StatusColorsPaymentDueDark,
+    unknown = StatusColorsUnknownDark,
+)
+
+val LocalStatusPalettes = staticCompositionLocalOf { StatusPalettesLight }

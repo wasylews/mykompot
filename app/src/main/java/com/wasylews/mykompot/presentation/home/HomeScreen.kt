@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.wasylews.mykompot.R
+import com.wasylews.mykompot.domain.model.AccountStatus
 import com.wasylews.mykompot.ui.theme.MyKompotTheme
 import com.wasylews.mykompot.ui.theme.Spacing
 import java.time.LocalDate
@@ -38,6 +39,7 @@ import java.time.LocalDate
 fun HomeScreen(
     state: HomeUiState,
     modifier: Modifier = Modifier,
+    onPayClick: () -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -50,7 +52,7 @@ fun HomeScreen(
             text = stringResource(R.string.your_internet),
             style = MaterialTheme.typography.titleLarge,
         )
-        StatusCard(state)
+        StatusCard(state, onPayClick = onPayClick)
     }
 }
 
@@ -69,6 +71,7 @@ fun HomeScreen(
 @Composable
 fun HomeScreenPreview() {
     val state = HomeUiState(
+        accountState = AccountStatus.State.ALL_GOOD,
         status = R.string.status_all_good,
         message = R.string.status_all_good_message,
         nextChargeDate = LocalDate.of(2026, 11, 1),

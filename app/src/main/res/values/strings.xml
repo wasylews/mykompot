@@ -10,12 +10,14 @@
 
     <!-- Home -->
     <string name="next_charge">Next charge</string>
-    <string name="status_all_good">All Good</string>
-    <string name="status_all_good_message">Everything is working. Your account is active.</string>
+    <string name="due">Due</string>
+    <string name="pay_now">Pay now</string>
+    <string name="status_all_good">All good</string>
+    <string name="status_all_good_message">Your account is active, and your internet is working.</string>
     <string name="status_payment_due">Payment due</string>
-    <string name="status_payment_due_message">Payment is due. Top up to keep your internet on.</string>
+    <string name="status_payment_due_message">Top up to keep your internet on.</string>
     <string name="status_unknown">Unknown</string>
-    <string name="status_unknown_message">Couldn\'t read your status. The account may still be fine.</string>
+    <string name="status_unknown_message">We couldn\'t check your status. Your account may still be fine.</string>
     <string name="tariff">Tariff</string>
     <string name="tariff_price">%1$d ₴</string>
     <string name="your_internet">Your internet</string>
@@ -24,7 +26,7 @@
     <string name="error_invalid_credentials">Invalid username or password. Please try again.</string>
     <string name="error_no_connection">Couldn\'t reach the server. Check your connection.</string>
     <string name="error_server">Something went wrong. Try again later.</string>
-    <string name="error_parsing">Couldn\'t read your status. The account may still be fine.</string>
+    <string name="error_parsing">We couldn\'t check your status. Your account may still be fine.</string>
 
     <!-- Relative dates -->
     <string name="today">today</string>

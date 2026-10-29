@@ -44,16 +44,26 @@ class HomeViewModel(
         val status = when (state) {
             AccountStatus.State.ALL_GOOD -> R.string.status_all_good
             AccountStatus.State.PAYMENT_DUE -> R.string.status_payment_due
+            AccountStatus.State.UNKNOWN -> R.string.status_unknown
         }
 
         val message = when (state) {
             AccountStatus.State.ALL_GOOD -> R.string.status_all_good_message
             AccountStatus.State.PAYMENT_DUE -> R.string.status_payment_due_message
+            AccountStatus.State.UNKNOWN -> R.string.status_unknown_message
+        }
+
+        val nextChargeLabel = when (state) {
+            AccountStatus.State.ALL_GOOD -> R.string.next_charge
+            AccountStatus.State.PAYMENT_DUE -> R.string.due
+            AccountStatus.State.UNKNOWN -> R.string.next_charge
         }
 
         return HomeUiState(
+            accountState = state,
             status = status,
             message = message,
+            nextChargeLabel = nextChargeLabel,
             nextChargeDate = profile.nextPaymentDate,
             daysUntilPayment = daysLeft,
             tariffName = profile.tariffPlan.name,

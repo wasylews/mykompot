@@ -30,6 +30,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -45,7 +47,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.wasylews.mykompot.R
-import com.wasylews.mykompot.ui.theme.LocalStatusColors
+import com.wasylews.mykompot.domain.model.AccountStatus
+import com.wasylews.mykompot.ui.theme.LocalStatusPalettes
 import com.wasylews.mykompot.ui.theme.Spacing
 import java.time.LocalDate
 
@@ -53,8 +56,14 @@ import java.time.LocalDate
 fun StatusCard(
     state: HomeUiState,
     modifier: Modifier = Modifier,
+    onPayClick: () -> Unit = {},
 ) {
-    val statusColors = LocalStatusColors.current
+    val palettes = LocalStatusPalettes.current
+    val statusColors = when (state.accountState) {
+        AccountStatus.State.ALL_GOOD -> palettes.allGood
+        AccountStatus.State.PAYMENT_DUE -> palettes.paymentDue
+        AccountStatus.State.UNKNOWN -> palettes.unknown
+    }
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -69,6 +78,23 @@ fun StatusCard(
             StatusChip(status = state.status, onColor = statusColors.on)
             StatusWordAndMessage(state = state, onColor = statusColors.on)
             NextChargeBlock(state = state, onColor = statusColors.on)
+            if (state.accountState == AccountStatus.State.PAYMENT_DUE) {
+                Button(
+                    onClick = onPayClick,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(999.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = statusColors.on,
+                        contentColor = statusColors.container,
+                    ),
+                ) {
+                    Text(
+                        text = stringResource(R.string.pay_now),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            }
         }
     }
 }
@@ -128,6 +154,8 @@ private fun NextChargeBlock(
     state: HomeUiState,
     onColor: Color,
 ) {
+    val isPaymentDue = state.accountState == AccountStatus.State.PAYMENT_DUE
+
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -135,35 +163,46 @@ private fun NextChargeBlock(
             verticalArrangement = Arrangement.spacedBy(3.dp),
         ) {
             Text(
-                text = stringResource(R.string.next_charge).uppercase(),
+                text = stringResource(state.nextChargeLabel).uppercase(),
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.ExtraBold,
                 letterSpacing = 0.95.sp,
                 color = onColor.copy(alpha = 0.65f),
             )
-            Row(
-                verticalAlignment = Alignment.Bottom,
-                horizontalArrangement = Arrangement.spacedBy(9.dp),
-            ) {
-                state.nextChargeDate?.let { date ->
-                    Text(
-                        text = chargeDateLabel(date),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = onColor,
-                    )
-                    state.daysUntilPayment?.let { days ->
-                        Text(
-                            text = relativeDayLabel(days),
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = onColor.copy(alpha = 0.62f),
-                        )
-                    }
-                }
-            }
+            ChargeValue(state = state, isPaymentDue = isPaymentDue, onColor = onColor)
         }
         // Tariff link
         TariffBlock(onColor, state)
+    }
+}
+
+@Composable
+private fun ChargeValue(
+    state: HomeUiState,
+    isPaymentDue: Boolean,
+    onColor: Color,
+) {
+    Row(
+        verticalAlignment = Alignment.Bottom,
+        horizontalArrangement = Arrangement.spacedBy(9.dp),
+    ) {
+        val date = state.nextChargeDate
+        if (date != null) {
+            Text(
+                text = chargeDateLabel(date),
+                style = MaterialTheme.typography.titleMedium,
+                color = onColor,
+            )
+            val days = state.daysUntilPayment
+            if (!isPaymentDue && days != null) {
+                Text(
+                    text = relativeDayLabel(days),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = onColor.copy(alpha = 0.62f),
+                )
+            }
+        }
     }
 }
 
@@ -222,10 +261,49 @@ fun StatusCardPreview() {
         ) { innerPadding ->
             StatusCard(
                 state = HomeUiState(
+                    accountState = AccountStatus.State.ALL_GOOD,
                     status = R.string.status_all_good,
                     message = R.string.status_all_good_message,
                     nextChargeDate = LocalDate.of(2026, 11, 1),
                     daysUntilPayment = 20,
+                    tariffName = "Standart 100",
+                    tariffPrice = 300,
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(innerPadding),
+            )
+        }
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview(
+    name = "Payment due · Light",
+    showBackground = true,
+    backgroundColor = 0xFFF4F3FB,
+    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_NO,
+)
+@androidx.compose.ui.tooling.preview.Preview(
+    name = "Payment due · Dark",
+    showBackground = true,
+    backgroundColor = 0xFF0E0D13,
+    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES,
+)
+@Composable
+fun StatusCardPaymentDuePreview() {
+    com.wasylews.mykompot.ui.theme.MyKompotTheme {
+        androidx.compose.material3.Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            containerColor = MaterialTheme.colorScheme.surface,
+        ) { innerPadding ->
+            StatusCard(
+                state = HomeUiState(
+                    accountState = AccountStatus.State.PAYMENT_DUE,
+                    status = R.string.status_payment_due,
+                    message = R.string.status_payment_due_message,
+                    nextChargeLabel = R.string.due,
+                    nextChargeDate = LocalDate.of(2026, 11, 1),
+                    daysUntilPayment = 2,
                     tariffName = "Standart 100",
                     tariffPrice = 300,
                 ),

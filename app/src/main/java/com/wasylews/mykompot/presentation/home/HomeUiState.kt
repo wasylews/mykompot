@@ -18,11 +18,14 @@ package com.wasylews.mykompot.presentation.home
 
 import androidx.annotation.StringRes
 import com.wasylews.mykompot.R
+import com.wasylews.mykompot.domain.model.AccountStatus.State
 import java.time.LocalDate
 
 data class HomeUiState(
+    val accountState: State = State.UNKNOWN,
     @StringRes val status: Int = R.string.status_unknown,
     @StringRes val message: Int = R.string.status_unknown_message,
+    @StringRes val nextChargeLabel: Int = R.string.next_charge,
     val nextChargeDate: LocalDate? = null,
     val daysUntilPayment: Long? = null,
     val tariffName: String = "",

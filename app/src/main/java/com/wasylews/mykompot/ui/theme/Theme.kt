@@ -110,9 +110,9 @@ fun MyKompotTheme(
         }
     }
 
-    val statusColors = if (darkTheme) StatusColorsDark else StatusColorsLight
+    val statusPalettes = if (darkTheme) StatusPalettesDark else StatusPalettesLight
 
-    CompositionLocalProvider(LocalStatusColors provides statusColors) {
+    CompositionLocalProvider(LocalStatusPalettes provides statusPalettes) {
         MaterialTheme(
             colorScheme = colorScheme,
             typography = Typography,

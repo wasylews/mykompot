@@ -47,9 +47,34 @@ class HomeViewModelTest : BaseViewModelTest() {
         // THEN
         assertEquals(R.string.status_all_good, state.status)
         assertEquals(R.string.status_all_good_message, state.message)
+        assertEquals(R.string.next_charge, state.nextChargeLabel)
         assertEquals(LocalDate.of(2026, 10, 27), state.nextChargeDate)
         assertEquals(7L, state.daysUntilPayment)
         assertEquals("Standart", state.tariffName)
         assertEquals(300, state.tariffPrice)
+    }
+
+    @Test
+    fun `get payment due state`() = runTest {
+        // GIVEN
+        val status = AccountStatus(
+            AccountStatus.State.PAYMENT_DUE,
+            profile().copy(isActive = false),
+            daysLeft = -2,
+        )
+        val useCase = FakeGetStatusUseCase(status)
+        val vm = HomeViewModel(useCase)
+
+        // WHEN
+        advanceUntilIdle()
+        val state = vm.uiState.value
+
+        // THEN
+        assertEquals(AccountStatus.State.PAYMENT_DUE, state.accountState)
+        assertEquals(R.string.status_payment_due, state.status)
+        assertEquals(R.string.status_payment_due_message, state.message)
+        assertEquals(R.string.due, state.nextChargeLabel)
+        assertEquals(LocalDate.of(2026, 10, 27), state.nextChargeDate)
+        assertEquals(-2L, state.daysUntilPayment)
     }
 }
