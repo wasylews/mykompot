@@ -32,7 +32,7 @@ class DataStoreLocalStorage(
         profileDataStore.updateData { profile.toEntity() }
     }
 
-    override suspend fun loadProfile(): Profile = profileDataStore.data.firstOrNull()?.toDomain() ?: Profile.DEFAULT
+    override suspend fun loadProfile(): Profile? = profileDataStore.data.firstOrNull()?.toDomain()
 }
 
 @Serializable

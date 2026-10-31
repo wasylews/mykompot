@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class DataStoreLocalStorageTest {
@@ -36,6 +37,15 @@ class DataStoreLocalStorageTest {
 
         val savedProfile = store.loadProfile()
         assertEquals(profile, savedProfile)
+    }
+
+    @Test
+    fun `load profile returns null when nothing is stored`() = runTest {
+        val store = DataStoreLocalStorage(FakeDataStore())
+
+        val savedProfile = store.loadProfile()
+
+        assertNull(savedProfile)
     }
 }
 

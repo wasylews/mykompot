@@ -22,7 +22,7 @@ interface LocalStorage {
     suspend fun saveProfile(profile: Profile)
 
     /**
-     * Loads current saved profile or [Profile.DEFAULT] if none exists.
+     * Loads the saved profile, or `null` when nothing usable is cached.
      */
-    suspend fun loadProfile(): Profile
+    suspend fun loadProfile(): Profile?
 }

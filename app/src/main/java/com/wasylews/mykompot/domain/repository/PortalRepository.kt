@@ -25,5 +25,5 @@ interface PortalRepository {
         password: String,
     ): LoginResult
 
-    suspend fun loadProfile(): Profile
+    suspend fun loadProfile(): Profile?
 }

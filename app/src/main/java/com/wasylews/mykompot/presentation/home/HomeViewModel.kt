@@ -35,12 +35,14 @@ class HomeViewModel(
 
     init {
         viewModelScope.launch {
-            val status = getStatusUseCase()
-            _uiState.value = status.toHomeUiState()
+            when (val status = getStatusUseCase()) {
+                is AccountStatus.Known -> _uiState.value = status.toHomeUiState()
+                AccountStatus.NoProfile -> Unit
+            }
         }
     }
 
-    private fun AccountStatus.toHomeUiState(): HomeUiState {
+    private fun AccountStatus.Known.toHomeUiState(): HomeUiState {
         val status = when (state) {
             AccountStatus.State.ALL_GOOD -> R.string.status_all_good
             AccountStatus.State.PAYMENT_DUE -> R.string.status_payment_due

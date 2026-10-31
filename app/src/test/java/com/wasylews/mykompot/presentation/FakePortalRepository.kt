@@ -24,14 +24,14 @@ import java.time.LocalDate
 
 class FakePortalRepository(
     private val result: LoginResult = successLogin(),
-    private val profile: Profile = profile(),
+    private val profile: Profile? = profile(),
 ) : PortalRepository {
     override suspend fun login(
         username: String,
         password: String,
     ): LoginResult = result
 
-    override suspend fun loadProfile(): Profile = profile
+    override suspend fun loadProfile(): Profile? = profile
 }
 
 fun successLogin() = LoginResult.Success

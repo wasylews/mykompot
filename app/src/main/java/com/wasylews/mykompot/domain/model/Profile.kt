@@ -22,12 +22,4 @@ data class Profile(
     val isActive: Boolean,
     val nextPaymentDate: LocalDate,
     val tariffPlan: TariffPlan,
-) {
-    companion object {
-        val DEFAULT = Profile(
-            isActive = false,
-            nextPaymentDate = LocalDate.now(),
-            tariffPlan = TariffPlan("", 0, 0),
-        )
-    }
-}
+)

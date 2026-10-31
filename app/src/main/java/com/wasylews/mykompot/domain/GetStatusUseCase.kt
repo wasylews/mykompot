@@ -34,14 +34,14 @@ class GetStatusUseCase(
     private val clock: Clock,
 ) : GetStatus {
     override suspend operator fun invoke(): AccountStatus {
-        val profile = repository.loadProfile()
+        val profile = repository.loadProfile() ?: return AccountStatus.NoProfile
         val daysLeft = ChronoUnit.DAYS.between(clock.today(), profile.nextPaymentDate)
         val state = when {
             !profile.isActive -> AccountStatus.State.PAYMENT_DUE
             daysLeft <= PAYMENT_DUE_WINDOW_DAYS -> AccountStatus.State.PAYMENT_DUE
             else -> AccountStatus.State.ALL_GOOD
         }
-        return AccountStatus(state, profile, daysLeft)
+        return AccountStatus.Known(state, profile, daysLeft)
     }
 
     private fun Clock.today(): LocalDate = java.time.Instant

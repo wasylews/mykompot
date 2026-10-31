@@ -35,10 +35,11 @@ class GetStatusUseCaseTest {
         )
 
         // WHEN
-        val accountStatus = useCase()
+        val result = useCase()
 
         // THEN
-        assertEquals(AccountStatus.State.ALL_GOOD, accountStatus.state)
+        val status = result as AccountStatus.Known
+        assertEquals(AccountStatus.State.ALL_GOOD, status.state)
     }
 
     @Test
@@ -51,10 +52,48 @@ class GetStatusUseCaseTest {
         )
 
         // WHEN
-        val accountStatus = useCase()
+        val result = useCase()
 
         // THEN
-        assertEquals(AccountStatus.State.PAYMENT_DUE, accountStatus.state)
-        assertEquals(-2, accountStatus.daysLeft)
+        val status = result as AccountStatus.Known
+        assertEquals(AccountStatus.State.PAYMENT_DUE, status.state)
+        assertEquals(-2, status.daysLeft)
+    }
+
+    @Test
+    fun `inactive profile is payment due regardless of date`() = runTest {
+        // GIVEN
+        val clock = MutableClock(LocalDate.of(2026, 10, 20))
+        val useCase = GetStatusUseCase(
+            repository = FakePortalRepository(
+                profile = profile().copy(
+                    isActive = false,
+                    nextPaymentDate = LocalDate.of(2027, 12, 31),
+                ),
+            ),
+            clock = clock,
+        )
+
+        // WHEN
+        val result = useCase()
+
+        // THEN
+        val status = result as AccountStatus.Known
+        assertEquals(AccountStatus.State.PAYMENT_DUE, status.state)
+    }
+
+    @Test
+    fun `no cached profile`() = runTest {
+        // GIVEN
+        val useCase = GetStatusUseCase(
+            repository = FakePortalRepository(profile = null),
+            clock = MutableClock(LocalDate.of(2026, 10, 20)),
+        )
+
+        // WHEN
+        val result = useCase()
+
+        // THEN
+        assertEquals(AccountStatus.NoProfile, result)
     }
 }

@@ -32,7 +32,7 @@ class HomeViewModelTest : BaseViewModelTest() {
     @Test
     fun `get current state`() = runTest {
         // GIVEN
-        val status = AccountStatus(
+        val status = AccountStatus.Known(
             AccountStatus.State.ALL_GOOD,
             profile(),
             daysLeft = 7,
@@ -57,7 +57,7 @@ class HomeViewModelTest : BaseViewModelTest() {
     @Test
     fun `get payment due state`() = runTest {
         // GIVEN
-        val status = AccountStatus(
+        val status = AccountStatus.Known(
             AccountStatus.State.PAYMENT_DUE,
             profile().copy(isActive = false),
             daysLeft = -2,

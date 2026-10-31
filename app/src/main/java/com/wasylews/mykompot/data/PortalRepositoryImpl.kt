@@ -75,7 +75,7 @@ class PortalRepositoryImpl(
         )
     }
 
-    override suspend fun loadProfile(): Profile = localStorage.loadProfile()
+    override suspend fun loadProfile(): Profile? = localStorage.loadProfile()
 
     private companion object {
         const val STATUS_ACTIVE = "Enable"

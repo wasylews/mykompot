@@ -78,7 +78,7 @@ class PortalRepositoryImplTest {
         val repo = createPortalRepository(testScheduler)
         repo.login("user", "pass")
 
-        val profile = repo.loadProfile()
+        val profile = requireNotNull(repo.loadProfile())
         assertTrue(profile.isActive)
         assertEquals("300GRN_100mb", profile.tariffPlan.name)
     }
@@ -120,5 +120,5 @@ private class FakeLocalStorage : LocalStorage {
         savedProfile = profile
     }
 
-    override suspend fun loadProfile(): Profile = savedProfile ?: Profile.DEFAULT
+    override suspend fun loadProfile(): Profile? = savedProfile
 }
