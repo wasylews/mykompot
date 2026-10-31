@@ -16,7 +16,6 @@
 
 package com.wasylews.mykompot.presentation.home
 
-import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,12 +27,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import com.wasylews.mykompot.R
-import com.wasylews.mykompot.domain.model.AccountStatus
 import com.wasylews.mykompot.ui.theme.MyKompotTheme
 import com.wasylews.mykompot.ui.theme.Spacing
-import java.time.LocalDate
 
 @Composable
 fun HomeScreen(
@@ -56,37 +53,18 @@ fun HomeScreen(
     }
 }
 
-@Preview(
-    name = "Light",
-    showBackground = true,
-    backgroundColor = 0xFFF4F3FB,
-    uiMode = Configuration.UI_MODE_NIGHT_NO,
-)
-@Preview(
-    name = "Dark",
-    showBackground = true,
-    backgroundColor = 0xFF0E0D13,
-    uiMode = Configuration.UI_MODE_NIGHT_YES,
-)
+@PreviewLightDark
 @Composable
-fun HomeScreenPreview() {
-    val state = HomeUiState(
-        accountState = AccountStatus.State.ALL_GOOD,
-        status = R.string.status_all_good,
-        message = R.string.status_all_good_message,
-        nextChargeDate = LocalDate.of(2026, 11, 1),
-        daysUntilPayment = 20,
-        tariffName = "Standart 100",
-        tariffPrice = 300,
-    )
-
+fun HomeScreenPreview(
+    @PreviewParameter(HomeUiStatePreviewParameterProvider::class) state: HomeUiState,
+) {
     MyKompotTheme {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             containerColor = MaterialTheme.colorScheme.surface,
         ) { innerPadding ->
             HomeScreen(
-                state,
+                state = state,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),

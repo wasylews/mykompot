@@ -44,13 +44,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.model.AccountStatus
 import com.wasylews.mykompot.ui.theme.LocalStatusPalettes
 import com.wasylews.mykompot.ui.theme.Spacing
-import java.time.LocalDate
 
 @Composable
 fun StatusCard(
@@ -239,73 +239,18 @@ private fun TariffBlock(
     }
 }
 
-@androidx.compose.ui.tooling.preview.Preview(
-    name = "Light",
-    showBackground = true,
-    backgroundColor = 0xFFF4F3FB,
-    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_NO,
-)
-@androidx.compose.ui.tooling.preview.Preview(
-    name = "Dark",
-    showBackground = true,
-    backgroundColor = 0xFF0E0D13,
-    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES,
-)
+@PreviewLightDark
 @Composable
-fun StatusCardPreview() {
+fun StatusCardPreview(
+    @PreviewParameter(HomeUiStatePreviewParameterProvider::class) state: HomeUiState,
+) {
     com.wasylews.mykompot.ui.theme.MyKompotTheme {
         androidx.compose.material3.Scaffold(
             modifier = Modifier.fillMaxSize(),
             containerColor = MaterialTheme.colorScheme.surface,
         ) { innerPadding ->
             StatusCard(
-                state = HomeUiState(
-                    accountState = AccountStatus.State.ALL_GOOD,
-                    status = R.string.status_all_good,
-                    message = R.string.status_all_good_message,
-                    nextChargeDate = LocalDate.of(2026, 11, 1),
-                    daysUntilPayment = 20,
-                    tariffName = "Standart 100",
-                    tariffPrice = 300,
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(innerPadding),
-            )
-        }
-    }
-}
-
-@androidx.compose.ui.tooling.preview.Preview(
-    name = "Payment due · Light",
-    showBackground = true,
-    backgroundColor = 0xFFF4F3FB,
-    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_NO,
-)
-@androidx.compose.ui.tooling.preview.Preview(
-    name = "Payment due · Dark",
-    showBackground = true,
-    backgroundColor = 0xFF0E0D13,
-    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES,
-)
-@Composable
-fun StatusCardPaymentDuePreview() {
-    com.wasylews.mykompot.ui.theme.MyKompotTheme {
-        androidx.compose.material3.Scaffold(
-            modifier = Modifier.fillMaxSize(),
-            containerColor = MaterialTheme.colorScheme.surface,
-        ) { innerPadding ->
-            StatusCard(
-                state = HomeUiState(
-                    accountState = AccountStatus.State.PAYMENT_DUE,
-                    status = R.string.status_payment_due,
-                    message = R.string.status_payment_due_message,
-                    nextChargeLabel = R.string.due,
-                    nextChargeDate = LocalDate.of(2026, 11, 1),
-                    daysUntilPayment = 2,
-                    tariffName = "Standart 100",
-                    tariffPrice = 300,
-                ),
+                state = state,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(innerPadding),
