@@ -21,24 +21,34 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.model.AccountStatus
+import com.wasylews.mykompot.domain.model.Profile
+import com.wasylews.mykompot.domain.model.TariffPlan
 import java.time.LocalDate
 
-internal val previewAllGoodState = HomeUiState(
-    accountState = AccountStatus.State.ALL_GOOD,
+internal val previewAllGoodState = HomeUiState.Content(
+    account = AccountStatus.Known(
+        AccountStatus.State.ALL_GOOD,
+        Profile(
+            isActive = true,
+            nextPaymentDate = LocalDate.of(2026, 11, 1),
+            tariffPlan = TariffPlan(name = "Standart 100", speed = 100, price = 300),
+        ),
+        daysLeft = 20,
+    ),
     status = R.string.status_all_good,
     message = R.string.status_all_good_message,
-    nextChargeDate = LocalDate.of(2026, 11, 1),
-    daysUntilPayment = 20,
-    tariffName = "Standart 100",
-    tariffPrice = 300,
+    nextChargeLabel = R.string.next_charge,
 )
 
 internal fun previewPaymentDueState() = previewAllGoodState.copy(
-    accountState = AccountStatus.State.PAYMENT_DUE,
+    account = AccountStatus.Known(
+        AccountStatus.State.PAYMENT_DUE,
+        previewAllGoodState.account.profile,
+        daysLeft = 2,
+    ),
     status = R.string.status_payment_due,
     message = R.string.status_payment_due_message,
     nextChargeLabel = R.string.due,
-    daysUntilPayment = 2,
 )
 
 /** Renders one preview per [HomeUiState] variant. */
@@ -47,10 +57,18 @@ class HomeUiStatePreviewParameterProvider : PreviewParameterProvider<HomeUiState
 
     override val values = states.asSequence()
 
-    override fun getDisplayName(index: Int): String = when (states[index].accountState) {
-        AccountStatus.State.ALL_GOOD -> "All good"
-        AccountStatus.State.PAYMENT_DUE -> "Payment due"
-        AccountStatus.State.UNKNOWN -> "Unknown"
+    override fun getDisplayName(index: Int): String = when (val state = states[index]) {
+        is HomeUiState.Content -> when (state.account.state) {
+            AccountStatus.State.ALL_GOOD -> "All good"
+            AccountStatus.State.PAYMENT_DUE -> "Payment due"
+            AccountStatus.State.UNKNOWN -> "Unknown"
+        }
+
+        HomeUiState.Loading -> "Loading"
+
+        HomeUiState.NoAccount -> "No account"
+
+        HomeUiState.Error -> "Error"
     }
 }
 

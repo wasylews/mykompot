@@ -17,17 +17,19 @@
 package com.wasylews.mykompot.presentation.home
 
 import androidx.annotation.StringRes
-import com.wasylews.mykompot.R
-import com.wasylews.mykompot.domain.model.AccountStatus.State
-import java.time.LocalDate
+import com.wasylews.mykompot.domain.model.AccountStatus
 
-data class HomeUiState(
-    val accountState: State = State.UNKNOWN,
-    @StringRes val status: Int = R.string.status_unknown,
-    @StringRes val message: Int = R.string.status_unknown_message,
-    @StringRes val nextChargeLabel: Int = R.string.next_charge,
-    val nextChargeDate: LocalDate? = null,
-    val daysUntilPayment: Long? = null,
-    val tariffName: String = "",
-    val tariffPrice: Int = 0,
-)
+sealed interface HomeUiState {
+    data object Loading : HomeUiState
+
+    data class Content(
+        val account: AccountStatus.Known,
+        @StringRes val status: Int,
+        @StringRes val message: Int,
+        @StringRes val nextChargeLabel: Int,
+    ) : HomeUiState
+
+    data object NoAccount : HomeUiState
+
+    data object Error : HomeUiState
+}

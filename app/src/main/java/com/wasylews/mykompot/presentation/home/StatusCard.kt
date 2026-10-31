@@ -51,6 +51,8 @@ import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.model.AccountStatus
 import com.wasylews.mykompot.ui.theme.LocalStatusPalettes
 import com.wasylews.mykompot.ui.theme.Spacing
+import com.wasylews.mykompot.ui.theme.StatusColors
+import com.wasylews.mykompot.ui.theme.StatusPalettes
 
 @Composable
 fun StatusCard(
@@ -58,12 +60,29 @@ fun StatusCard(
     modifier: Modifier = Modifier,
     onPayClick: () -> Unit = {},
 ) {
-    val palettes = LocalStatusPalettes.current
-    val statusColors = when (state.accountState) {
-        AccountStatus.State.ALL_GOOD -> palettes.allGood
-        AccountStatus.State.PAYMENT_DUE -> palettes.paymentDue
-        AccountStatus.State.UNKNOWN -> palettes.unknown
+    when (state) {
+        is HomeUiState.Content -> ContentCard(
+            state = state,
+            modifier = modifier,
+            onPayClick = onPayClick,
+        )
+
+        HomeUiState.NoAccount, HomeUiState.Error -> UnknownCard(
+            modifier = modifier,
+        )
+
+        HomeUiState.Loading -> Unit
     }
+}
+
+@Composable
+private fun ContentCard(
+    state: HomeUiState.Content,
+    modifier: Modifier,
+    onPayClick: () -> Unit,
+) {
+    val palettes = LocalStatusPalettes.current
+    val statusColors = statusColorsFor(state.account.state, palettes)
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -76,9 +95,13 @@ fun StatusCard(
             verticalArrangement = Arrangement.spacedBy(Spacing.md),
         ) {
             StatusChip(status = state.status, onColor = statusColors.on)
-            StatusWordAndMessage(state = state, onColor = statusColors.on)
+            StatusWordAndMessage(
+                status = state.status,
+                message = state.message,
+                onColor = statusColors.on,
+            )
             NextChargeBlock(state = state, onColor = statusColors.on)
-            if (state.accountState == AccountStatus.State.PAYMENT_DUE) {
+            if (state.account.state == AccountStatus.State.PAYMENT_DUE) {
                 Button(
                     onClick = onPayClick,
                     modifier = Modifier.fillMaxWidth(),
@@ -97,6 +120,40 @@ fun StatusCard(
             }
         }
     }
+}
+
+@Composable
+private fun UnknownCard(modifier: Modifier) {
+    val palettes = LocalStatusPalettes.current
+    val onColor = palettes.unknown.on
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(26.dp),
+        colors = CardDefaults.cardColors(containerColor = palettes.unknown.container),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+    ) {
+        Column(
+            modifier = Modifier.padding(22.dp),
+            verticalArrangement = Arrangement.spacedBy(Spacing.md),
+        ) {
+            StatusChip(status = R.string.status_unknown, onColor = onColor)
+            StatusWordAndMessage(
+                status = R.string.status_unknown,
+                message = R.string.status_unknown_message,
+                onColor = onColor,
+            )
+        }
+    }
+}
+
+private fun statusColorsFor(
+    state: AccountStatus.State,
+    palettes: StatusPalettes,
+): StatusColors = when (state) {
+    AccountStatus.State.ALL_GOOD -> palettes.allGood
+    AccountStatus.State.PAYMENT_DUE -> palettes.paymentDue
+    AccountStatus.State.UNKNOWN -> palettes.unknown
 }
 
 @Composable
@@ -130,19 +187,20 @@ private fun StatusChip(
 
 @Composable
 private fun StatusWordAndMessage(
-    state: HomeUiState,
+    @StringRes status: Int,
+    @StringRes message: Int,
     onColor: Color,
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(
-            text = stringResource(state.status),
+            text = stringResource(status),
             style = MaterialTheme.typography.displaySmall,
             color = onColor,
         )
         Text(
-            text = stringResource(state.message),
+            text = stringResource(message),
             style = MaterialTheme.typography.bodyMedium,
             color = onColor.copy(alpha = 0.88f),
         )
@@ -151,7 +209,7 @@ private fun StatusWordAndMessage(
 
 @Composable
 private fun NextChargeBlock(
-    state: HomeUiState,
+    state: HomeUiState.Content,
     onColor: Color,
 ) {
     Column(
@@ -176,31 +234,29 @@ private fun NextChargeBlock(
 
 @Composable
 private fun ChargeValue(
-    state: HomeUiState,
+    state: HomeUiState.Content,
     onColor: Color,
 ) {
-    val isPaymentDue = state.accountState == AccountStatus.State.PAYMENT_DUE
+    val isPaymentDue = state.account.state == AccountStatus.State.PAYMENT_DUE
 
     Row(
         verticalAlignment = Alignment.Bottom,
         horizontalArrangement = Arrangement.spacedBy(9.dp),
     ) {
-        val date = state.nextChargeDate
-        if (date != null) {
+        val date = state.account.profile.nextPaymentDate
+        Text(
+            text = chargeDateLabel(date),
+            style = MaterialTheme.typography.titleMedium,
+            color = onColor,
+        )
+        val days = state.account.daysLeft
+        if (!isPaymentDue) {
             Text(
-                text = chargeDateLabel(date),
-                style = MaterialTheme.typography.titleMedium,
-                color = onColor,
+                text = relativeDayLabel(days),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = onColor.copy(alpha = 0.62f),
             )
-            val days = state.daysUntilPayment
-            if (!isPaymentDue && days != null) {
-                Text(
-                    text = relativeDayLabel(days),
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = onColor.copy(alpha = 0.62f),
-                )
-            }
         }
     }
 }
@@ -208,7 +264,7 @@ private fun ChargeValue(
 @Composable
 private fun TariffBlock(
     onColor: Color,
-    state: HomeUiState,
+    state: HomeUiState.Content,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -220,13 +276,13 @@ private fun TariffBlock(
             color = onColor.copy(alpha = 0.68f),
         )
         Text(
-            text = state.tariffName,
+            text = state.account.profile.tariffPlan.name,
             style = MaterialTheme.typography.bodySmall,
             fontWeight = FontWeight.Bold,
             color = onColor,
         )
         Text(
-            text = stringResource(R.string.tariff_price, state.tariffPrice),
+            text = stringResource(R.string.tariff_price, state.account.profile.tariffPlan.price),
             style = MaterialTheme.typography.bodySmall,
             color = onColor.copy(alpha = 0.68f),
         )

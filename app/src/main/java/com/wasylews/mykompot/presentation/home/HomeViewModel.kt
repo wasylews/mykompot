@@ -16,6 +16,7 @@
 
 package com.wasylews.mykompot.presentation.home
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wasylews.mykompot.R
@@ -30,46 +31,60 @@ import org.koin.core.annotation.KoinViewModel
 class HomeViewModel(
     private val getStatusUseCase: GetStatus,
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(HomeUiState())
+    private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
     val uiState: StateFlow<HomeUiState> = _uiState
 
     init {
         viewModelScope.launch {
-            when (val status = getStatusUseCase()) {
-                is AccountStatus.Known -> _uiState.value = status.toHomeUiState()
-                AccountStatus.NoProfile -> Unit
-            }
+            _uiState.value = loadState()
         }
     }
 
-    private fun AccountStatus.Known.toHomeUiState(): HomeUiState {
-        val status = when (state) {
-            AccountStatus.State.ALL_GOOD -> R.string.status_all_good
-            AccountStatus.State.PAYMENT_DUE -> R.string.status_payment_due
-            AccountStatus.State.UNKNOWN -> R.string.status_unknown
+    private suspend fun loadState(): HomeUiState = runCatching {
+        getStatusUseCase().toHomeUiState()
+    }.getOrElse {
+        HomeUiState.Error
+    }
+
+    private fun AccountStatus.toHomeUiState(): HomeUiState = when (this) {
+        is AccountStatus.Known -> {
+            val copy = state.toStatusCopy()
+            HomeUiState.Content(
+                account = this,
+                status = copy.status,
+                message = copy.message,
+                nextChargeLabel = copy.nextChargeLabel,
+            )
         }
 
-        val message = when (state) {
-            AccountStatus.State.ALL_GOOD -> R.string.status_all_good_message
-            AccountStatus.State.PAYMENT_DUE -> R.string.status_payment_due_message
-            AccountStatus.State.UNKNOWN -> R.string.status_unknown_message
+        AccountStatus.NoProfile -> {
+            HomeUiState.NoAccount
         }
+    }
 
-        val nextChargeLabel = when (state) {
-            AccountStatus.State.ALL_GOOD -> R.string.next_charge
-            AccountStatus.State.PAYMENT_DUE -> R.string.due
-            AccountStatus.State.UNKNOWN -> R.string.next_charge
-        }
+    private fun AccountStatus.State.toStatusCopy(): StatusCopy = when (this) {
+        AccountStatus.State.ALL_GOOD -> StatusCopy(
+            status = R.string.status_all_good,
+            message = R.string.status_all_good_message,
+            nextChargeLabel = R.string.next_charge,
+        )
 
-        return HomeUiState(
-            accountState = state,
-            status = status,
-            message = message,
-            nextChargeLabel = nextChargeLabel,
-            nextChargeDate = profile.nextPaymentDate,
-            daysUntilPayment = daysLeft,
-            tariffName = profile.tariffPlan.name,
-            tariffPrice = profile.tariffPlan.price,
+        AccountStatus.State.PAYMENT_DUE -> StatusCopy(
+            status = R.string.status_payment_due,
+            message = R.string.status_payment_due_message,
+            nextChargeLabel = R.string.due,
+        )
+
+        AccountStatus.State.UNKNOWN -> StatusCopy(
+            status = R.string.status_unknown,
+            message = R.string.status_unknown_message,
+            nextChargeLabel = R.string.next_charge,
         )
     }
 }
+
+private data class StatusCopy(
+    @StringRes val status: Int,
+    @StringRes val message: Int,
+    @StringRes val nextChargeLabel: Int,
+)

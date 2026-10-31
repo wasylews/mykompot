@@ -20,7 +20,8 @@ import com.wasylews.mykompot.domain.GetStatus
 import com.wasylews.mykompot.domain.model.AccountStatus
 
 class FakeGetStatusUseCase(
-    private val status: AccountStatus,
+    private val status: AccountStatus = AccountStatus.NoProfile,
+    private val error: Throwable? = null,
 ) : GetStatus {
-    override suspend fun invoke(): AccountStatus = status
+    override suspend fun invoke(): AccountStatus = error?.let { throw it } ?: status
 }

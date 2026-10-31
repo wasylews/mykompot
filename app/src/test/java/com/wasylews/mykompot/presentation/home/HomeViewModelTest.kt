@@ -23,58 +23,101 @@ import com.wasylews.mykompot.presentation.profile
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import okio.IOException
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import java.time.LocalDate
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest : BaseViewModelTest() {
+    private val allGoodStatus = AccountStatus.Known(
+        AccountStatus.State.ALL_GOOD,
+        profile(),
+        daysLeft = 7,
+    )
+
+    private val paymentDueStatus = AccountStatus.Known(
+        AccountStatus.State.PAYMENT_DUE,
+        profile().copy(isActive = false),
+        daysLeft = -2,
+    )
+
+    @Test
+    fun `initial state is loading`() = runTest {
+        // GIVEN
+        val vm = HomeViewModel(FakeGetStatusUseCase(allGoodStatus))
+
+        // WHEN
+        val state = vm.uiState.value
+
+        // THEN
+        assertEquals(HomeUiState.Loading, state)
+    }
+
     @Test
     fun `get current state`() = runTest {
         // GIVEN
-        val status = AccountStatus.Known(
-            AccountStatus.State.ALL_GOOD,
-            profile(),
-            daysLeft = 7,
-        )
-        val useCase = FakeGetStatusUseCase(status)
-        val vm = HomeViewModel(useCase)
+        val vm = HomeViewModel(FakeGetStatusUseCase(allGoodStatus))
 
         // WHEN
         advanceUntilIdle()
         val state = vm.uiState.value
 
         // THEN
-        assertEquals(R.string.status_all_good, state.status)
-        assertEquals(R.string.status_all_good_message, state.message)
-        assertEquals(R.string.next_charge, state.nextChargeLabel)
-        assertEquals(LocalDate.of(2026, 10, 27), state.nextChargeDate)
-        assertEquals(7L, state.daysUntilPayment)
-        assertEquals("Standart", state.tariffName)
-        assertEquals(300, state.tariffPrice)
+        assertEquals(
+            HomeUiState.Content(
+                account = allGoodStatus,
+                status = R.string.status_all_good,
+                message = R.string.status_all_good_message,
+                nextChargeLabel = R.string.next_charge,
+            ),
+            state,
+        )
     }
 
     @Test
     fun `get payment due state`() = runTest {
         // GIVEN
-        val status = AccountStatus.Known(
-            AccountStatus.State.PAYMENT_DUE,
-            profile().copy(isActive = false),
-            daysLeft = -2,
-        )
-        val useCase = FakeGetStatusUseCase(status)
-        val vm = HomeViewModel(useCase)
+        val vm = HomeViewModel(FakeGetStatusUseCase(paymentDueStatus))
 
         // WHEN
         advanceUntilIdle()
         val state = vm.uiState.value
 
         // THEN
-        assertEquals(AccountStatus.State.PAYMENT_DUE, state.accountState)
-        assertEquals(R.string.status_payment_due, state.status)
-        assertEquals(R.string.status_payment_due_message, state.message)
-        assertEquals(R.string.due, state.nextChargeLabel)
-        assertEquals(LocalDate.of(2026, 10, 27), state.nextChargeDate)
-        assertEquals(-2L, state.daysUntilPayment)
+        assertEquals(
+            HomeUiState.Content(
+                account = paymentDueStatus,
+                status = R.string.status_payment_due,
+                message = R.string.status_payment_due_message,
+                nextChargeLabel = R.string.due,
+            ),
+            state,
+        )
+    }
+
+    @Test
+    fun `no cached profile maps to no account`() = runTest {
+        // GIVEN
+        val vm = HomeViewModel(FakeGetStatusUseCase(AccountStatus.NoProfile))
+
+        // WHEN
+        advanceUntilIdle()
+        val state = vm.uiState.value
+
+        // THEN
+        assertEquals(HomeUiState.NoAccount, state)
+    }
+
+    @Test
+    fun `profile load error maps to error`() = runTest {
+        // GIVEN
+        val vm = HomeViewModel(FakeGetStatusUseCase(error = IOException()))
+
+        // WHEN
+        advanceUntilIdle()
+        val state = vm.uiState.value
+
+        // THEN
+        assertEquals(HomeUiState.Error, state)
     }
 }
