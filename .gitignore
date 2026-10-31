@@ -4,8 +4,9 @@
 *.orig
 resources/
 
-# Wayfinder research notes — kept local, never committed
-docs/research/
+# Planning notes and throwaway prototypes — kept local, the code is the source of truth
+docs/
+prototype/
 
 # Android / Gradle
 .gradle/
