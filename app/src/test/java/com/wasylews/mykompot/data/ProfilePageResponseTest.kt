@@ -16,6 +16,7 @@
 
 package com.wasylews.mykompot.data
 
+import com.wasylews.mykompot.HtmlFixtures
 import dev.burnoo.kspoon.Kspoon
 import org.junit.Assert.assertEquals
 import org.junit.Test
