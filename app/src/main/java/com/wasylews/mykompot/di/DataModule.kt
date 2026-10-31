@@ -19,6 +19,7 @@ package com.wasylews.mykompot.di
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
+import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.dataStoreFile
 import com.wasylews.mykompot.BuildConfig
 import com.wasylews.mykompot.data.PortalApi
@@ -57,6 +58,7 @@ class DataModule {
     @Singleton
     fun provideProfileDataStore(context: Context): DataStore<ProfileEntity?> = DataStoreFactory.create(
         serializer = ProfileEntitySerializer,
+        corruptionHandler = ReplaceFileCorruptionHandler<ProfileEntity?> { null },
         produceFile = { context.dataStoreFile("profile.json") },
     )
 }
