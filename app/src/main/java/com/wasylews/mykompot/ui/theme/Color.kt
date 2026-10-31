@@ -91,43 +91,36 @@ val InversePrimaryDark = Color(0xFF6650E5)
 data class StatusColors(
     val container: Color,
     val on: Color,
-    val accent: Color,
 )
 
 val StatusColorsAllGoodLight = StatusColors(
     container = Color(0xFFD7F3DD),
     on = Color(0xFF0E5A2A),
-    accent = Color(0xFF2FB257),
 )
 
 val StatusColorsAllGoodDark = StatusColors(
     container = Color(0xFF103520),
     on = Color(0xFFB9F7CA),
-    accent = Color(0xFF51D97C),
 )
 
 val StatusColorsPaymentDueLight = StatusColors(
     container = Color(0xFFFFE8C9),
     on = Color(0xFF7A4A00),
-    accent = Color(0xFFF79B1B),
 )
 
 val StatusColorsPaymentDueDark = StatusColors(
     container = Color(0xFF3A2A06),
     on = Color(0xFFFFD896),
-    accent = Color(0xFFF7A712),
 )
 
 val StatusColorsUnknownLight = StatusColors(
     container = Color(0xFFE9E6F5),
     on = Color(0xFF4A4458),
-    accent = Color(0xFF8E879F),
 )
 
 val StatusColorsUnknownDark = StatusColors(
     container = Color(0xFF2B2740),
     on = Color(0xFFCEC5E8),
-    accent = Color(0xFF9C93BA),
 )
 
 data class StatusPalettes(

@@ -78,7 +78,6 @@ fun LoginScreen(
             OutlinedTextField(
                 state = uiState.usernameState,
                 label = { Text(stringResource(R.string.username)) },
-                isError = false,
                 modifier = Modifier.fillMaxWidth(),
             )
             Spacer(modifier = Modifier.height(Spacing.md))

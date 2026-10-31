@@ -1,6 +1,6 @@
 <resources>
     <!-- App -->
-    <string name="app_name">My Kompot</string>
+    <string name="app_name">MyKompot</string>
 
     <!-- Login -->
     <string name="log_in">Log in</string>

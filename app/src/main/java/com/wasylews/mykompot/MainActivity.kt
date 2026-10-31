@@ -55,7 +55,7 @@ class MainActivity : ComponentActivity() {
                         val homeUiState by homeViewModel.uiState.collectAsState()
 
                         HomeScreen(
-                            homeUiState,
+                            state = homeUiState,
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(innerPadding),

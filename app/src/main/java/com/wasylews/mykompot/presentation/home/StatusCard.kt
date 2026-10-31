@@ -154,8 +154,6 @@ private fun NextChargeBlock(
     state: HomeUiState,
     onColor: Color,
 ) {
-    val isPaymentDue = state.accountState == AccountStatus.State.PAYMENT_DUE
-
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -169,7 +167,7 @@ private fun NextChargeBlock(
                 letterSpacing = 0.95.sp,
                 color = onColor.copy(alpha = 0.65f),
             )
-            ChargeValue(state = state, isPaymentDue = isPaymentDue, onColor = onColor)
+            ChargeValue(state = state, onColor = onColor)
         }
         // Tariff link
         TariffBlock(onColor, state)
@@ -179,9 +177,10 @@ private fun NextChargeBlock(
 @Composable
 private fun ChargeValue(
     state: HomeUiState,
-    isPaymentDue: Boolean,
     onColor: Color,
 ) {
+    val isPaymentDue = state.accountState == AccountStatus.State.PAYMENT_DUE
+
     Row(
         verticalAlignment = Alignment.Bottom,
         horizontalArrangement = Arrangement.spacedBy(9.dp),
