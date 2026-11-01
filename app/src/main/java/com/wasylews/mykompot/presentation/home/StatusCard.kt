@@ -67,7 +67,7 @@ fun StatusCard(
             onPayClick = onPayClick,
         )
 
-        HomeUiState.NoAccount, HomeUiState.Error -> UnknownCard(
+        HomeUiState.NoAccount, HomeUiState.Error -> UnavailableCard(
             modifier = modifier,
         )
 
@@ -123,24 +123,24 @@ private fun ContentCard(
 }
 
 @Composable
-private fun UnknownCard(modifier: Modifier) {
+private fun UnavailableCard(modifier: Modifier) {
     val palettes = LocalStatusPalettes.current
-    val onColor = palettes.unknown.on
+    val onColor = palettes.unavailable.on
 
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(26.dp),
-        colors = CardDefaults.cardColors(containerColor = palettes.unknown.container),
+        colors = CardDefaults.cardColors(containerColor = palettes.unavailable.container),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
     ) {
         Column(
             modifier = Modifier.padding(22.dp),
             verticalArrangement = Arrangement.spacedBy(Spacing.md),
         ) {
-            StatusChip(status = R.string.status_unknown, onColor = onColor)
+            StatusChip(status = R.string.status_unavailable, onColor = onColor)
             StatusWordAndMessage(
-                status = R.string.status_unknown,
-                message = R.string.status_unknown_message,
+                status = R.string.status_unavailable,
+                message = R.string.status_unavailable_message,
                 onColor = onColor,
             )
         }
@@ -153,7 +153,6 @@ private fun statusColorsFor(
 ): StatusColors = when (state) {
     AccountStatus.State.ALL_GOOD -> palettes.allGood
     AccountStatus.State.PAYMENT_DUE -> palettes.paymentDue
-    AccountStatus.State.UNKNOWN -> palettes.unknown
 }
 
 @Composable

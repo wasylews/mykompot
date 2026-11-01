@@ -20,6 +20,7 @@ import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.model.AccountStatus
 import com.wasylews.mykompot.presentation.BaseViewModelTest
 import com.wasylews.mykompot.presentation.profile
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -119,5 +120,18 @@ class HomeViewModelTest : BaseViewModelTest() {
 
         // THEN
         assertEquals(HomeUiState.Error, state)
+    }
+
+    @Test
+    fun `cancellation is not mapped to error`() = runTest {
+        // GIVEN
+        val vm = HomeViewModel(FakeGetStatusUseCase(error = CancellationException()))
+
+        // WHEN
+        advanceUntilIdle()
+        val state = vm.uiState.value
+
+        // THEN
+        assertEquals(HomeUiState.Loading, state)
     }
 }

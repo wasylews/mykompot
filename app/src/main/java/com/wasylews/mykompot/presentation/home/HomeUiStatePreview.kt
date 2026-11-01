@@ -53,7 +53,13 @@ internal fun previewPaymentDueState() = previewAllGoodState.copy(
 
 /** Renders one preview per [HomeUiState] variant. */
 class HomeUiStatePreviewParameterProvider : PreviewParameterProvider<HomeUiState> {
-    private val states = listOf(previewAllGoodState, previewPaymentDueState())
+    private val states = listOf(
+        previewAllGoodState,
+        previewPaymentDueState(),
+        HomeUiState.Loading,
+        HomeUiState.NoAccount,
+        HomeUiState.Error,
+    )
 
     override val values = states.asSequence()
 
@@ -61,7 +67,6 @@ class HomeUiStatePreviewParameterProvider : PreviewParameterProvider<HomeUiState
         is HomeUiState.Content -> when (state.account.state) {
             AccountStatus.State.ALL_GOOD -> "All good"
             AccountStatus.State.PAYMENT_DUE -> "Payment due"
-            AccountStatus.State.UNKNOWN -> "Unknown"
         }
 
         HomeUiState.Loading -> "Loading"

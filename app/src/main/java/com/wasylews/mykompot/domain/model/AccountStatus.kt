@@ -28,6 +28,5 @@ sealed interface AccountStatus {
     enum class State {
         ALL_GOOD,
         PAYMENT_DUE,
-        UNKNOWN,
     }
 }

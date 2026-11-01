@@ -22,6 +22,7 @@ import androidx.lifecycle.viewModelScope
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.GetStatus
 import com.wasylews.mykompot.domain.model.AccountStatus
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -42,7 +43,8 @@ class HomeViewModel(
 
     private suspend fun loadState(): HomeUiState = runCatching {
         getStatusUseCase().toHomeUiState()
-    }.getOrElse {
+    }.getOrElse { error ->
+        if (error is CancellationException) throw error
         HomeUiState.Error
     }
 
@@ -73,12 +75,6 @@ class HomeViewModel(
             status = R.string.status_payment_due,
             message = R.string.status_payment_due_message,
             nextChargeLabel = R.string.due,
-        )
-
-        AccountStatus.State.UNKNOWN -> StatusCopy(
-            status = R.string.status_unknown,
-            message = R.string.status_unknown_message,
-            nextChargeLabel = R.string.next_charge,
         )
     }
 }

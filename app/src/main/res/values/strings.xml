@@ -16,8 +16,8 @@
     <string name="status_all_good_message">Your account is active, and your internet is working.</string>
     <string name="status_payment_due">Payment due</string>
     <string name="status_payment_due_message">Top up to keep your internet on.</string>
-    <string name="status_unknown">Unknown</string>
-    <string name="status_unknown_message">We couldn\'t check your status. Your account may still be fine.</string>
+    <string name="status_unavailable">Unknown</string>
+    <string name="status_unavailable_message">We couldn\'t check your status. Your account may still be fine.</string>
     <string name="tariff">Tariff</string>
     <string name="tariff_price">%1$d ₴</string>
     <string name="your_internet">Your internet</string>
