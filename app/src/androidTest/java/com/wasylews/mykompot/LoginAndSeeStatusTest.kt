@@ -17,52 +17,13 @@
 package com.wasylews.mykompot
 
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
-import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextInput
 import mockwebserver3.MockResponse
-import mockwebserver3.MockWebServer
 import mockwebserver3.SocketEffect
-import org.junit.After
-import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
-import org.koin.core.context.loadKoinModules
-import org.koin.core.context.unloadKoinModules
-import org.koin.dsl.module
-import org.koin.test.KoinTest
-import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
-import kotlin.time.Instant
 
-@OptIn(ExperimentalTestApi::class)
-class LoginAndSeeStatusTest : KoinTest {
-    @get:Rule
-    val composeRule = createAndroidComposeRule<MainActivity>()
-
-    private val server = MockWebServer()
-
-    private val clock = MutableClock(Instant.parse("2026-10-01T10:00:00Z"))
-    private val testModule = module {
-        single<Clock> { clock }
-    }
-
-    @Before
-    fun setup() {
-        loadKoinModules(testModule)
-        server.start(8080)
-    }
-
-    @After
-    fun teardown() {
-        server.close()
-        unloadKoinModules(testModule)
-    }
-
+class LoginAndSeeStatusTest : BaseAcceptanceTest() {
     @Test
     fun loginAndSeeAllGood() {
         // GIVEN server is up
@@ -127,20 +88,5 @@ class LoginAndSeeStatusTest : KoinTest {
 
         // THEN I see the error message
         waitForNodeWithStringRes(R.string.error_server).assertIsDisplayed()
-    }
-
-    private fun performLogin() {
-        waitForNodeWithStringRes(R.string.username).performTextInput("user")
-        waitForNodeWithStringRes(R.string.password).performTextInput("pass")
-        waitForNodeWithStringRes(R.string.log_in).performClick()
-    }
-
-    private fun waitForNodeWithStringRes(
-        res: Int,
-        timeoutMillis: Long = 5_000,
-    ): SemanticsNodeInteraction {
-        val string = composeRule.activity.getString(res)
-        composeRule.waitUntilExactlyOneExists(hasText(string), timeoutMillis)
-        return composeRule.onNodeWithText(string)
     }
 }

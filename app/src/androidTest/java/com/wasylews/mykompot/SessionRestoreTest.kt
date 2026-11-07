@@ -16,54 +16,14 @@
 
 package com.wasylews.mykompot
 
-import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ActivityScenario
-import androidx.test.platform.app.InstrumentationRegistry
 import com.wasylews.mykompot.presentation.main.MainActivity
 import mockwebserver3.MockResponse
-import mockwebserver3.MockWebServer
-import org.junit.After
-import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
-import org.koin.core.context.loadKoinModules
-import org.koin.core.context.unloadKoinModules
-import org.koin.dsl.module
-import org.koin.test.KoinTest
-import kotlin.time.Clock
-import kotlin.time.Instant
 
-@OptIn(ExperimentalTestApi::class)
-class SessionRestoreTest : KoinTest {
-    @get:Rule
-    val composeRule = createEmptyComposeRule()
-
-    private val server = MockWebServer()
-
-    private val clock = MutableClock(Instant.parse("2026-10-01T10:00:00Z"))
-    private val testModule = module {
-        single<Clock> { clock }
-    }
-
-    @Before
-    fun setup() {
-        loadKoinModules(testModule)
-        server.start(8080)
-    }
-
-    @After
-    fun teardown() {
-        server.close()
-        unloadKoinModules(testModule)
-    }
-
+class SessionRestoreTest : BaseAcceptanceTest() {
     @Test
     fun reopeningTheAppKeepsTheSession() {
         // GIVEN a successful login
@@ -86,25 +46,9 @@ class SessionRestoreTest : KoinTest {
         }
     }
 
-    private fun performLogin() {
-        waitForNodeWithStringRes(R.string.username).performTextInput("user")
-        waitForNodeWithStringRes(R.string.password).performTextInput("pass")
-        waitForNodeWithStringRes(R.string.log_in).performClick()
-    }
-
     private fun assertLoginFormIsHidden() {
         composeRule
-            .onNodeWithText(string(R.string.username))
+            .onNodeWithText(stringRes(R.string.username))
             .assertDoesNotExist()
     }
-
-    private fun waitForNodeWithStringRes(
-        res: Int,
-        timeoutMillis: Long = 5_000,
-    ): SemanticsNodeInteraction {
-        composeRule.waitUntilExactlyOneExists(hasText(string(res)), timeoutMillis)
-        return composeRule.onNodeWithText(string(res))
-    }
-
-    private fun string(res: Int): String = InstrumentationRegistry.getInstrumentation().targetContext.getString(res)
 }
