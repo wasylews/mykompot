@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.wasylews.mykompot
+package com.wasylews.mykompot.presentation.main
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -27,10 +27,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.wasylews.mykompot.domain.model.SessionState
 import com.wasylews.mykompot.presentation.home.HomeScreen
 import com.wasylews.mykompot.presentation.home.HomeViewModel
 import com.wasylews.mykompot.presentation.login.LoginScreen
-import com.wasylews.mykompot.presentation.login.LoginState
 import com.wasylews.mykompot.presentation.login.LoginViewModel
 import com.wasylews.mykompot.ui.theme.MyKompotTheme
 import org.koin.compose.viewmodel.koinViewModel
@@ -41,16 +42,17 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MyKompotTheme {
+                val mainViewModel = koinViewModel<MainViewModel>()
+                val sessionState = mainViewModel.sessionState.collectAsStateWithLifecycle()
+
                 val loginViewModel = koinViewModel<LoginViewModel>()
-                val loginState by loginViewModel.loginState.collectAsState()
                 val uiState by loginViewModel.uiState.collectAsState()
-                val isLoggedIn = loginState == LoginState.LoggedIn
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     containerColor = MaterialTheme.colorScheme.surface,
                 ) { innerPadding ->
-                    if (isLoggedIn) {
+                    if (sessionState.value == SessionState.LoggedIn) {
                         val homeViewModel = koinViewModel<HomeViewModel>()
                         val homeUiState by homeViewModel.uiState.collectAsState()
 

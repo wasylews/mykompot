@@ -26,6 +26,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
+import com.wasylews.mykompot.presentation.main.MainActivity
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import org.junit.After
