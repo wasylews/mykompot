@@ -19,6 +19,8 @@ package com.wasylews.mykompot
 object HtmlFixtures {
     fun profile() = load("profile.html")
 
+    fun paymentDue() = load("payment-due.html")
+
     fun loginFailed() = load("login-failed.html")
 
     private fun load(name: String): String = requireNotNull(

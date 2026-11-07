@@ -27,9 +27,19 @@ class ProfilePageResponseTest {
         val page = HtmlFixtures.profile()
         val result = Kspoon.parse<ProfilePageResponse>(page)
 
-        assertEquals("Enable", result.status)
+        assertEquals("Enable", result.accountState)
         assertEquals("[35] 300GRN_100mb", result.plan)
         assertEquals("Next periodic payments throught days (2026-11-01)", result.nextPayment)
+    }
+
+    @Test
+    fun `parsing payment due page`() {
+        val page = HtmlFixtures.paymentDue()
+        val result = Kspoon.parse<ProfilePageResponse>(page)
+
+        assertEquals("Too Small Deposit", result.accountState)
+        assertEquals("[35] 300GRN_100mb", result.plan)
+        assertEquals("", result.nextPayment)
     }
 
     @Test

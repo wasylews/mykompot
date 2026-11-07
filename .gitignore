@@ -2,7 +2,7 @@
 *.har
 *.bak
 *.orig
-resources/
+/resources/
 
 # Planning notes and throwaway prototypes — kept local, the code is the source of truth
 docs/

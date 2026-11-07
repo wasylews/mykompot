@@ -35,10 +35,13 @@ interface PortalApi {
 data class ProfilePageResponse(
     @Selector(".err_message")
     val error: String? = null,
-    @Selector("tr.odd:nth-child(8) > td:nth-child(2)")
+    @Selector(".top_status li.tCenter")
     val status: String? = null,
     @Selector("table.form:nth-child(2) tr:nth-child(2) > td:nth-child(2)")
     val plan: String? = null,
     @Selector("div.kabinet-styled_table-wrap_form h3")
     val nextPayment: String? = null,
-)
+) {
+    val accountState: String?
+        get() = status?.removePrefix("State: ")?.trim()
+}

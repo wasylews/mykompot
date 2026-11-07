@@ -1,0 +1,98 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Billing Osipenka</title>
+<meta HTTP-EQUIV='Cache-Control' content='no-cache,no-cache,no-store,must-revalidate' />
+<meta HTTP-EQUIV='Expires' CONTENT='-1'/>
+<meta HTTP-EQUIV='Pragma' CONTENT='no-cache' />
+<meta HTTP-EQUIV='Content-Type' CONTENT='text/html; charset=utf-8' />
+<meta HTTP-EQUIV='content-language' content='' />
+<meta name='Author' content='~AsmodeuS~' />
+<link rel='stylesheet' type='text/css' href='styles/default/styleLib.css' />
+<link rel='stylesheet' type='text/css' href='styles/default/client.css' />
+<link rel='stylesheet' type='text/css' href='print.css' media='print' />
+<link rel='stylesheet' type='text/css' href='styles/default/js/selectbox/jquery.selectbox.css' />
+<link rel='stylesheet' type='text/css' href='/styles/default/chosen.css' />
+<!--[if lt IE 9]>
+<link rel='stylesheet' type='text/css' href='css/default/styleIE.css' />
+<![endif]-->
+<script type='text/javascript' src='styles/default/js/jquery-1.5.1.min.js'></script>
+<script type='text/javascript' src='styles/default/js/main_kabinet.js'></script>
+<script type='text/javascript' src='styles/default/js/checkform.js'></script>
+<script type='text/javascript' src='styles/default/js/selectbox/jquery.selectbox-0.6.1.js'></script>
+<script type='text/javascript' src='styles/default/js/functions.js'></script>
+<script type='text/javascript' src='styles/default/js/calendar.js'></script>
+<script type='text/javascript' src='/styles/default/js/chosen.jquery.min.js' ></script>
+<!--[if lt IE 9]>
+<script type='text/javascript' src='/styles/default/js/html5.js'></script>
+<![endif]-->	
+</head>
+<body>
+<div class='page_wrap'>
+<div class='inner_wrap'>
+<TABLE width='100%' border='0' cellpadding='0' cellspacing='0'>
+<TR class='title_color'  style='height: 80'><TD align='right' valign=bottom><h2><i><font color=blue>Tv</font>Optimum</i>     </h2><p><i><b></b></i>      </p></TD></TR>
+</TABLE>
+<TABLE width='100%'>
+<TR><TD align='center'>
+
+
+<br>
+<div id=info_message class='box_shadow border_rad'>
+  <div class='err_message border_rad_t2'>Error</div>
+  <div>Wrong password</div>  
+</div>
+<br>
+<script type="text/javascript">
+	function selectLanguage() {
+		sLanguage	= '';
+		
+		try {
+			frm = document.forms[0];
+			if(frm.language)
+				sLanguage = frm.language.options[frm.language.selectedIndex].value;
+			sLocation = 'https://kompot.uz.ua:9443/index.cgi?DOMAIN_ID=&language='+sLanguage;
+			location.replace(sLocation);
+		} catch(err) {
+			alert('Your brownser do not support JS');
+		}
+   }
+
+  function set_referrer () {
+    document.getElementById('REFERRER').value=location.href;
+	 }
+</script>
+
+
+<div class='login_form_border'>
+<div class='kabinet-styled_table-wrap box_shadow border_rad'>
+<br>
+<br>
+<form action='https://kompot.uz.ua:9443/index.cgi' METHOD='post' name=form_login>
+<input type=hidden name=DOMAIN_ID value=''>
+<input type=hidden ID=REFERRER name=REFERRER value='https://kompot.uz.ua:9443/'>
+<TABLE width='400' class=form>
+<TR><TH colspan=2 class=form_title>User portal&nbsp;</TH></TR>
+<TR><TD colspan=2>&nbsp;</TD></TR>
+<TR><TD align=right width=50%>&nbsp;Language: &nbsp;</TD><TD  width=50%><select name='language' class='styled_selectbox' onChange="selectLanguage()" ID='language'>
+<option value='english' selected>English
+<option value='french'>French
+<option value='bulgarian'>Болгарська
+<option value='russian'>Русский
+<option value='ukraine'>Українська
+</select>
+</TD></TR>
+<TR><TD align=right>&nbsp;User: &nbsp;</TD><TD><input type='text' name='user'></TD></TR>
+<TR><TD align=right>&nbsp;Password: &nbsp;</TD><TD><input type='password' name='passwd'></TD></TR>
+<tr><th colspan='2' class=even><input type='submit' name='logined' value=' Enter ' onclick='set_referrer()'></th></TR>
+</TABLE>
+</form>
+<br>
+</div>
+</div>
+<br>
+<br>
+
+
+</TD></TR></TABLE>
+
