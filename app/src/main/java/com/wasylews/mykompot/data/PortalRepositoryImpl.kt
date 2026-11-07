@@ -21,6 +21,7 @@ import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.TariffPlan
 import com.wasylews.mykompot.domain.repository.PortalRepository
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import okio.IOException
 import org.koin.core.annotation.Singleton
@@ -54,7 +55,7 @@ class PortalRepositoryImpl(
     }
 
     private fun ProfilePageResponse.toProfile(): Profile? = Profile(
-        isActive = status == STATUS_ACTIVE,
+        isActive = accountState == STATUS_ACTIVE,
         nextPaymentDate = getPaymentDate(nextPayment) ?: return null,
         tariffPlan = getTariffPlan(plan) ?: return null,
     )
@@ -76,6 +77,10 @@ class PortalRepositoryImpl(
     }
 
     override suspend fun loadProfile(): Profile? = localStorage.loadProfile()
+
+    override fun sessionFlow(): Flow<String?> {
+        TODO("Not yet implemented")
+    }
 
     private companion object {
         const val STATUS_ACTIVE = "Enable"

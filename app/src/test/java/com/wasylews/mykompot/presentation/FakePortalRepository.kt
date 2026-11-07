@@ -20,11 +20,14 @@ import com.wasylews.mykompot.domain.model.LoginResult
 import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.TariffPlan
 import com.wasylews.mykompot.domain.repository.PortalRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import java.time.LocalDate
 
 class FakePortalRepository(
     private val result: LoginResult = successLogin(),
     private val profile: Profile? = profile(),
+    private val session: String? = null,
 ) : PortalRepository {
     override suspend fun login(
         username: String,
@@ -32,6 +35,8 @@ class FakePortalRepository(
     ): LoginResult = result
 
     override suspend fun loadProfile(): Profile? = profile
+
+    override fun sessionFlow(): Flow<String?> = flowOf(session)
 }
 
 fun successLogin() = LoginResult.Success

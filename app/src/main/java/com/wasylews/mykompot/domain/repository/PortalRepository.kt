@@ -18,6 +18,7 @@ package com.wasylews.mykompot.domain.repository
 
 import com.wasylews.mykompot.domain.model.LoginResult
 import com.wasylews.mykompot.domain.model.Profile
+import kotlinx.coroutines.flow.Flow
 
 interface PortalRepository {
     suspend fun login(
@@ -26,4 +27,6 @@ interface PortalRepository {
     ): LoginResult
 
     suspend fun loadProfile(): Profile?
+
+    fun sessionFlow(): Flow<String?>
 }
