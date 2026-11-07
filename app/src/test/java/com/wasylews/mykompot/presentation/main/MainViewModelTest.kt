@@ -28,8 +28,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class MainViewModelTest: BaseViewModelTest() {
-
+class MainViewModelTest : BaseViewModelTest() {
     @Test
     fun `logged out without stored session`() = runTest {
         val vm = MainViewModel(FakeObserveSessionUseCase(SessionState.LoggedOut))
@@ -52,9 +51,8 @@ class MainViewModelTest: BaseViewModelTest() {
 }
 
 class FakeObserveSessionUseCase(
-    state: SessionState
-): ObserveSession {
-
+    state: SessionState,
+) : ObserveSession {
     private val sessionStateFlow = MutableStateFlow(state)
 
     override fun sessionStateFlow(): Flow<SessionState> = sessionStateFlow

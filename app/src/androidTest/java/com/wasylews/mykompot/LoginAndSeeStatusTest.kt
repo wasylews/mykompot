@@ -16,7 +16,6 @@
 
 package com.wasylews.mykompot
 
-import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import mockwebserver3.MockResponse
 import mockwebserver3.SocketEffect
@@ -29,11 +28,13 @@ class LoginAndSeeStatusTest : BaseAcceptanceTest() {
         // GIVEN server is up
         server.enqueue(MockResponse(body = HtmlFixtures.profile()))
 
-        // WHEN I log in
-        performLogin()
+        launch().use {
+            // WHEN I log in
+            performLogin()
 
-        // THEN I see the status
-        waitForNodeWithStringRes(R.string.status_all_good).assertIsDisplayed()
+            // THEN I see the status
+            waitForNodeWithStringRes(R.string.status_all_good).assertIsDisplayed()
+        }
     }
 
     @Test
@@ -43,11 +44,13 @@ class LoginAndSeeStatusTest : BaseAcceptanceTest() {
         // AND current date set past due date
         clock.advanceBy(30.days)
 
-        // WHEN I log in
-        performLogin()
+        launch().use {
+            // WHEN I log in
+            performLogin()
 
-        // THEN I see the payment due
-        waitForNodeWithStringRes(R.string.status_payment_due).assertIsDisplayed()
+            // THEN I see the payment due
+            waitForNodeWithStringRes(R.string.status_payment_due).assertIsDisplayed()
+        }
     }
 
     @Test
@@ -55,11 +58,13 @@ class LoginAndSeeStatusTest : BaseAcceptanceTest() {
         // GIVEN server is up
         server.enqueue(MockResponse(body = HtmlFixtures.loginFailed()))
 
-        // WHEN I log in with wrong credentials
-        performLogin()
+        launch().use {
+            // WHEN I log in with wrong credentials
+            performLogin()
 
-        // THEN I see the error message
-        waitForNodeWithStringRes(R.string.error_invalid_credentials).assertIsDisplayed()
+            // THEN I see the error message
+            waitForNodeWithStringRes(R.string.error_invalid_credentials).assertIsDisplayed()
+        }
     }
 
     @Test
@@ -71,11 +76,13 @@ class LoginAndSeeStatusTest : BaseAcceptanceTest() {
             .build()
         server.enqueue(response)
 
-        // WHEN I try to log in
-        performLogin()
+        launch().use {
+            // WHEN I try to log in
+            performLogin()
 
-        // THEN I see the error message
-        waitForNodeWithStringRes(R.string.error_no_connection).assertIsDisplayed()
+            // THEN I see the error message
+            waitForNodeWithStringRes(R.string.error_no_connection).assertIsDisplayed()
+        }
     }
 
     @Test
@@ -83,10 +90,12 @@ class LoginAndSeeStatusTest : BaseAcceptanceTest() {
         // GIVEN server is down
         server.enqueue(MockResponse(502))
 
-        // WHEN I try to log in
-        performLogin()
+        launch().use {
+            // WHEN I try to log in
+            performLogin()
 
-        // THEN I see the error message
-        waitForNodeWithStringRes(R.string.error_server).assertIsDisplayed()
+            // THEN I see the error message
+            waitForNodeWithStringRes(R.string.error_server).assertIsDisplayed()
+        }
     }
 }

@@ -22,18 +22,26 @@ import com.wasylews.mykompot.domain.model.TariffPlan
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
+import org.koin.core.annotation.Named
 import org.koin.core.annotation.Singleton
 import java.time.LocalDate
 
 @Singleton
 class DataStoreLocalStorage(
-    private val profileDataStore: DataStore<ProfileEntity?>,
+    @Named("profile") private val profileDataStore: DataStore<ProfileEntity?>,
+    @Named("session") private val sessionDataStore: DataStore<String?>,
 ) : LocalStorage {
     override suspend fun saveProfile(profile: Profile) {
         profileDataStore.updateData { profile.toEntity() }
     }
 
     override fun profileFlow(): Flow<Profile?> = profileDataStore.data.map { it?.toDomain() }
+
+    override fun sessionFlow(): Flow<String?> = sessionDataStore.data
+
+    override suspend fun saveSession(sid: String) {
+        sessionDataStore.updateData { sid }
+    }
 }
 
 @Serializable

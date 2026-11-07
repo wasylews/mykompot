@@ -23,15 +23,13 @@ import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Factory
 
 interface ObserveSession {
-
     fun sessionStateFlow(): Flow<SessionState>
 }
 
 @Factory
 class ObserveSessionUseCase(
-    private val repository: PortalRepository
+    private val repository: PortalRepository,
 ) : ObserveSession {
-
     override fun sessionStateFlow(): Flow<SessionState> = repository.sessionFlow()
         .map {
             if (it.isNullOrEmpty()) {
@@ -40,5 +38,4 @@ class ObserveSessionUseCase(
                 SessionState.LoggedIn
             }
         }
-
 }

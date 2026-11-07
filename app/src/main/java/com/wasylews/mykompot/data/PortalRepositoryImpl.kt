@@ -26,6 +26,7 @@ import kotlinx.coroutines.withContext
 import okio.IOException
 import org.koin.core.annotation.Singleton
 import retrofit2.HttpException
+import retrofit2.Response
 import java.time.LocalDate
 
 @Singleton
@@ -39,14 +40,18 @@ class PortalRepositoryImpl(
         password: String,
     ): LoginResult = withContext(dispatcher) {
         return@withContext try {
-            val page = api.login(username, password)
+            val response = api.login(username, password)
+            if (!response.isSuccessful) return@withContext LoginResult.ServerError
+            val page = response.body() ?: return@withContext LoginResult.ParsingError
             if (page.error != null) {
-                LoginResult.InvalidCredentials
-            } else {
-                val profile = page.toProfile() ?: return@withContext LoginResult.ParsingError
-                localStorage.saveProfile(profile)
-                LoginResult.Success
+                return@withContext LoginResult.InvalidCredentials
             }
+
+            val profile = page.toProfile() ?: return@withContext LoginResult.ParsingError
+            val sid = response.sid() ?: page.sid ?: return@withContext LoginResult.ParsingError
+            localStorage.saveProfile(profile)
+            localStorage.saveSession(sid)
+            LoginResult.Success
         } catch (_: HttpException) {
             LoginResult.ServerError
         } catch (_: IOException) {
@@ -76,13 +81,21 @@ class PortalRepositoryImpl(
         )
     }
 
+    private fun Response<ProfilePageResponse>.sid(): String? = headers()
+        .values("Set-Cookie")
+        .firstNotNullOfOrNull { it.cookieValue(SID_COOKIE) }
+
+    private fun String.cookieValue(name: String): String? = substringAfter(
+        delimiter = "$name=",
+        missingDelimiterValue = "",
+    ).substringBefore(';').takeIf { it.isNotBlank() }
+
     override fun profileFlow(): Flow<Profile?> = localStorage.profileFlow()
 
-    override fun sessionFlow(): Flow<String?> {
-        TODO("Not yet implemented")
-    }
+    override fun sessionFlow(): Flow<String?> = localStorage.sessionFlow()
 
     private companion object {
         const val STATUS_ACTIVE = "Enable"
+        const val SID_COOKIE = "sid"
     }
 }

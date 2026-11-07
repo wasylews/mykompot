@@ -25,6 +25,7 @@ import com.wasylews.mykompot.BuildConfig
 import com.wasylews.mykompot.data.PortalApi
 import com.wasylews.mykompot.data.ProfileEntity
 import com.wasylews.mykompot.data.ProfileEntitySerializer
+import com.wasylews.mykompot.data.SessionSerializer
 import dev.burnoo.kspoon.Kspoon
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -32,6 +33,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import org.koin.core.annotation.ComponentScan
 import org.koin.core.annotation.Configuration
 import org.koin.core.annotation.Module
+import org.koin.core.annotation.Named
 import org.koin.core.annotation.Singleton
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
@@ -56,9 +58,18 @@ class DataModule {
     fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
 
     @Singleton
+    @Named("profile")
     fun provideProfileDataStore(context: Context): DataStore<ProfileEntity?> = DataStoreFactory.create(
         serializer = ProfileEntitySerializer,
         corruptionHandler = ReplaceFileCorruptionHandler<ProfileEntity?> { null },
         produceFile = { context.dataStoreFile("profile.json") },
+    )
+
+    @Singleton
+    @Named("session")
+    fun provideSessionDataStore(context: Context): DataStore<String?> = DataStoreFactory.create(
+        serializer = SessionSerializer,
+        corruptionHandler = ReplaceFileCorruptionHandler<String?> { null },
+        produceFile = { context.dataStoreFile("session.json") },
     )
 }

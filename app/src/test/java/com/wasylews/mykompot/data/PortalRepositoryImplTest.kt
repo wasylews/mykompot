@@ -16,18 +16,20 @@
 
 package com.wasylews.mykompot.data
 
+import app.cash.turbine.test
 import com.wasylews.mykompot.domain.model.LoginResult
 import com.wasylews.mykompot.domain.model.Profile
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.runTest
+import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
 import okio.IOException
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import retrofit2.HttpException
@@ -81,9 +83,22 @@ class PortalRepositoryImplTest {
         val repo = createPortalRepository(testScheduler)
         repo.login("user", "pass")
 
-        val profile = requireNotNull(repo.profileFlow().first())
-        assertTrue(profile.isActive)
-        assertEquals("300GRN_100mb", profile.tariffPlan.name)
+        repo.profileFlow().test {
+            val profile = awaitItem()!!
+            assertTrue(profile.isActive)
+            assertEquals("300GRN_100mb", profile.tariffPlan.name)
+        }
+    }
+
+    @Test
+    fun `session flow emits the saved session`() = runTest {
+        val repo = createPortalRepository(testScheduler)
+        repo.login("user", "pass")
+
+        repo.sessionFlow().test {
+            val session = awaitItem()
+            assertFalse(session.isNullOrEmpty())
+        }
     }
 
     private fun createPortalRepository(
@@ -113,15 +128,30 @@ private class FakePortalApi(
     override suspend fun login(
         username: String,
         password: String,
-    ) = response.also { exception?.let { throw it } }
+    ): Response<ProfilePageResponse> {
+        exception?.let { throw it }
+        return Response.success(
+            response,
+            Headers.Builder()
+                .add("Set-Cookie", "sid=test-session")
+                .build(),
+        )
+    }
 }
 
 private class FakeLocalStorage : LocalStorage {
     private val savedProfile = MutableStateFlow<Profile?>(null)
+    private val savedSession = MutableStateFlow<String?>(null)
 
     override suspend fun saveProfile(profile: Profile) {
         savedProfile.value = profile
     }
 
     override fun profileFlow(): Flow<Profile?> = savedProfile
+
+    override fun sessionFlow(): Flow<String?> = savedSession
+
+    override suspend fun saveSession(sid: String) {
+        savedSession.value = sid
+    }
 }

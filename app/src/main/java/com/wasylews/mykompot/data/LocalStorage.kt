@@ -26,4 +26,8 @@ interface LocalStorage {
      * Emits the saved profile, or `null` when nothing usable is cached.
      */
     fun profileFlow(): Flow<Profile?>
+
+    fun sessionFlow(): Flow<String?>
+
+    suspend fun saveSession(sid: String)
 }

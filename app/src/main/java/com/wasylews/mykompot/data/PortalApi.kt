@@ -18,6 +18,7 @@ package com.wasylews.mykompot.data
 
 import dev.burnoo.kspoon.annotation.Selector
 import kotlinx.serialization.Serializable
+import retrofit2.Response
 import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
 import retrofit2.http.POST
@@ -28,7 +29,7 @@ interface PortalApi {
     suspend fun login(
         @Field("user") username: String,
         @Field("passwd") password: String,
-    ): ProfilePageResponse
+    ): Response<ProfilePageResponse>
 }
 
 @Serializable
@@ -41,6 +42,8 @@ data class ProfilePageResponse(
     val plan: String? = null,
     @Selector("div.kabinet-styled_table-wrap_form h3")
     val nextPayment: String? = null,
+    @Selector("input[name=sid]", attr = "value")
+    val sid: String? = null,
 ) {
     val accountState: String?
         get() = status?.removePrefix("State: ")?.trim()

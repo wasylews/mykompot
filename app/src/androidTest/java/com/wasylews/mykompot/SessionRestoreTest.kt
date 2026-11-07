@@ -18,8 +18,6 @@ package com.wasylews.mykompot
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithText
-import androidx.test.core.app.ActivityScenario
-import com.wasylews.mykompot.presentation.main.MainActivity
 import mockwebserver3.MockResponse
 import org.junit.Test
 
@@ -33,13 +31,13 @@ class SessionRestoreTest : BaseAcceptanceTest() {
                 .addHeader("Set-Cookie", "sid=test-session")
                 .build(),
         )
-        ActivityScenario.launch(MainActivity::class.java).use {
+        launch().use {
             performLogin()
             waitForNodeWithStringRes(R.string.status_all_good).assertIsDisplayed()
         }
 
         // WHEN I reopen the app
-        ActivityScenario.launch(MainActivity::class.java).use {
+        launch().use {
             // THEN I see the status without logging in
             waitForNodeWithStringRes(R.string.status_all_good).assertIsDisplayed()
             assertLoginFormIsHidden()

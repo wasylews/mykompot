@@ -26,9 +26,8 @@ import org.koin.core.annotation.KoinViewModel
 
 @KoinViewModel
 class MainViewModel(
-    observeSession: ObserveSession
-): ViewModel() {
-
+    observeSession: ObserveSession,
+) : ViewModel() {
     val sessionState = observeSession.sessionStateFlow()
         .stateIn(viewModelScope, SharingStarted.Eagerly, SessionState.LoggedOut)
 }

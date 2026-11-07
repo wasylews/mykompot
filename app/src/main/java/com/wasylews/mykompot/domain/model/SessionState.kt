@@ -18,5 +18,5 @@ package com.wasylews.mykompot.domain.model
 
 enum class SessionState {
     LoggedIn,
-    LoggedOut
+    LoggedOut,
 }

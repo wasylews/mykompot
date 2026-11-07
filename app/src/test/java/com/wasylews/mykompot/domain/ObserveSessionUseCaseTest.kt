@@ -24,7 +24,6 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 class ObserveSessionUseCaseTest {
-
     @Test
     fun `no stored session returns LoggedOut`() = runTest {
         val useCase = ObserveSessionUseCase(FakePortalRepository())
