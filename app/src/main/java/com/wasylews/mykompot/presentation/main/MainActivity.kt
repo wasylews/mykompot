@@ -20,12 +20,15 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.wasylews.mykompot.domain.model.SessionState
@@ -43,7 +46,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MyKompotTheme {
                 val mainViewModel = koinViewModel<MainViewModel>()
-                val sessionState = mainViewModel.sessionState.collectAsStateWithLifecycle()
+                val sessionState by mainViewModel.sessionState.collectAsStateWithLifecycle()
 
                 val loginViewModel = koinViewModel<LoginViewModel>()
                 val uiState by loginViewModel.uiState.collectAsState()
@@ -52,25 +55,40 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     containerColor = MaterialTheme.colorScheme.surface,
                 ) { innerPadding ->
-                    if (sessionState.value == SessionState.LoggedIn) {
-                        val homeViewModel = koinViewModel<HomeViewModel>()
-                        val homeUiState by homeViewModel.uiState.collectAsState()
+                    when (sessionState) {
+                        SessionState.Loading -> {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(innerPadding),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
 
-                        HomeScreen(
-                            state = homeUiState,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(innerPadding),
-                        )
-                    } else {
-                        LoginScreen(
-                            uiState = uiState,
-                            onLoginClick = { loginViewModel.login() },
-                            onErrorConsumed = loginViewModel::clearError,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(innerPadding),
-                        )
+                        SessionState.LoggedIn -> {
+                            val homeViewModel = koinViewModel<HomeViewModel>()
+                            val homeUiState by homeViewModel.uiState.collectAsState()
+
+                            HomeScreen(
+                                state = homeUiState,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(innerPadding),
+                            )
+                        }
+
+                        SessionState.LoggedOut -> {
+                            LoginScreen(
+                                uiState = uiState,
+                                onLoginClick = { loginViewModel.login() },
+                                onErrorConsumed = loginViewModel::clearError,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(innerPadding),
+                            )
+                        }
                     }
                 }
             }

@@ -30,30 +30,28 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class MainViewModelTest : BaseViewModelTest() {
     @Test
-    fun `logged out without stored session`() = runTest {
-        val vm = MainViewModel(FakeObserveSessionUseCase(SessionState.LoggedOut))
+    fun `async stored session resolves to logged in`() = runTest {
+        val observeSession = FakeObserveSession()
+        val vm = MainViewModel(observeSession)
 
         advanceUntilIdle()
-        val state = vm.sessionState.value
+        assertEquals(SessionState.Loading, vm.sessionState.value)
 
-        assertEquals(SessionState.LoggedOut, state)
-    }
-
-    @Test
-    fun `logged in with stored session`() = runTest {
-        val vm = MainViewModel(FakeObserveSessionUseCase(SessionState.LoggedIn))
-
+        observeSession.setState(SessionState.LoggedIn)
         advanceUntilIdle()
-        val state = vm.sessionState.value
 
-        assertEquals(SessionState.LoggedIn, state)
+        assertEquals(SessionState.LoggedIn, vm.sessionState.value)
     }
 }
 
-class FakeObserveSessionUseCase(
-    state: SessionState,
+class FakeObserveSession(
+    state: SessionState = SessionState.Loading,
 ) : ObserveSession {
-    private val sessionStateFlow = MutableStateFlow(state)
+    private val stateFlow = MutableStateFlow(state)
 
-    override fun sessionStateFlow(): Flow<SessionState> = sessionStateFlow
+    fun setState(state: SessionState) {
+        stateFlow.value = state
+    }
+
+    override fun sessionStateFlow(): Flow<SessionState> = stateFlow
 }

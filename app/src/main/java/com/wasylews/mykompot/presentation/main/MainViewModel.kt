@@ -21,6 +21,7 @@ import androidx.lifecycle.viewModelScope
 import com.wasylews.mykompot.domain.ObserveSession
 import com.wasylews.mykompot.domain.model.SessionState
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.stateIn
 import org.koin.core.annotation.KoinViewModel
 
@@ -29,5 +30,6 @@ class MainViewModel(
     observeSession: ObserveSession,
 ) : ViewModel() {
     val sessionState = observeSession.sessionStateFlow()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, SessionState.LoggedOut)
+        .catch { emit(SessionState.LoggedOut) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, SessionState.Loading)
 }
