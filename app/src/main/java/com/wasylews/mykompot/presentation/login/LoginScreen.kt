@@ -48,13 +48,17 @@ import com.wasylews.mykompot.ui.theme.Spacing
 fun LoginScreen(
     uiState: LoginUiState,
     onLoginClick: () -> Unit,
+    onErrorConsumed: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val error = uiState.errorId?.let { stringResource(it) }.orEmpty()
 
-    LaunchedEffect(uiState.errorId) {
-        uiState.errorId?.let { snackbarHostState.showSnackbar(error) }
+    LaunchedEffect(error) {
+        if (error.isNotEmpty()) {
+            snackbarHostState.showSnackbar(error)
+            onErrorConsumed()
+        }
     }
 
     Scaffold(
@@ -125,9 +129,9 @@ fun LoginScreenPreview() {
                 usernameState = TextFieldState("user"),
                 passwordState = TextFieldState("pass"),
                 isLoading = false,
-                errorId = null,
             ),
             onLoginClick = {},
+            onErrorConsumed = {},
         )
     }
 }

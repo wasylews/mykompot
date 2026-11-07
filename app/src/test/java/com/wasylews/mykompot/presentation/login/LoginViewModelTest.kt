@@ -27,6 +27,8 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -42,12 +44,13 @@ class LoginViewModelTest : BaseViewModelTest() {
         vm.login()
         advanceUntilIdle()
 
-        // THEN the state is LoggedIn
-        assertEquals(LoginState.LoggedIn, vm.loginState.value)
+        // THEN login completes without an error
+        assertFalse(vm.uiState.value.isLoading)
+        assertNull(vm.uiState.value.errorId)
     }
 
     @Test
-    fun `empty credentials are validated`() {
+    fun `empty credentials are validated`() = runTest {
         // GIVEN a view model with empty credentials
         val vm = LoginViewModel(FakePortalRepository(LoginResult.InvalidCredentials))
         vm.usernameState.edit { replace(0, length, "") }
@@ -55,27 +58,30 @@ class LoginViewModelTest : BaseViewModelTest() {
 
         // WHEN login is invoked
         vm.login()
+        advanceUntilIdle()
 
-        // THEN both username and password are invalid
+        // THEN credentials are invalid and login does not start
         assertFalse(vm.isUsernameValid)
         assertFalse(vm.isPasswordValid)
+        assertFalse(vm.uiState.value.isLoading)
+        assertNull(vm.uiState.value.errorId)
     }
 
     @Test
-    fun `login emits loading then logged in`() = runTest {
+    fun `login emits loading then completes`() = runTest {
         // GIVEN a repository that returns a successful login
         val vm = LoginViewModel(FakePortalRepository(successLogin()))
         vm.usernameState.edit { replace(0, length, "user") }
         vm.passwordState.edit { replace(0, length, "pass") }
 
         // WHEN login is invoked
-        vm.loginState.test {
-            assertEquals(LoginState.Unknown, awaitItem())
+        vm.uiState.test {
+            assertFalse(awaitItem().isLoading)
             vm.login()
 
-            // THEN we transition from loading to logged in
-            assertEquals(LoginState.Loading, awaitItem())
-            assertEquals(LoginState.LoggedIn, awaitItem())
+            // THEN we transition from loading to idle
+            assertTrue(awaitItem().isLoading)
+            assertFalse(awaitItem().isLoading)
         }
     }
 
@@ -90,9 +96,11 @@ class LoginViewModelTest : BaseViewModelTest() {
         vm.login()
         advanceUntilIdle()
 
-        // THEN an invalid-credentials error state is set
-        val state = vm.loginState.value as LoginState.Error
-        assertEquals(R.string.error_invalid_credentials, state.errorId)
+        // THEN an invalid-credentials error is shown and can be consumed
+        assertEquals(R.string.error_invalid_credentials, vm.uiState.value.errorId)
+        assertFalse(vm.uiState.value.isLoading)
+        vm.clearError()
+        assertNull(vm.uiState.value.errorId)
     }
 
     @Test
@@ -106,9 +114,11 @@ class LoginViewModelTest : BaseViewModelTest() {
         vm.login()
         advanceUntilIdle()
 
-        // THEN a no-connection error state is set
-        val state = vm.loginState.value as LoginState.Error
-        assertEquals(R.string.error_no_connection, state.errorId)
+        // THEN a no-connection error is shown and can be consumed
+        assertEquals(R.string.error_no_connection, vm.uiState.value.errorId)
+        assertFalse(vm.uiState.value.isLoading)
+        vm.clearError()
+        assertNull(vm.uiState.value.errorId)
     }
 
     @Test
@@ -122,8 +132,10 @@ class LoginViewModelTest : BaseViewModelTest() {
         vm.login()
         advanceUntilIdle()
 
-        // THEN a server error state is set
-        val state = vm.loginState.value as LoginState.Error
-        assertEquals(R.string.error_server, state.errorId)
+        // THEN a server error is shown and can be consumed
+        assertEquals(R.string.error_server, vm.uiState.value.errorId)
+        assertFalse(vm.uiState.value.isLoading)
+        vm.clearError()
+        assertNull(vm.uiState.value.errorId)
     }
 }

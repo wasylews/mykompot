@@ -25,11 +25,9 @@ import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.model.LoginResult
 import com.wasylews.mykompot.domain.repository.PortalRepository
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
 
@@ -50,29 +48,24 @@ class LoginViewModel(
         passwordState.text.matches(inputValidationRegex)
     }
 
-    private val _loginState = MutableStateFlow<LoginState>(LoginState.Unknown)
-    val loginState: StateFlow<LoginState> = _loginState.asStateFlow()
-
-    val uiState: StateFlow<LoginUiState> = loginState
-        .map { state ->
-            LoginUiState(
-                usernameState = usernameState,
-                passwordState = passwordState,
-                isLoading = state is LoginState.Loading,
-                errorId = (state as? LoginState.Error)?.errorId,
-            )
-        }.stateIn(viewModelScope, SharingStarted.Eagerly, LoginUiState(usernameState, passwordState))
+    private val _uiState = MutableStateFlow(LoginUiState(usernameState, passwordState))
+    val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
     fun login() = viewModelScope.launch {
         if (!isUsernameValid || !isPasswordValid) return@launch
 
-        _loginState.value = LoginState.Loading
-        when (repository.login(usernameState.text.toString(), passwordState.text.toString())) {
-            is LoginResult.Success -> _loginState.value = LoginState.LoggedIn
-            LoginResult.InvalidCredentials -> _loginState.value = LoginState.Error(R.string.error_invalid_credentials)
-            LoginResult.NetworkError -> _loginState.value = LoginState.Error(R.string.error_no_connection)
-            LoginResult.ServerError -> _loginState.value = LoginState.Error(R.string.error_server)
-            LoginResult.ParsingError -> _loginState.value = LoginState.Error(R.string.error_parsing)
+        _uiState.update { it.copy(isLoading = true, errorId = null) }
+        val errorId = when (repository.login(usernameState.text.toString(), passwordState.text.toString())) {
+            is LoginResult.Success -> null
+            LoginResult.InvalidCredentials -> R.string.error_invalid_credentials
+            LoginResult.NetworkError -> R.string.error_no_connection
+            LoginResult.ServerError -> R.string.error_server
+            LoginResult.ParsingError -> R.string.error_parsing
         }
+        _uiState.update { it.copy(isLoading = false, errorId = errorId) }
+    }
+
+    fun clearError() {
+        _uiState.update { it.copy(errorId = null) }
     }
 }

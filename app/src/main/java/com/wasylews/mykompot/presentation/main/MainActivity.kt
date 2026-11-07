@@ -66,6 +66,7 @@ class MainActivity : ComponentActivity() {
                         LoginScreen(
                             uiState = uiState,
                             onLoginClick = { loginViewModel.login() },
+                            onErrorConsumed = loginViewModel::clearError,
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(innerPadding),
