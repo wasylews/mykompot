@@ -20,6 +20,7 @@ import androidx.datastore.core.DataStore
 import com.wasylews.mykompot.presentation.profile
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -28,22 +29,22 @@ import org.junit.Test
 
 class DataStoreLocalStorageTest {
     @Test
-    fun `load saved profile`() = runTest {
+    fun `profile flow emits the saved profile`() = runTest {
         val dataStore = FakeDataStore()
         val store = DataStoreLocalStorage(dataStore)
 
         val profile = profile()
         store.saveProfile(profile)
 
-        val savedProfile = store.loadProfile()
+        val savedProfile = store.profileFlow().first()
         assertEquals(profile, savedProfile)
     }
 
     @Test
-    fun `load profile returns null when nothing is stored`() = runTest {
+    fun `profile flow emits null when nothing is stored`() = runTest {
         val store = DataStoreLocalStorage(FakeDataStore())
 
-        val savedProfile = store.loadProfile()
+        val savedProfile = store.profileFlow().first()
 
         assertNull(savedProfile)
     }

@@ -17,12 +17,13 @@
 package com.wasylews.mykompot.data
 
 import com.wasylews.mykompot.domain.model.Profile
+import kotlinx.coroutines.flow.Flow
 
 interface LocalStorage {
     suspend fun saveProfile(profile: Profile)
 
     /**
-     * Loads the saved profile, or `null` when nothing usable is cached.
+     * Emits the saved profile, or `null` when nothing usable is cached.
      */
-    suspend fun loadProfile(): Profile?
+    fun profileFlow(): Flow<Profile?>
 }

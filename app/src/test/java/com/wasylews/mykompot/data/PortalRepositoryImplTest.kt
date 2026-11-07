@@ -18,6 +18,9 @@ package com.wasylews.mykompot.data
 
 import com.wasylews.mykompot.domain.model.LoginResult
 import com.wasylews.mykompot.domain.model.Profile
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.runTest
@@ -74,11 +77,11 @@ class PortalRepositoryImplTest {
     }
 
     @Test
-    fun `load saved profile`() = runTest {
+    fun `profile flow emits the saved profile`() = runTest {
         val repo = createPortalRepository(testScheduler)
         repo.login("user", "pass")
 
-        val profile = requireNotNull(repo.loadProfile())
+        val profile = requireNotNull(repo.profileFlow().first())
         assertTrue(profile.isActive)
         assertEquals("300GRN_100mb", profile.tariffPlan.name)
     }
@@ -114,11 +117,11 @@ private class FakePortalApi(
 }
 
 private class FakeLocalStorage : LocalStorage {
-    private var savedProfile: Profile? = null
+    private val savedProfile = MutableStateFlow<Profile?>(null)
 
     override suspend fun saveProfile(profile: Profile) {
-        savedProfile = profile
+        savedProfile.value = profile
     }
 
-    override suspend fun loadProfile(): Profile? = savedProfile
+    override fun profileFlow(): Flow<Profile?> = savedProfile
 }

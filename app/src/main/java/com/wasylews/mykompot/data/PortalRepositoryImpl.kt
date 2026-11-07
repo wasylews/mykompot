@@ -76,7 +76,7 @@ class PortalRepositoryImpl(
         )
     }
 
-    override suspend fun loadProfile(): Profile? = localStorage.loadProfile()
+    override fun profileFlow(): Flow<Profile?> = localStorage.profileFlow()
 
     override fun sessionFlow(): Flow<String?> {
         TODO("Not yet implemented")

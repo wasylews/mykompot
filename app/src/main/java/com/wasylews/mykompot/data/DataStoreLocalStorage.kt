@@ -19,7 +19,8 @@ package com.wasylews.mykompot.data
 import androidx.datastore.core.DataStore
 import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.TariffPlan
-import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import org.koin.core.annotation.Singleton
 import java.time.LocalDate
@@ -32,7 +33,7 @@ class DataStoreLocalStorage(
         profileDataStore.updateData { profile.toEntity() }
     }
 
-    override suspend fun loadProfile(): Profile? = profileDataStore.data.firstOrNull()?.toDomain()
+    override fun profileFlow(): Flow<Profile?> = profileDataStore.data.map { it?.toDomain() }
 }
 
 @Serializable

@@ -26,7 +26,7 @@ interface PortalRepository {
         password: String,
     ): LoginResult
 
-    suspend fun loadProfile(): Profile?
+    fun profileFlow(): Flow<Profile?>
 
     fun sessionFlow(): Flow<String?>
 }

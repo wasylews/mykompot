@@ -34,7 +34,7 @@ class FakePortalRepository(
         password: String,
     ): LoginResult = result
 
-    override suspend fun loadProfile(): Profile? = profile
+    override fun profileFlow(): Flow<Profile?> = flowOf(profile)
 
     override fun sessionFlow(): Flow<String?> = flowOf(session)
 }

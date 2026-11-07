@@ -18,6 +18,7 @@ package com.wasylews.mykompot.domain
 
 import com.wasylews.mykompot.domain.model.AccountStatus
 import com.wasylews.mykompot.domain.repository.PortalRepository
+import kotlinx.coroutines.flow.first
 import org.koin.core.annotation.Factory
 import java.time.LocalDate
 import java.time.ZoneId
@@ -34,7 +35,7 @@ class GetStatusUseCase(
     private val clock: Clock,
 ) : GetStatus {
     override suspend operator fun invoke(): AccountStatus {
-        val profile = repository.loadProfile() ?: return AccountStatus.NoProfile
+        val profile = repository.profileFlow().first() ?: return AccountStatus.NoProfile
         val daysLeft = ChronoUnit.DAYS.between(clock.today(), profile.nextPaymentDate)
         val state = when {
             !profile.isActive -> AccountStatus.State.PAYMENT_DUE
