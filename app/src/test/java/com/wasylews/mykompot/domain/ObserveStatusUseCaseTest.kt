@@ -19,23 +19,24 @@ package com.wasylews.mykompot.domain
 import com.wasylews.mykompot.domain.model.AccountStatus
 import com.wasylews.mykompot.presentation.FakePortalRepository
 import com.wasylews.mykompot.presentation.profile
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.time.LocalDate
 
-class GetStatusUseCaseTest {
+class ObserveStatusUseCaseTest {
     @Test
     fun `load account status`() = runTest {
         // GIVEN
         val clock = MutableClock(LocalDate.of(2026, 10, 20))
-        val useCase = GetStatusUseCase(
+        val useCase = ObserveStatusUseCase(
             repository = FakePortalRepository(),
             clock = clock,
         )
 
         // WHEN
-        val result = useCase()
+        val result = useCase.statusFlow().first()
 
         // THEN
         val status = result as AccountStatus.Known
@@ -46,13 +47,13 @@ class GetStatusUseCaseTest {
     fun `load user profile 3 days before due date`() = runTest {
         // GIVEN
         val clock = MutableClock(LocalDate.of(2026, 10, 29))
-        val useCase = GetStatusUseCase(
+        val useCase = ObserveStatusUseCase(
             repository = FakePortalRepository(profile = profile()),
             clock = clock,
         )
 
         // WHEN
-        val result = useCase()
+        val result = useCase.statusFlow().first()
 
         // THEN
         val status = result as AccountStatus.Known
@@ -64,7 +65,7 @@ class GetStatusUseCaseTest {
     fun `inactive profile is payment due regardless of date`() = runTest {
         // GIVEN
         val clock = MutableClock(LocalDate.of(2026, 10, 20))
-        val useCase = GetStatusUseCase(
+        val useCase = ObserveStatusUseCase(
             repository = FakePortalRepository(
                 profile = profile().copy(
                     isActive = false,
@@ -75,7 +76,7 @@ class GetStatusUseCaseTest {
         )
 
         // WHEN
-        val result = useCase()
+        val result = useCase.statusFlow().first()
 
         // THEN
         val status = result as AccountStatus.Known
@@ -85,13 +86,13 @@ class GetStatusUseCaseTest {
     @Test
     fun `no cached profile`() = runTest {
         // GIVEN
-        val useCase = GetStatusUseCase(
+        val useCase = ObserveStatusUseCase(
             repository = FakePortalRepository(profile = null),
             clock = MutableClock(LocalDate.of(2026, 10, 20)),
         )
 
         // WHEN
-        val result = useCase()
+        val result = useCase.statusFlow().first()
 
         // THEN
         assertEquals(AccountStatus.NoProfile, result)

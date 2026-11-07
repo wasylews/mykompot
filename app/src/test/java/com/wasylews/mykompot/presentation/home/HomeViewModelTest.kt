@@ -45,7 +45,7 @@ class HomeViewModelTest : BaseViewModelTest() {
     @Test
     fun `initial state is loading`() = runTest {
         // GIVEN
-        val vm = HomeViewModel(FakeGetStatusUseCase(allGoodStatus))
+        val vm = HomeViewModel(FakeObserveStatusUseCase(allGoodStatus))
 
         // WHEN
         val state = vm.uiState.value
@@ -57,7 +57,7 @@ class HomeViewModelTest : BaseViewModelTest() {
     @Test
     fun `get current state`() = runTest {
         // GIVEN
-        val vm = HomeViewModel(FakeGetStatusUseCase(allGoodStatus))
+        val vm = HomeViewModel(FakeObserveStatusUseCase(allGoodStatus))
 
         // WHEN
         advanceUntilIdle()
@@ -78,7 +78,7 @@ class HomeViewModelTest : BaseViewModelTest() {
     @Test
     fun `get payment due state`() = runTest {
         // GIVEN
-        val vm = HomeViewModel(FakeGetStatusUseCase(paymentDueStatus))
+        val vm = HomeViewModel(FakeObserveStatusUseCase(paymentDueStatus))
 
         // WHEN
         advanceUntilIdle()
@@ -99,7 +99,7 @@ class HomeViewModelTest : BaseViewModelTest() {
     @Test
     fun `no cached profile maps to no account`() = runTest {
         // GIVEN
-        val vm = HomeViewModel(FakeGetStatusUseCase(AccountStatus.NoProfile))
+        val vm = HomeViewModel(FakeObserveStatusUseCase(AccountStatus.NoProfile))
 
         // WHEN
         advanceUntilIdle()
@@ -112,7 +112,7 @@ class HomeViewModelTest : BaseViewModelTest() {
     @Test
     fun `profile load error maps to error`() = runTest {
         // GIVEN
-        val vm = HomeViewModel(FakeGetStatusUseCase(error = IOException()))
+        val vm = HomeViewModel(FakeObserveStatusUseCase(error = IOException()))
 
         // WHEN
         advanceUntilIdle()
@@ -125,7 +125,7 @@ class HomeViewModelTest : BaseViewModelTest() {
     @Test
     fun `cancellation is not mapped to error`() = runTest {
         // GIVEN
-        val vm = HomeViewModel(FakeGetStatusUseCase(error = CancellationException()))
+        val vm = HomeViewModel(FakeObserveStatusUseCase(error = CancellationException()))
 
         // WHEN
         advanceUntilIdle()

@@ -18,32 +18,37 @@ package com.wasylews.mykompot.domain
 
 import com.wasylews.mykompot.domain.model.AccountStatus
 import com.wasylews.mykompot.domain.repository.PortalRepository
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Factory
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import kotlin.time.Clock
 
-interface GetStatus {
-    suspend operator fun invoke(): AccountStatus
+interface ObserveStatus {
+    fun statusFlow(): Flow<AccountStatus>
 }
 
 @Factory
-class GetStatusUseCase(
+class ObserveStatusUseCase(
     private val repository: PortalRepository,
     private val clock: Clock,
-) : GetStatus {
-    override suspend operator fun invoke(): AccountStatus {
-        val profile = repository.profileFlow().first() ?: return AccountStatus.NoProfile
-        val daysLeft = ChronoUnit.DAYS.between(clock.today(), profile.nextPaymentDate)
-        val state = when {
-            !profile.isActive -> AccountStatus.State.PAYMENT_DUE
-            daysLeft <= PAYMENT_DUE_WINDOW_DAYS -> AccountStatus.State.PAYMENT_DUE
-            else -> AccountStatus.State.ALL_GOOD
+) : ObserveStatus {
+    override fun statusFlow(): Flow<AccountStatus> = repository.profileFlow()
+        .map { profile ->
+            if (profile == null) {
+                AccountStatus.NoProfile
+            } else {
+                val daysLeft = ChronoUnit.DAYS.between(clock.today(), profile.nextPaymentDate)
+                val state = when {
+                    !profile.isActive -> AccountStatus.State.PAYMENT_DUE
+                    daysLeft <= PAYMENT_DUE_WINDOW_DAYS -> AccountStatus.State.PAYMENT_DUE
+                    else -> AccountStatus.State.ALL_GOOD
+                }
+                AccountStatus.Known(state, profile, daysLeft)
+            }
         }
-        return AccountStatus.Known(state, profile, daysLeft)
-    }
 
     private fun Clock.today(): LocalDate = java.time.Instant
         .ofEpochMilli(now().toEpochMilliseconds())

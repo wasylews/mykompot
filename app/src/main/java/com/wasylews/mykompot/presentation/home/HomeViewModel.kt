@@ -20,33 +20,31 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wasylews.mykompot.R
-import com.wasylews.mykompot.domain.GetStatus
+import com.wasylews.mykompot.domain.ObserveStatus
 import com.wasylews.mykompot.domain.model.AccountStatus
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import org.koin.core.annotation.KoinViewModel
 
 @KoinViewModel
 class HomeViewModel(
-    private val getStatusUseCase: GetStatus,
+    observeStatusUseCase: ObserveStatus,
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
-    val uiState: StateFlow<HomeUiState> = _uiState
-
-    init {
-        viewModelScope.launch {
-            _uiState.value = loadState()
+    val uiState: StateFlow<HomeUiState> = observeStatusUseCase.statusFlow()
+        .map { it.toHomeUiState() }
+        .catch { error ->
+            if (error is CancellationException) throw error
+            emit(HomeUiState.Error)
         }
-    }
-
-    private suspend fun loadState(): HomeUiState = runCatching {
-        getStatusUseCase().toHomeUiState()
-    }.getOrElse { error ->
-        if (error is CancellationException) throw error
-        HomeUiState.Error
-    }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = HomeUiState.Loading,
+        )
 
     private fun AccountStatus.toHomeUiState(): HomeUiState = when (this) {
         is AccountStatus.Known -> {

@@ -16,12 +16,17 @@
 
 package com.wasylews.mykompot.presentation.home
 
-import com.wasylews.mykompot.domain.GetStatus
+import com.wasylews.mykompot.domain.ObserveStatus
 import com.wasylews.mykompot.domain.model.AccountStatus
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 
-class FakeGetStatusUseCase(
+class FakeObserveStatusUseCase(
     private val status: AccountStatus = AccountStatus.NoProfile,
     private val error: Throwable? = null,
-) : GetStatus {
-    override suspend fun invoke(): AccountStatus = error?.let { throw it } ?: status
+) : ObserveStatus {
+    override fun statusFlow(): Flow<AccountStatus> = flow {
+        error?.let { throw it }
+        emit(status)
+    }
 }
