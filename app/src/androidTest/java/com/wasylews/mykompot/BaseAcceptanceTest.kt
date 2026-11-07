@@ -16,8 +16,10 @@
 
 package com.wasylews.mykompot
 
+import androidx.annotation.StringRes
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -26,10 +28,14 @@ import androidx.compose.ui.test.performTextInput
 import androidx.datastore.core.DataStore
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
+import com.wasylews.mykompot.data.LocalStorage
 import com.wasylews.mykompot.data.ProfileEntity
+import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.presentation.main.MainActivity
 import kotlinx.coroutines.runBlocking
+import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.SocketEffect
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -38,6 +44,7 @@ import org.koin.core.context.unloadKoinModules
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.koin.test.KoinTest
+import org.koin.test.get
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -71,6 +78,15 @@ abstract class BaseAcceptanceTest : KoinTest {
 
     protected fun launch(): ActivityScenario<MainActivity> = ActivityScenario.launch(MainActivity::class.java)
 
+    protected fun givenStoredSession(
+        sid: String = "test-session",
+        profile: Profile? = null,
+    ) = runBlocking {
+        val storage = get<LocalStorage>()
+        storage.saveSession(sid)
+        if (profile != null) storage.saveProfile(profile)
+    }
+
     protected fun performLogin() {
         waitForNodeWithStringRes(R.string.username).performTextInput("user")
         waitForNodeWithStringRes(R.string.password).performTextInput("pass")
@@ -84,6 +100,46 @@ abstract class BaseAcceptanceTest : KoinTest {
         val string = stringRes(res)
         composeRule.waitUntilExactlyOneExists(hasText(string), timeoutMillis)
         return composeRule.onNodeWithText(string)
+    }
+
+    protected fun assertShows(@StringRes res: Int) {
+        waitForNodeWithStringRes(res).assertIsDisplayed()
+    }
+
+    protected fun givenServerResponse(
+        body: String = "",
+        status: Int = 200,
+        headers: Map<String, String> = emptyMap(),
+    ) {
+        val builder = MockResponse.Builder()
+            .code(status)
+            .body(body)
+        headers.forEach { (name, value) -> builder.addHeader(name, value) }
+        server.enqueue(builder.build())
+    }
+
+    protected fun givenServerReturnsProfile() {
+        givenServerResponse(body = HtmlFixtures.profile())
+    }
+
+    protected fun givenServerReturnsLoginSuccess(sid: String = "test-session") {
+        givenServerResponse(
+            body = HtmlFixtures.profile(),
+            headers = mapOf("Set-Cookie" to "sid=$sid"),
+        )
+    }
+
+    protected fun givenServerIsDown(status: Int = 502) {
+        givenServerResponse(status = status)
+    }
+
+    protected fun givenServerIsUnreachable(body: String = HtmlFixtures.profile()) {
+        server.enqueue(
+            MockResponse.Builder()
+                .body(body)
+                .onResponseBody(SocketEffect.ShutdownConnection)
+                .build(),
+        )
     }
 
     protected fun stringRes(res: Int): String = InstrumentationRegistry.getInstrumentation().targetContext.getString(res)

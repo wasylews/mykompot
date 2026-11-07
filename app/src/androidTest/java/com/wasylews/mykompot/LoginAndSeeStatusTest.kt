@@ -16,9 +16,6 @@
 
 package com.wasylews.mykompot
 
-import androidx.compose.ui.test.assertIsDisplayed
-import mockwebserver3.MockResponse
-import mockwebserver3.SocketEffect
 import org.junit.Test
 import kotlin.time.Duration.Companion.days
 
@@ -26,21 +23,21 @@ class LoginAndSeeStatusTest : BaseAcceptanceTest() {
     @Test
     fun loginAndSeeAllGood() {
         // GIVEN server is up
-        server.enqueue(MockResponse(body = HtmlFixtures.profile()))
+        givenServerReturnsProfile()
 
         launch().use {
             // WHEN I log in
             performLogin()
 
             // THEN I see the status
-            waitForNodeWithStringRes(R.string.status_all_good).assertIsDisplayed()
+            assertShows(R.string.status_all_good)
         }
     }
 
     @Test
     fun loginAndSeePaymentDue() {
         // GIVEN server is up
-        server.enqueue(MockResponse(body = HtmlFixtures.profile()))
+        givenServerReturnsProfile()
         // AND current date set past due date
         clock.advanceBy(30.days)
 
@@ -49,53 +46,49 @@ class LoginAndSeeStatusTest : BaseAcceptanceTest() {
             performLogin()
 
             // THEN I see the payment due
-            waitForNodeWithStringRes(R.string.status_payment_due).assertIsDisplayed()
+            assertShows(R.string.status_payment_due)
         }
     }
 
     @Test
     fun loginFailed() {
         // GIVEN server is up
-        server.enqueue(MockResponse(body = HtmlFixtures.loginFailed()))
+        givenServerResponse(body = HtmlFixtures.loginFailed())
 
         launch().use {
             // WHEN I log in with wrong credentials
             performLogin()
 
             // THEN I see the error message
-            waitForNodeWithStringRes(R.string.error_invalid_credentials).assertIsDisplayed()
+            assertShows(R.string.error_invalid_credentials)
         }
     }
 
     @Test
     fun connectionIssues() {
         // GIVEN no connection
-        val response = MockResponse.Builder()
-            .body(HtmlFixtures.profile())
-            .onResponseBody(SocketEffect.ShutdownConnection)
-            .build()
-        server.enqueue(response)
+        givenServerIsUnreachable()
 
         launch().use {
             // WHEN I try to log in
             performLogin()
 
             // THEN I see the error message
-            waitForNodeWithStringRes(R.string.error_no_connection).assertIsDisplayed()
+            assertShows(R.string.error_no_connection)
         }
     }
 
     @Test
     fun serverIssues() {
         // GIVEN server is down
-        server.enqueue(MockResponse(502))
+        givenServerIsDown()
 
         launch().use {
             // WHEN I try to log in
             performLogin()
 
             // THEN I see the error message
-            waitForNodeWithStringRes(R.string.error_server).assertIsDisplayed()
+            assertShows(R.string.error_server)
         }
     }
 }

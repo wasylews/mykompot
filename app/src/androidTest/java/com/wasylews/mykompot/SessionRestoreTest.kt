@@ -16,30 +16,23 @@
 
 package com.wasylews.mykompot
 
-import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithText
-import mockwebserver3.MockResponse
 import org.junit.Test
 
 class SessionRestoreTest : BaseAcceptanceTest() {
     @Test
     fun reopeningTheAppKeepsTheSession() {
         // GIVEN a successful login
-        server.enqueue(
-            MockResponse.Builder()
-                .body(HtmlFixtures.profile())
-                .addHeader("Set-Cookie", "sid=test-session")
-                .build(),
-        )
+        givenServerReturnsLoginSuccess()
         launch().use {
             performLogin()
-            waitForNodeWithStringRes(R.string.status_all_good).assertIsDisplayed()
+            assertShows(R.string.status_all_good)
         }
 
         // WHEN I reopen the app
         launch().use {
             // THEN I see the status without logging in
-            waitForNodeWithStringRes(R.string.status_all_good).assertIsDisplayed()
+            assertShows(R.string.status_all_good)
             assertLoginFormIsHidden()
         }
     }
