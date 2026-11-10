@@ -56,7 +56,7 @@ class SpotlessConventionPlugin : Plugin<Project> {
             format("kts") {
                 target("*.kts")
                 // Look for the first line that doesn't have a block comment (assumed to be the license)
-                licenseHeaderFile(rootDir.resolve("spotless/copyright.kts"), "(^(?![\\/ ]\\*).*$)")
+                licenseHeaderFile(rootDir.resolve("spotless/copyright.kts"), "(^(?![\\/ ]\\*)[^\\s].*$)")
                 endWithNewline()
             }
         }
@@ -76,7 +76,7 @@ class SpotlessConventionPlugin : Plugin<Project> {
                 target("build-logic/*.kts")
                 target("build-logic/convention/*.kts")
                 // Look for the first line that doesn't have a block comment (assumed to be the license)
-                licenseHeaderFile(rootDir.resolve("spotless/copyright.kts"), "(^(?![\\/ ]\\*).*$)")
+                licenseHeaderFile(rootDir.resolve("spotless/copyright.kts"), "(^(?![\\/ ]\\*)[^\\s].*$)")
                 endWithNewline()
             }
         }
