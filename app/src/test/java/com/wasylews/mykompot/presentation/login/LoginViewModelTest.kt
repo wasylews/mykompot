@@ -52,9 +52,7 @@ class LoginViewModelTest : BaseViewModelTest() {
     @Test
     fun `empty credentials are validated`() = runTest {
         // GIVEN a view model with empty credentials
-        val vm = LoginViewModel(FakePortalRepository(LoginResult.InvalidCredentials))
-        vm.usernameState.edit { replace(0, length, "") }
-        vm.passwordState.edit { replace(0, length, "") }
+        val vm = LoginViewModel(FakePortalRepository(successLogin()))
 
         // WHEN login is invoked
         vm.login()

@@ -35,7 +35,7 @@ class ObserveSessionUseCaseTest {
     }
 
     @Test
-    fun `stored session returns LoggedOut`() = runTest {
+    fun `stored session returns LoggedIn`() = runTest {
         val useCase = ObserveSessionUseCase(FakePortalRepository(session = "session-id"))
 
         useCase.sessionStateFlow().test {
