@@ -17,12 +17,15 @@
 package com.wasylews.mykompot
 
 import androidx.compose.ui.test.onNodeWithText
+import com.wasylews.mykompot.domain.model.Profile
+import com.wasylews.mykompot.domain.model.TariffPlan
 import org.junit.Test
+import java.time.LocalDate
 
-class SessionRestoreTest : BaseAcceptanceTest() {
+class ReturningUserSkipsLoginTest : BaseAcceptanceTest() {
     @Test
-    fun reopeningTheAppKeepsTheSession() {
-        // GIVEN a successful login
+    fun skipsLoginAndShowsStatus() {
+        // GIVEN a saved session
         givenServerReturnsLoginSuccess()
         launch().use {
             performLogin()
@@ -33,6 +36,27 @@ class SessionRestoreTest : BaseAcceptanceTest() {
         launch().use {
             // THEN I see the status without logging in
             assertShows(R.string.status_all_good)
+            assertLoginFormIsHidden()
+        }
+    }
+
+    @Test
+    fun showsPaymentDueStatus() {
+        // GIVEN a saved session with a payment-due profile
+        givenStoredSession(profile = Profile(
+            isActive = true,
+            nextPaymentDate = LocalDate.of(2026, 10, 2),
+            tariffPlan = TariffPlan(
+                name = "[35] 300GRN_100mb",
+                speed = 100,
+                price = 300,
+            ),
+        ))
+
+        launch().use {
+            // WHEN I open the app
+            // THEN I see the payment due status without logging in
+            assertShows(R.string.status_payment_due)
             assertLoginFormIsHidden()
         }
     }

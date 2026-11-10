@@ -17,11 +17,20 @@
 package com.wasylews.mykompot
 
 import org.junit.Test
-import kotlin.time.Duration.Companion.days
 
-class LoginAndSeeStatusTest : BaseAcceptanceTest() {
+class SignInFlowTest : BaseAcceptanceTest() {
     @Test
-    fun loginAndSeeAllGood() {
+    fun showsLoginWhenOpenedWithoutSession() {
+        // GIVEN no saved session
+
+        launch().use {
+            // THEN I see the login form
+            assertShows(R.string.username)
+        }
+    }
+
+    @Test
+    fun signInSucceedsAndShowsStatus() {
         // GIVEN server is up
         givenServerReturnsProfile()
 
@@ -35,23 +44,7 @@ class LoginAndSeeStatusTest : BaseAcceptanceTest() {
     }
 
     @Test
-    fun loginAndSeePaymentDue() {
-        // GIVEN server is up
-        givenServerReturnsProfile()
-        // AND current date set past due date
-        clock.advanceBy(30.days)
-
-        launch().use {
-            // WHEN I log in
-            performLogin()
-
-            // THEN I see the payment due
-            assertShows(R.string.status_payment_due)
-        }
-    }
-
-    @Test
-    fun loginFailed() {
+    fun signInFailsWithInvalidCredentials() {
         // GIVEN server is up
         givenServerResponse(body = HtmlFixtures.loginFailed())
 
@@ -65,7 +58,7 @@ class LoginAndSeeStatusTest : BaseAcceptanceTest() {
     }
 
     @Test
-    fun connectionIssues() {
+    fun signInFailsWhenOffline() {
         // GIVEN no connection
         givenServerIsUnreachable()
 
@@ -79,7 +72,7 @@ class LoginAndSeeStatusTest : BaseAcceptanceTest() {
     }
 
     @Test
-    fun serverIssues() {
+    fun signInFailsWhenServerUnavailable() {
         // GIVEN server is down
         givenServerIsDown()
 

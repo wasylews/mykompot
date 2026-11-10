@@ -37,6 +37,7 @@ import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketEffect
 import org.junit.After
+import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Rule
 import org.koin.core.context.loadKoinModules
@@ -45,6 +46,7 @@ import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.koin.test.KoinTest
 import org.koin.test.get
+import java.util.concurrent.TimeUnit
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -102,7 +104,9 @@ abstract class BaseAcceptanceTest : KoinTest {
         return composeRule.onNodeWithText(string)
     }
 
-    protected fun assertShows(@StringRes res: Int) {
+    protected fun assertShows(
+        @StringRes res: Int,
+    ) {
         waitForNodeWithStringRes(res).assertIsDisplayed()
     }
 
@@ -140,6 +144,10 @@ abstract class BaseAcceptanceTest : KoinTest {
                 .onResponseBody(SocketEffect.ShutdownConnection)
                 .build(),
         )
+    }
+
+    protected fun assertRefreshRequested() {
+        assertNotNull(server.takeRequest(2, TimeUnit.SECONDS))
     }
 
     protected fun stringRes(res: Int): String = InstrumentationRegistry.getInstrumentation().targetContext.getString(res)
