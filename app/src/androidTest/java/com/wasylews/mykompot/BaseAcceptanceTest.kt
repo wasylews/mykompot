@@ -110,6 +110,14 @@ abstract class BaseAcceptanceTest : KoinTest {
         waitForNodeWithStringRes(res).assertIsDisplayed()
     }
 
+    protected fun assertDoesNotShow(
+        @StringRes res: Int,
+    ) {
+        composeRule
+            .onNodeWithText(stringRes(res))
+            .assertDoesNotExist()
+    }
+
     protected fun givenServerResponse(
         body: String = "",
         status: Int = 200,

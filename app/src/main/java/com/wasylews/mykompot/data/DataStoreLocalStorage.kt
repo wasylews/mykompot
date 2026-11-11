@@ -47,7 +47,7 @@ class DataStoreLocalStorage(
 @Serializable
 data class ProfileEntity(
     val isActive: Boolean,
-    val nextPaymentDate: String,
+    val nextPaymentDate: String?,
     val tariffPlan: TariffPlanEntity,
 )
 
@@ -60,13 +60,13 @@ data class TariffPlanEntity(
 
 private fun Profile.toEntity() = ProfileEntity(
     isActive = isActive,
-    nextPaymentDate = nextPaymentDate.toString(),
+    nextPaymentDate = nextPaymentDate?.toString(),
     tariffPlan = tariffPlan.toEntity(),
 )
 
 private fun ProfileEntity.toDomain() = Profile(
     isActive = isActive,
-    nextPaymentDate = LocalDate.parse(nextPaymentDate),
+    nextPaymentDate = nextPaymentDate?.let { LocalDate.parse(nextPaymentDate) },
     tariffPlan = tariffPlan.toDomain(),
 )
 

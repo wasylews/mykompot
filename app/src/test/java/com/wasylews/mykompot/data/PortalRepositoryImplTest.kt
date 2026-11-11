@@ -31,7 +31,6 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 import okio.IOException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import retrofit2.HttpException
 import retrofit2.Response
@@ -49,7 +48,7 @@ class PortalRepositoryImplTest {
 
     @Test
     fun `login with valid credentials`() = runTest {
-        val repo = createPortalRepository(testScheduler, FakePortalApi(activeProfile()))
+        val repo = createPortalRepository(testScheduler, FakePortalApi(activeProfileResponse()))
 
         val result = repo.login("user", "pass")
 
@@ -58,7 +57,7 @@ class PortalRepositoryImplTest {
 
     @Test
     fun `network error`() = runTest {
-        val portalApi = FakePortalApi(activeProfile(), exception = IOException())
+        val portalApi = FakePortalApi(activeProfileResponse(), exception = IOException())
         val repo = createPortalRepository(testScheduler, portalApi)
         val result = repo.login("user", "pass")
 
@@ -73,7 +72,7 @@ class PortalRepositoryImplTest {
                 "text/plain".toMediaType(),
             ),
         )
-        val portalApi = FakePortalApi(activeProfile(), exception = HttpException(response))
+        val portalApi = FakePortalApi(activeProfileResponse(), exception = HttpException(response))
         val repo = createPortalRepository(testScheduler, portalApi)
         val result = repo.login("user", "pass")
 
@@ -85,11 +84,7 @@ class PortalRepositoryImplTest {
         val repo = createPortalRepository(testScheduler)
         repo.login("user", "pass")
 
-        repo.profileFlow().test {
-            val profile = awaitItem()!!
-            assertTrue(profile.isActive)
-            assertEquals("300GRN_100mb", profile.tariffPlan.name)
-        }
+        repo.expectProfile(profile())
     }
 
     @Test
@@ -105,56 +100,51 @@ class PortalRepositoryImplTest {
 
     @Test
     fun `refresh keeps cached profile on network error`() = runTest {
-        val storage = FakeLocalStorage()
         val cachedProfile = profile()
-        storage.saveSession("test-session")
-        storage.saveProfile(cachedProfile)
-        val api = FakePortalApi(activeProfile(), exception = IOException())
-        val repo = createPortalRepository(
+        val (repo, api) = refreshFixture(
             testScheduler = testScheduler,
-            portalApi = api,
-            localStorage = storage,
+            profile = cachedProfile,
+            api = FakePortalApi(activeProfileResponse(), exception = IOException()),
         )
 
         repo.refresh()
 
         assertEquals(1, api.fetchCalls)
-        repo.profileFlow().test {
-            assertEquals(cachedProfile, awaitItem())
-        }
-        repo.sessionFlow().test {
-            assertEquals("test-session", awaitItem())
-        }
+        repo.expectProfile(cachedProfile)
+        repo.expectSession("test-session")
     }
 
     @Test
     fun `refresh saves fetched profile when cache is empty`() = runTest {
-        val storage = FakeLocalStorage()
-        storage.saveSession("test-session")
-        val api = FakePortalApi(activeProfile())
-        val repo = createPortalRepository(
+        val (repo, api) = refreshFixture(
             testScheduler = testScheduler,
-            portalApi = api,
-            localStorage = storage,
+            api = FakePortalApi(activeProfileResponse()),
         )
 
         repo.refresh()
 
         assertEquals(1, api.fetchCalls)
-        repo.profileFlow().test {
-            assertEquals(
-                profile(),
-                awaitItem(),
-            )
-        }
-        repo.sessionFlow().test {
-            assertEquals("test-session", awaitItem())
-        }
+        repo.expectProfile(profile())
+        repo.expectSession("test-session")
+    }
+
+    @Test
+    fun `refresh saves inactive profile when next payment date is missing`() = runTest {
+        val (repo, api) = refreshFixture(
+            testScheduler = testScheduler,
+            api = FakePortalApi(inactiveProfileResponse()),
+        )
+
+        repo.refresh()
+
+        assertEquals(1, api.fetchCalls)
+        repo.expectProfile(inactiveProfile())
+        repo.expectSession("test-session")
     }
 
     private fun createPortalRepository(
         testScheduler: TestCoroutineScheduler,
-        portalApi: PortalApi = FakePortalApi(activeProfile()),
+        portalApi: PortalApi = FakePortalApi(activeProfileResponse()),
         localStorage: LocalStorage = FakeLocalStorage(),
     ): PortalRepositoryImpl = PortalRepositoryImpl(
         dispatcher = StandardTestDispatcher(testScheduler),
@@ -162,10 +152,45 @@ class PortalRepositoryImplTest {
         localStorage = localStorage,
     )
 
-    private fun activeProfile() = ProfilePageResponse(
+    private suspend fun refreshFixture(
+        testScheduler: TestCoroutineScheduler,
+        profile: Profile? = null,
+        api: FakePortalApi = FakePortalApi(activeProfileResponse()),
+    ): Pair<PortalRepositoryImpl, FakePortalApi> {
+        val storage = FakeLocalStorage().apply {
+            saveSession("test-session")
+            if (profile != null) saveProfile(profile)
+        }
+        val repo = createPortalRepository(
+            testScheduler = testScheduler,
+            portalApi = api,
+            localStorage = storage,
+        )
+        return repo to api
+    }
+
+    private suspend fun PortalRepositoryImpl.expectProfile(expected: Profile?) {
+        profileFlow().test {
+            assertEquals(expected, awaitItem())
+        }
+    }
+
+    private suspend fun PortalRepositoryImpl.expectSession(expected: String?) {
+        sessionFlow().test {
+            assertEquals(expected, awaitItem())
+        }
+    }
+
+    private fun activeProfileResponse() = ProfilePageResponse(
         status = "Enable",
         plan = "300GRN_100mb",
         nextPayment = "Next periodic payments throught days (2026-11-01)",
+    )
+
+    private fun inactiveProfileResponse() = ProfilePageResponse(
+        status = "Too Small Deposit",
+        plan = "300GRN_100mb",
+        nextPayment = null,
     )
 
     private fun failedLogin() = ProfilePageResponse(
@@ -175,11 +200,19 @@ class PortalRepositoryImplTest {
     private fun profile() = Profile(
         isActive = true,
         nextPaymentDate = LocalDate.of(2026, 11, 1),
-        tariffPlan = TariffPlan(
-            name = "300GRN_100mb",
-            speed = 100,
-            price = 300,
-        ),
+        tariffPlan = defaultTariffPlan(),
+    )
+
+    private fun inactiveProfile() = Profile(
+        isActive = false,
+        nextPaymentDate = null,
+        tariffPlan = defaultTariffPlan(),
+    )
+
+    private fun defaultTariffPlan() = TariffPlan(
+        name = "300GRN_100mb",
+        speed = 100,
+        price = 300,
     )
 }
 

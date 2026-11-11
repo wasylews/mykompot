@@ -43,15 +43,17 @@ class ReturningUserSkipsLoginTest : BaseAcceptanceTest() {
     @Test
     fun showsPaymentDueStatus() {
         // GIVEN a saved session with a payment-due profile
-        givenStoredSession(profile = Profile(
-            isActive = true,
-            nextPaymentDate = LocalDate.of(2026, 10, 2),
-            tariffPlan = TariffPlan(
-                name = "[35] 300GRN_100mb",
-                speed = 100,
-                price = 300,
+        givenStoredSession(
+            profile = Profile(
+                isActive = true,
+                nextPaymentDate = LocalDate.of(2026, 10, 2),
+                tariffPlan = TariffPlan(
+                    name = "[35] 300GRN_100mb",
+                    speed = 100,
+                    price = 300,
+                ),
             ),
-        ))
+        )
 
         launch().use {
             // WHEN I open the app

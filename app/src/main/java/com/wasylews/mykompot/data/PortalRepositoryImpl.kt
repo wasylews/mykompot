@@ -62,7 +62,7 @@ class PortalRepositoryImpl(
 
     private fun ProfilePageResponse.toProfile(): Profile? = Profile(
         isActive = accountState == STATUS_ACTIVE,
-        nextPaymentDate = getPaymentDate(nextPayment) ?: return null,
+        nextPaymentDate = getPaymentDate(nextPayment),
         tariffPlan = getTariffPlan(plan) ?: return null,
     )
 
@@ -101,9 +101,7 @@ class PortalRepositoryImpl(
             val profile = page.toProfile() ?: return@withContext
             localStorage.saveProfile(profile)
         } catch (_: HttpException) {
-
         } catch (_: IOException) {
-
         }
     }
 

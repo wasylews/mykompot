@@ -37,7 +37,6 @@ class HomeViewModel(
     observeStatusUseCase: ObserveStatus,
     refreshStatus: RefreshStatus,
 ) : ViewModel() {
-
     init {
         viewModelScope.launch {
             refreshStatus()
@@ -63,7 +62,7 @@ class HomeViewModel(
                 account = this,
                 status = copy.status,
                 message = copy.message,
-                nextChargeLabel = copy.nextChargeLabel,
+                nextChargeLabel = copy.nextChargeLabel.takeIf { daysLeft != null },
             )
         }
 

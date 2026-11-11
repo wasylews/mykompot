@@ -84,6 +84,29 @@ class ObserveStatusUseCaseTest {
     }
 
     @Test
+    fun `inactive profile without next payment date is payment due`() = runTest {
+        // GIVEN
+        val clock = MutableClock(LocalDate.of(2026, 10, 20))
+        val useCase = ObserveStatusUseCase(
+            repository = FakePortalRepository(
+                profile = profile().copy(
+                    isActive = false,
+                    nextPaymentDate = null,
+                ),
+            ),
+            clock = clock,
+        )
+
+        // WHEN
+        val result = useCase.statusFlow().first()
+
+        // THEN
+        val status = result as AccountStatus.Known
+        assertEquals(AccountStatus.State.PAYMENT_DUE, status.state)
+        assertEquals(null, status.daysLeft)
+    }
+
+    @Test
     fun `no cached profile`() = runTest {
         // GIVEN
         val useCase = ObserveStatusUseCase(

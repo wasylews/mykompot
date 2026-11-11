@@ -20,7 +20,7 @@ sealed interface AccountStatus {
     data class Known(
         val state: State,
         val profile: Profile,
-        val daysLeft: Long,
+        val daysLeft: Long?,
     ) : AccountStatus
 
     data object NoProfile : AccountStatus

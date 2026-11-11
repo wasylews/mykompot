@@ -20,6 +20,6 @@ import java.time.LocalDate
 
 data class Profile(
     val isActive: Boolean,
-    val nextPaymentDate: LocalDate,
+    val nextPaymentDate: LocalDate?,
     val tariffPlan: TariffPlan,
 )

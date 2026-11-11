@@ -26,7 +26,7 @@ sealed interface HomeUiState {
         val account: AccountStatus.Known,
         @StringRes val status: Int,
         @StringRes val message: Int,
-        @StringRes val nextChargeLabel: Int,
+        @StringRes val nextChargeLabel: Int?,
     ) : HomeUiState
 
     data object NoAccount : HomeUiState

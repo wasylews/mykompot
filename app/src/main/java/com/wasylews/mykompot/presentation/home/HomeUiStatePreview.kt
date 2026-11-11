@@ -51,11 +51,27 @@ internal fun previewPaymentDueState() = previewAllGoodState.copy(
     nextChargeLabel = R.string.due,
 )
 
+internal val previewPaymentDueNoDateState = HomeUiState.Content(
+    account = AccountStatus.Known(
+        state = AccountStatus.State.PAYMENT_DUE,
+        profile = Profile(
+            isActive = false,
+            nextPaymentDate = null,
+            tariffPlan = TariffPlan(name = "Standart 100", speed = 100, price = 300),
+        ),
+        daysLeft = null,
+    ),
+    status = R.string.status_payment_due,
+    message = R.string.status_payment_due_message,
+    nextChargeLabel = null,
+)
+
 /** Renders one preview per [HomeUiState] variant. */
 class HomeUiStatePreviewParameterProvider : PreviewParameterProvider<HomeUiState> {
     private val states = listOf(
         previewAllGoodState,
         previewPaymentDueState(),
+        previewPaymentDueNoDateState,
         HomeUiState.Loading,
         HomeUiState.NoAccount,
         HomeUiState.Error,
@@ -65,8 +81,13 @@ class HomeUiStatePreviewParameterProvider : PreviewParameterProvider<HomeUiState
 
     override fun getDisplayName(index: Int): String = when (val state = states[index]) {
         is HomeUiState.Content -> when (state.account.state) {
-            AccountStatus.State.ALL_GOOD -> "All good"
-            AccountStatus.State.PAYMENT_DUE -> "Payment due"
+            AccountStatus.State.ALL_GOOD -> {
+                "All good"
+            }
+
+            AccountStatus.State.PAYMENT_DUE -> {
+                if (state.nextChargeLabel == null) "Payment due (no date)" else "Payment due"
+            }
         }
 
         HomeUiState.Loading -> "Loading"

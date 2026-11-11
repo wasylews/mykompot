@@ -84,8 +84,9 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
         givenServerResponse(body = HtmlFixtures.paymentDue())
 
         launch().use {
-            // THEN I see the payment due status
+            // THEN I see the payment due status without a next charge date
             assertShows(R.string.status_payment_due)
+            assertDoesNotShow(R.string.due)
             assertRefreshRequested()
         }
     }

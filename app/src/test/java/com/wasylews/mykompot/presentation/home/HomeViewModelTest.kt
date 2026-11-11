@@ -148,4 +148,33 @@ class HomeViewModelTest : BaseViewModelTest() {
         // THEN
         assertEquals(1, refreshStatus.calls)
     }
+
+    @Test
+    fun `inactive account without next payment date hides next charge`() = runTest {
+        // GIVEN
+        val status = AccountStatus.Known(
+            state = AccountStatus.State.PAYMENT_DUE,
+            profile = profile().copy(
+                isActive = false,
+                nextPaymentDate = null,
+            ),
+            daysLeft = null,
+        )
+        val vm = HomeViewModel(FakeObserveStatusUseCase(status), FakeRefreshStatus())
+
+        // WHEN
+        advanceUntilIdle()
+        val state = vm.uiState.value
+
+        // THEN
+        assertEquals(
+            HomeUiState.Content(
+                account = status,
+                status = R.string.status_payment_due,
+                message = R.string.status_payment_due_message,
+                nextChargeLabel = null,
+            ),
+            state,
+        )
+    }
 }

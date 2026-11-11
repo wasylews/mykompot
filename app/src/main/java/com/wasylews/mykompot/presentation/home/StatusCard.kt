@@ -36,6 +36,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -50,6 +51,7 @@ import androidx.compose.ui.unit.sp
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.model.AccountStatus
 import com.wasylews.mykompot.ui.theme.LocalStatusPalettes
+import com.wasylews.mykompot.ui.theme.MyKompotTheme
 import com.wasylews.mykompot.ui.theme.Spacing
 import com.wasylews.mykompot.ui.theme.StatusColors
 import com.wasylews.mykompot.ui.theme.StatusPalettes
@@ -214,17 +216,19 @@ private fun NextChargeBlock(
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(3.dp),
-        ) {
-            Text(
-                text = stringResource(state.nextChargeLabel).uppercase(),
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.ExtraBold,
-                letterSpacing = 0.95.sp,
-                color = onColor.copy(alpha = 0.65f),
-            )
-            ChargeValue(state = state, onColor = onColor)
+        state.nextChargeLabel?.let {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(3.dp),
+            ) {
+                Text(
+                    text = stringResource(state.nextChargeLabel).uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = 0.95.sp,
+                    color = onColor.copy(alpha = 0.65f),
+                )
+                ChargeValue(state = state, onColor = onColor)
+            }
         }
         // Tariff link
         TariffBlock(onColor, state)
@@ -242,13 +246,13 @@ private fun ChargeValue(
         verticalAlignment = Alignment.Bottom,
         horizontalArrangement = Arrangement.spacedBy(9.dp),
     ) {
-        val date = state.account.profile.nextPaymentDate
+        val date = state.account.profile.nextPaymentDate ?: return
         Text(
             text = chargeDateLabel(date),
             style = MaterialTheme.typography.titleMedium,
             color = onColor,
         )
-        val days = state.account.daysLeft
+        val days = state.account.daysLeft ?: return
         if (!isPaymentDue) {
             Text(
                 text = relativeDayLabel(days),
@@ -299,8 +303,8 @@ private fun TariffBlock(
 fun StatusCardPreview(
     @PreviewParameter(HomeUiStatePreviewParameterProvider::class) state: HomeUiState,
 ) {
-    com.wasylews.mykompot.ui.theme.MyKompotTheme {
-        androidx.compose.material3.Scaffold(
+    MyKompotTheme {
+        Scaffold(
             modifier = Modifier.fillMaxSize(),
             containerColor = MaterialTheme.colorScheme.surface,
         ) { innerPadding ->

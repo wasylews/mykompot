@@ -40,10 +40,12 @@ class ObserveStatusUseCase(
             if (profile == null) {
                 AccountStatus.NoProfile
             } else {
-                val daysLeft = ChronoUnit.DAYS.between(clock.today(), profile.nextPaymentDate)
+                val daysLeft = profile.nextPaymentDate?.let {
+                    ChronoUnit.DAYS.between(clock.today(), it)
+                }
                 val state = when {
                     !profile.isActive -> AccountStatus.State.PAYMENT_DUE
-                    daysLeft <= PAYMENT_DUE_WINDOW_DAYS -> AccountStatus.State.PAYMENT_DUE
+                    daysLeft != null && daysLeft <= PAYMENT_DUE_WINDOW_DAYS -> AccountStatus.State.PAYMENT_DUE
                     else -> AccountStatus.State.ALL_GOOD
                 }
                 AccountStatus.Known(state, profile, daysLeft)

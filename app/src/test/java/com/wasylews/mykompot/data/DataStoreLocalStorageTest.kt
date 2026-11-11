@@ -61,6 +61,17 @@ class DataStoreLocalStorageTest {
     }
 
     @Test
+    fun `profile flow emits the saved profile without next payment date`() = runTest {
+        val store = createLocalStorage()
+
+        val profile = profile().copy(isActive = false, nextPaymentDate = null)
+        store.saveProfile(profile)
+
+        val savedProfile = store.profileFlow().first()
+        assertEquals(profile, savedProfile)
+    }
+
+    @Test
     fun `profile flow emits null when nothing is stored`() = runTest {
         val store = createLocalStorage()
 
@@ -107,6 +118,19 @@ class DataStoreLocalStorageTest {
         val second = createLocalStorage(sessionFile = sessionFile)
 
         assertEquals("test-session", second.sessionFlow().first())
+    }
+
+    @Test
+    fun `profile without next payment date survives a new store instance`() = runTest {
+        val profileFile = File(tmp.root, PROFILE_FILE)
+        val profile = profile().copy(isActive = false, nextPaymentDate = null)
+        val first = createLocalStorage(profileFile = profileFile)
+        first.saveProfile(profile)
+        closeStores()
+
+        val second = createLocalStorage(profileFile = profileFile)
+
+        assertEquals(profile, second.profileFlow().first())
     }
 
     @Test
