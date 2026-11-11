@@ -42,6 +42,14 @@ class DataStoreLocalStorage(
     override suspend fun saveSession(sid: String) {
         sessionDataStore.updateData { sid }
     }
+
+    override suspend fun clearProfile() {
+        profileDataStore.updateData { null }
+    }
+
+    override suspend fun clearSession() {
+        sessionDataStore.updateData { null }
+    }
 }
 
 @Serializable

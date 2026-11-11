@@ -98,6 +98,12 @@ class PortalRepositoryImpl(
             if (!response.isSuccessful) return@withContext
 
             val page = response.body() ?: return@withContext
+            if (page.error != null) {
+                localStorage.clearProfile()
+                localStorage.clearSession()
+                return@withContext
+            }
+
             val profile = page.toProfile() ?: return@withContext
             localStorage.saveProfile(profile)
         } catch (_: HttpException) {

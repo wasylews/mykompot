@@ -142,6 +142,21 @@ class PortalRepositoryImplTest {
         repo.expectSession("test-session")
     }
 
+    @Test
+    fun `refresh clears session when server returns login page`() = runTest {
+        val (repo, api) = refreshFixture(
+            testScheduler = testScheduler,
+            profile = profile(),
+            api = FakePortalApi(failedLogin()),
+        )
+
+        repo.refresh()
+
+        assertEquals(1, api.fetchCalls)
+        repo.expectProfile(null)
+        repo.expectSession(null)
+    }
+
     private fun createPortalRepository(
         testScheduler: TestCoroutineScheduler,
         portalApi: PortalApi = FakePortalApi(activeProfileResponse()),
@@ -256,5 +271,13 @@ private class FakeLocalStorage : LocalStorage {
 
     override suspend fun saveSession(sid: String) {
         savedSession.value = sid
+    }
+
+    override suspend fun clearProfile() {
+        savedProfile.value = null
+    }
+
+    override suspend fun clearSession() {
+        savedSession.value = null
     }
 }

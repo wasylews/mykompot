@@ -30,4 +30,8 @@ interface LocalStorage {
     fun sessionFlow(): Flow<String?>
 
     suspend fun saveSession(sid: String)
+
+    suspend fun clearProfile()
+
+    suspend fun clearSession()
 }
