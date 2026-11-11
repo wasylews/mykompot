@@ -98,16 +98,18 @@ abstract class BaseAcceptanceTest : KoinTest {
     protected fun waitForNodeWithStringRes(
         res: Int,
         timeoutMillis: Long = 5_000,
+        vararg formatArgs: Any,
     ): SemanticsNodeInteraction {
-        val string = stringRes(res)
+        val string = stringRes(res, *formatArgs)
         composeRule.waitUntilExactlyOneExists(hasText(string), timeoutMillis)
         return composeRule.onNodeWithText(string)
     }
 
     protected fun assertShows(
         @StringRes res: Int,
+        vararg formatArgs: Any,
     ) {
-        waitForNodeWithStringRes(res).assertIsDisplayed()
+        waitForNodeWithStringRes(res, formatArgs = formatArgs).assertIsDisplayed()
     }
 
     protected fun assertDoesNotShow(
@@ -158,5 +160,6 @@ abstract class BaseAcceptanceTest : KoinTest {
         assertNotNull(server.takeRequest(2, TimeUnit.SECONDS))
     }
 
-    protected fun stringRes(res: Int): String = InstrumentationRegistry.getInstrumentation().targetContext.getString(res)
+    protected fun stringRes(res: Int, vararg formatArgs: Any): String =
+        InstrumentationRegistry.getInstrumentation().targetContext.getString(res, *formatArgs)
 }
