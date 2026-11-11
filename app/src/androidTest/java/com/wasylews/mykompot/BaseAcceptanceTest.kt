@@ -160,6 +160,8 @@ abstract class BaseAcceptanceTest : KoinTest {
         assertNotNull(server.takeRequest(2, TimeUnit.SECONDS))
     }
 
-    protected fun stringRes(res: Int, vararg formatArgs: Any): String =
-        InstrumentationRegistry.getInstrumentation().targetContext.getString(res, *formatArgs)
+    protected fun stringRes(
+        res: Int,
+        vararg formatArgs: Any,
+    ): String = InstrumentationRegistry.getInstrumentation().targetContext.getString(res, *formatArgs)
 }

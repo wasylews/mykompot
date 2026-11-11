@@ -16,11 +16,18 @@
 
 package com.wasylews.mykompot
 
+import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeDown
 import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.TariffPlan
+import com.wasylews.mykompot.presentation.home.HOME_SCREEN_TEST_TAG
 import org.junit.Test
 import java.time.LocalDate
 
+@OptIn(ExperimentalTestApi::class)
 class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
     @Test
     fun showsCachedStatusWhenOffline() {
@@ -114,6 +121,27 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
         launch().use {
             // THEN I am taken back to login
             assertShows(R.string.username)
+            assertRefreshRequested()
+        }
+    }
+
+    @Test
+    fun refreshesStatusOnPullToRefresh() {
+        // GIVEN a stored session with a cached profile
+        givenStoredSession(profile = allGoodProfile())
+        givenServerReturnsProfile()
+        givenServerReturnsProfile()
+
+        launch().use {
+            // THEN I see the status after the initial refresh
+            assertShows(R.string.status_all_good)
+            assertRefreshRequested()
+
+            // WHEN I pull to refresh
+            composeRule.waitUntilExactlyOneExists(hasTestTag(HOME_SCREEN_TEST_TAG), 5_000)
+            composeRule.onNodeWithTag(HOME_SCREEN_TEST_TAG).performTouchInput { swipeDown() }
+
+            // THEN the status is refreshed again
             assertRefreshRequested()
         }
     }

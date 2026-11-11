@@ -24,8 +24,10 @@ import com.wasylews.mykompot.domain.ObserveStatus
 import com.wasylews.mykompot.domain.RefreshStatus
 import com.wasylews.mykompot.domain.model.AccountStatus
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -35,11 +37,23 @@ import org.koin.core.annotation.KoinViewModel
 @KoinViewModel
 class HomeViewModel(
     observeStatusUseCase: ObserveStatus,
-    refreshStatus: RefreshStatus,
+    private val refreshStatus: RefreshStatus,
 ) : ViewModel() {
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
     init {
+        refresh()
+    }
+
+    fun refresh() {
         viewModelScope.launch {
-            refreshStatus()
+            _isRefreshing.value = true
+            try {
+                refreshStatus()
+            } finally {
+                _isRefreshing.value = false
+            }
         }
     }
 
