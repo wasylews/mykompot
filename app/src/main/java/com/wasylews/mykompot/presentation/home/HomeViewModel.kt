@@ -21,6 +21,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.ObserveStatus
+import com.wasylews.mykompot.domain.RefreshStatus
 import com.wasylews.mykompot.domain.model.AccountStatus
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.SharingStarted
@@ -28,12 +29,21 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
 
 @KoinViewModel
 class HomeViewModel(
     observeStatusUseCase: ObserveStatus,
+    refreshStatus: RefreshStatus,
 ) : ViewModel() {
+
+    init {
+        viewModelScope.launch {
+            refreshStatus()
+        }
+    }
+
     val uiState: StateFlow<HomeUiState> = observeStatusUseCase.statusFlow()
         .map { it.toHomeUiState() }
         .catch { error ->

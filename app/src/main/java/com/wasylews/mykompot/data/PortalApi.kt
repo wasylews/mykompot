@@ -21,7 +21,9 @@ import kotlinx.serialization.Serializable
 import retrofit2.Response
 import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
+import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Query
 
 interface PortalApi {
     @FormUrlEncoded
@@ -29,6 +31,11 @@ interface PortalApi {
     suspend fun login(
         @Field("user") username: String,
         @Field("passwd") password: String,
+    ): Response<ProfilePageResponse>
+
+    @GET("/index.cgi?index=43")
+    suspend fun fetchProfile(
+        @Query("sid") sid: String,
     ): Response<ProfilePageResponse>
 }
 

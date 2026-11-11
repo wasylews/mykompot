@@ -29,10 +29,16 @@ class FakePortalRepository(
     private val profile: Profile? = profile(),
     private val session: String? = null,
 ) : PortalRepository {
+    var refreshCalls = 0
+
     override suspend fun login(
         username: String,
         password: String,
     ): LoginResult = result
+
+    override suspend fun refresh() {
+        refreshCalls++
+    }
 
     override fun profileFlow(): Flow<Profile?> = flowOf(profile)
 

@@ -22,6 +22,7 @@ import com.wasylews.mykompot.domain.model.TariffPlan
 import com.wasylews.mykompot.domain.repository.PortalRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import okio.IOException
 import org.koin.core.annotation.Singleton
@@ -89,6 +90,17 @@ class PortalRepositoryImpl(
         delimiter = "$name=",
         missingDelimiterValue = "",
     ).substringBefore(';').takeIf { it.isNotBlank() }
+
+    override suspend fun refresh() = withContext(dispatcher) {
+        try {
+            val session = sessionFlow().first() ?: return@withContext
+            api.fetchProfile(session)
+        } catch (_: HttpException) {
+
+        } catch (_: IOException) {
+
+        }
+    }
 
     override fun profileFlow(): Flow<Profile?> = localStorage.profileFlow()
 

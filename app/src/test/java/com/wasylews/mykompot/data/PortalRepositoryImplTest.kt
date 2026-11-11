@@ -19,6 +19,7 @@ package com.wasylews.mykompot.data
 import app.cash.turbine.test
 import com.wasylews.mykompot.domain.model.LoginResult
 import com.wasylews.mykompot.domain.model.Profile
+import com.wasylews.mykompot.domain.model.TariffPlan
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -34,6 +35,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import retrofit2.HttpException
 import retrofit2.Response
+import java.time.LocalDate
 
 class PortalRepositoryImplTest {
     @Test
@@ -101,13 +103,38 @@ class PortalRepositoryImplTest {
         }
     }
 
+    @Test
+    fun `refresh keeps cached profile on network error`() = runTest {
+        val storage = FakeLocalStorage()
+        val cachedProfile = profile()
+        storage.saveSession("test-session")
+        storage.saveProfile(cachedProfile)
+        val api = FakePortalApi(activeProfile(), exception = IOException())
+        val repo = createPortalRepository(
+            testScheduler = testScheduler,
+            portalApi = api,
+            localStorage = storage,
+        )
+
+        repo.refresh()
+
+        assertEquals(1, api.fetchCalls)
+        repo.profileFlow().test {
+            assertEquals(cachedProfile, awaitItem())
+        }
+        repo.sessionFlow().test {
+            assertEquals("test-session", awaitItem())
+        }
+    }
+
     private fun createPortalRepository(
         testScheduler: TestCoroutineScheduler,
         portalApi: PortalApi = FakePortalApi(activeProfile()),
+        localStorage: LocalStorage = FakeLocalStorage(),
     ): PortalRepositoryImpl = PortalRepositoryImpl(
         dispatcher = StandardTestDispatcher(testScheduler),
         api = portalApi,
-        localStorage = FakeLocalStorage(),
+        localStorage = localStorage,
     )
 
     private fun activeProfile() = ProfilePageResponse(
@@ -119,12 +146,24 @@ class PortalRepositoryImplTest {
     private fun failedLogin() = ProfilePageResponse(
         error = "Wrong password",
     )
+
+    private fun profile() = Profile(
+        isActive = true,
+        nextPaymentDate = LocalDate.of(2026, 11, 1),
+        tariffPlan = TariffPlan(
+            name = "300GRN_100mb",
+            speed = 100,
+            price = 300,
+        ),
+    )
 }
 
 private class FakePortalApi(
     private val response: ProfilePageResponse,
     private val exception: Exception? = null,
 ) : PortalApi {
+    var fetchCalls = 0
+
     override suspend fun login(
         username: String,
         password: String,
@@ -136,6 +175,12 @@ private class FakePortalApi(
                 .add("Set-Cookie", "sid=test-session")
                 .build(),
         )
+    }
+
+    override suspend fun fetchProfile(cookie: String): Response<ProfilePageResponse> {
+        fetchCalls++
+        exception?.let { throw it }
+        return Response.success(response)
     }
 }
 

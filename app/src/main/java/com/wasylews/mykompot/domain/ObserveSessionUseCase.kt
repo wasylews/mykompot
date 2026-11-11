@@ -22,7 +22,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Factory
 
-interface ObserveSession {
+fun interface ObserveSession {
     fun sessionStateFlow(): Flow<SessionState>
 }
 

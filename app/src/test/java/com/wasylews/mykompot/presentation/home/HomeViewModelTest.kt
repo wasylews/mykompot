@@ -46,7 +46,7 @@ class HomeViewModelTest : BaseViewModelTest() {
     @Test
     fun `initial state is loading`() = runTest {
         // GIVEN
-        val vm = HomeViewModel(FakeObserveStatusUseCase(allGoodStatus))
+        val vm = HomeViewModel(FakeObserveStatusUseCase(allGoodStatus), FakeRefreshStatus())
 
         // WHEN
         val state = vm.uiState.value
@@ -58,7 +58,7 @@ class HomeViewModelTest : BaseViewModelTest() {
     @Test
     fun `get current state`() = runTest {
         // GIVEN
-        val vm = HomeViewModel(FakeObserveStatusUseCase(allGoodStatus))
+        val vm = HomeViewModel(FakeObserveStatusUseCase(allGoodStatus), FakeRefreshStatus())
 
         // WHEN
         advanceUntilIdle()
@@ -79,7 +79,7 @@ class HomeViewModelTest : BaseViewModelTest() {
     @Test
     fun `get payment due state`() = runTest {
         // GIVEN
-        val vm = HomeViewModel(FakeObserveStatusUseCase(paymentDueStatus))
+        val vm = HomeViewModel(FakeObserveStatusUseCase(paymentDueStatus), FakeRefreshStatus())
 
         // WHEN
         advanceUntilIdle()
@@ -100,7 +100,7 @@ class HomeViewModelTest : BaseViewModelTest() {
     @Test
     fun `no cached profile maps to no account`() = runTest {
         // GIVEN
-        val vm = HomeViewModel(FakeObserveStatusUseCase(AccountStatus.NoProfile))
+        val vm = HomeViewModel(FakeObserveStatusUseCase(AccountStatus.NoProfile), FakeRefreshStatus())
 
         // WHEN
         advanceUntilIdle()
@@ -113,7 +113,7 @@ class HomeViewModelTest : BaseViewModelTest() {
     @Test
     fun `profile load error maps to error`() = runTest {
         // GIVEN
-        val vm = HomeViewModel(FakeObserveStatusUseCase(error = IOException()))
+        val vm = HomeViewModel(FakeObserveStatusUseCase(error = IOException()), FakeRefreshStatus())
 
         // WHEN
         advanceUntilIdle()
@@ -126,7 +126,7 @@ class HomeViewModelTest : BaseViewModelTest() {
     @Test
     fun `cancellation is not mapped to error`() = runTest {
         // GIVEN
-        val vm = HomeViewModel(FakeObserveStatusUseCase(error = CancellationException()))
+        val vm = HomeViewModel(FakeObserveStatusUseCase(error = CancellationException()), FakeRefreshStatus())
 
         // WHEN
         advanceUntilIdle()
@@ -134,5 +134,18 @@ class HomeViewModelTest : BaseViewModelTest() {
 
         // THEN
         assertNotEquals(HomeUiState.Error, state)
+    }
+
+    @Test
+    fun `refreshes status on init`() = runTest {
+        // GIVEN
+        val refreshStatus = FakeRefreshStatus()
+
+        // WHEN
+        HomeViewModel(FakeObserveStatusUseCase(allGoodStatus), refreshStatus)
+        advanceUntilIdle()
+
+        // THEN
+        assertEquals(1, refreshStatus.calls)
     }
 }

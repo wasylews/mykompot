@@ -26,7 +26,7 @@ import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import kotlin.time.Clock
 
-interface ObserveStatus {
+fun interface ObserveStatus {
     fun statusFlow(): Flow<AccountStatus>
 }
 
