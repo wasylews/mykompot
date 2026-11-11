@@ -39,8 +39,8 @@ class HomeViewModelTest : BaseViewModelTest() {
 
     private val paymentDueStatus = AccountStatus.Known(
         AccountStatus.State.PAYMENT_DUE,
-        profile().copy(isActive = false),
-        daysLeft = -2,
+        profile(),
+        daysLeft = 2,
     )
 
     @Test
@@ -150,10 +150,10 @@ class HomeViewModelTest : BaseViewModelTest() {
     }
 
     @Test
-    fun `inactive account without next payment date hides next charge`() = runTest {
+    fun `suspended account without next payment date hides next charge`() = runTest {
         // GIVEN
         val status = AccountStatus.Known(
-            state = AccountStatus.State.PAYMENT_DUE,
+            state = AccountStatus.State.SUSPENDED,
             profile = profile().copy(
                 isActive = false,
                 nextPaymentDate = null,
@@ -170,8 +170,8 @@ class HomeViewModelTest : BaseViewModelTest() {
         assertEquals(
             HomeUiState.Content(
                 account = status,
-                status = R.string.status_payment_due,
-                message = R.string.status_payment_due_message,
+                status = R.string.status_suspended,
+                message = R.string.status_suspended_message,
                 nextChargeLabel = null,
             ),
             state,

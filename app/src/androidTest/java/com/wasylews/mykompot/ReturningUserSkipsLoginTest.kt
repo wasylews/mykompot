@@ -16,12 +16,16 @@
 
 package com.wasylews.mykompot
 
+import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
 import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.TariffPlan
 import org.junit.Test
 import java.time.LocalDate
 
+@OptIn(ExperimentalTestApi::class)
 class ReturningUserSkipsLoginTest : BaseAcceptanceTest() {
     @Test
     fun skipsLoginAndShowsStatus() {
@@ -54,12 +58,18 @@ class ReturningUserSkipsLoginTest : BaseAcceptanceTest() {
                 ),
             ),
         )
+        // AND refresh returns the same payment-due profile
+        givenServerResponse(body = HtmlFixtures.paymentDue())
 
         launch().use {
             // WHEN I open the app
             // THEN I see the payment due status without logging in
             assertShows(R.string.status_payment_due)
+            val due = stringRes(R.string.due)
+            composeRule.waitUntilExactlyOneExists(hasText(due, ignoreCase = true), 5_000)
+            composeRule.onNodeWithText(due, ignoreCase = true).assertIsDisplayed()
             assertLoginFormIsHidden()
+            assertRefreshRequested()
         }
     }
 

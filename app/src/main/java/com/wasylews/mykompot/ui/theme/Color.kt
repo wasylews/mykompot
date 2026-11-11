@@ -123,21 +123,34 @@ val StatusColorsUnavailableDark = StatusColors(
     on = Color(0xFFCEC5E8),
 )
 
+val StatusColorsSuspendedLight = StatusColors(
+    container = Color(0xFFFFDDD4),
+    on = Color(0xFF8C2218),
+)
+
+val StatusColorsSuspendedDark = StatusColors(
+    container = Color(0xFF3D1711),
+    on = Color(0xFFFFB8AC),
+)
+
 data class StatusPalettes(
     val allGood: StatusColors,
     val paymentDue: StatusColors,
+    val suspended: StatusColors,
     val unavailable: StatusColors,
 )
 
 val StatusPalettesLight = StatusPalettes(
     allGood = StatusColorsAllGoodLight,
     paymentDue = StatusColorsPaymentDueLight,
+    suspended = StatusColorsSuspendedLight,
     unavailable = StatusColorsUnavailableLight,
 )
 
 val StatusPalettesDark = StatusPalettes(
     allGood = StatusColorsAllGoodDark,
     paymentDue = StatusColorsPaymentDueDark,
+    suspended = StatusColorsSuspendedDark,
     unavailable = StatusColorsUnavailableDark,
 )
 

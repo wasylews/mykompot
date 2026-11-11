@@ -16,6 +16,8 @@
     <string name="status_all_good_message">Your account is active, and your internet is working.</string>
     <string name="status_payment_due">Payment due</string>
     <string name="status_payment_due_message">Top up to keep your internet on.</string>
+    <string name="status_suspended">Suspended</string>
+    <string name="status_suspended_message">Your internet is suspended. Top up to restore service.</string>
     <string name="status_unavailable">Unknown</string>
     <string name="status_unavailable_message">We couldn\'t check your status. Your account may still be fine.</string>
     <string name="tariff">Tariff</string>

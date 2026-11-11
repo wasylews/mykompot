@@ -33,13 +33,23 @@ class ProfilePageResponseTest {
     }
 
     @Test
-    fun `parsing payment due page`() {
-        val page = HtmlFixtures.paymentDue()
+    fun `parsing suspended page`() {
+        val page = HtmlFixtures.suspended()
         val result = Kspoon.parse<ProfilePageResponse>(page)
 
         assertEquals("Too Small Deposit", result.accountState)
         assertEquals("[35] 300GRN_100mb", result.plan)
         assertEquals("", result.nextPayment)
+    }
+
+    @Test
+    fun `parsing payment due page`() {
+        val page = HtmlFixtures.paymentDue()
+        val result = Kspoon.parse<ProfilePageResponse>(page)
+
+        assertEquals("Enable", result.accountState)
+        assertEquals("[35] 300GRN_100mb", result.plan)
+        assertEquals("Next periodic payments throught days (2026-10-02)", result.nextPayment)
     }
 
     @Test

@@ -21,6 +21,8 @@ object HtmlFixtures {
 
     fun paymentDue() = load("payment-due.html")
 
+    fun suspended() = load("suspended.html")
+
     fun loginFailed() = load("login-failed.html")
 
     private fun load(name: String): String = requireNotNull(

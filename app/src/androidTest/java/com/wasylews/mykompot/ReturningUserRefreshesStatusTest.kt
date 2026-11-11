@@ -77,15 +77,15 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
     }
 
     @Test
-    fun showsPaymentDueStatusFetchedFromServer() {
+    fun showsSuspendedStatusFetchedFromServer() {
         // GIVEN a stored session with no cached profile
         givenStoredSession()
-        // AND the server returns a payment-due profile
-        givenServerResponse(body = HtmlFixtures.paymentDue())
+        // AND the server returns a suspended profile
+        givenServerResponse(body = HtmlFixtures.suspended())
 
         launch().use {
-            // THEN I see the payment due status without a next charge date
-            assertShows(R.string.status_payment_due)
+            // THEN I see the suspended status without a next charge date
+            assertShows(R.string.status_suspended)
             assertDoesNotShow(R.string.due)
             assertRefreshRequested()
         }

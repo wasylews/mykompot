@@ -51,9 +51,9 @@ internal fun previewPaymentDueState() = previewAllGoodState.copy(
     nextChargeLabel = R.string.due,
 )
 
-internal val previewPaymentDueNoDateState = HomeUiState.Content(
+internal val previewSuspendedState = HomeUiState.Content(
     account = AccountStatus.Known(
-        state = AccountStatus.State.PAYMENT_DUE,
+        state = AccountStatus.State.SUSPENDED,
         profile = Profile(
             isActive = false,
             nextPaymentDate = null,
@@ -61,8 +61,8 @@ internal val previewPaymentDueNoDateState = HomeUiState.Content(
         ),
         daysLeft = null,
     ),
-    status = R.string.status_payment_due,
-    message = R.string.status_payment_due_message,
+    status = R.string.status_suspended,
+    message = R.string.status_suspended_message,
     nextChargeLabel = null,
 )
 
@@ -71,23 +71,20 @@ class HomeUiStatePreviewParameterProvider : PreviewParameterProvider<HomeUiState
     private val states = listOf(
         previewAllGoodState,
         previewPaymentDueState(),
-        previewPaymentDueNoDateState,
+        previewSuspendedState,
         HomeUiState.Loading,
         HomeUiState.NoAccount,
         HomeUiState.Error,
     )
 
-    override val values = states.asSequence()
+    override val values: Sequence<HomeUiState>
+        get() = states.asSequence()
 
     override fun getDisplayName(index: Int): String = when (val state = states[index]) {
         is HomeUiState.Content -> when (state.account.state) {
-            AccountStatus.State.ALL_GOOD -> {
-                "All good"
-            }
-
-            AccountStatus.State.PAYMENT_DUE -> {
-                if (state.nextChargeLabel == null) "Payment due (no date)" else "Payment due"
-            }
+            AccountStatus.State.ALL_GOOD -> "All good"
+            AccountStatus.State.PAYMENT_DUE -> "Payment due"
+            AccountStatus.State.SUSPENDED -> "Suspended"
         }
 
         HomeUiState.Loading -> "Loading"

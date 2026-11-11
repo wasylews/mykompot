@@ -58,11 +58,11 @@ class ObserveStatusUseCaseTest {
         // THEN
         val status = result as AccountStatus.Known
         assertEquals(AccountStatus.State.PAYMENT_DUE, status.state)
-        assertEquals(-2, status.daysLeft)
+        assertEquals(-2L, status.daysLeft)
     }
 
     @Test
-    fun `inactive profile is payment due regardless of date`() = runTest {
+    fun `inactive profile is suspended regardless of date`() = runTest {
         // GIVEN
         val clock = MutableClock(LocalDate.of(2026, 10, 20))
         val useCase = ObserveStatusUseCase(
@@ -80,11 +80,11 @@ class ObserveStatusUseCaseTest {
 
         // THEN
         val status = result as AccountStatus.Known
-        assertEquals(AccountStatus.State.PAYMENT_DUE, status.state)
+        assertEquals(AccountStatus.State.SUSPENDED, status.state)
     }
 
     @Test
-    fun `inactive profile without next payment date is payment due`() = runTest {
+    fun `inactive profile without next payment date is suspended`() = runTest {
         // GIVEN
         val clock = MutableClock(LocalDate.of(2026, 10, 20))
         val useCase = ObserveStatusUseCase(
@@ -102,7 +102,7 @@ class ObserveStatusUseCaseTest {
 
         // THEN
         val status = result as AccountStatus.Known
-        assertEquals(AccountStatus.State.PAYMENT_DUE, status.state)
+        assertEquals(AccountStatus.State.SUSPENDED, status.state)
         assertEquals(null, status.daysLeft)
     }
 

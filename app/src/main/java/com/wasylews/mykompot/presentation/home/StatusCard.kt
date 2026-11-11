@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -36,7 +35,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -45,6 +44,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -103,7 +103,9 @@ private fun ContentCard(
                 onColor = statusColors.on,
             )
             NextChargeBlock(state = state, onColor = statusColors.on)
-            if (state.account.state == AccountStatus.State.PAYMENT_DUE) {
+            if (state.account.state == AccountStatus.State.PAYMENT_DUE ||
+                state.account.state == AccountStatus.State.SUSPENDED
+            ) {
                 Button(
                     onClick = onPayClick,
                     modifier = Modifier.fillMaxWidth(),
@@ -155,6 +157,7 @@ private fun statusColorsFor(
 ): StatusColors = when (state) {
     AccountStatus.State.ALL_GOOD -> palettes.allGood
     AccountStatus.State.PAYMENT_DUE -> palettes.paymentDue
+    AccountStatus.State.SUSPENDED -> palettes.suspended
 }
 
 @Composable
@@ -298,22 +301,26 @@ private fun TariffBlock(
     }
 }
 
-@PreviewLightDark
+@Preview(name = "States (Light | Dark)", showBackground = true, widthDp = 800)
 @Composable
-fun StatusCardPreview(
+fun StatusCardStatesPreview(
     @PreviewParameter(HomeUiStatePreviewParameterProvider::class) state: HomeUiState,
 ) {
-    MyKompotTheme {
-        Scaffold(
-            modifier = Modifier.fillMaxSize(),
-            containerColor = MaterialTheme.colorScheme.surface,
-        ) { innerPadding ->
-            StatusCard(
-                state = state,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(innerPadding),
-            )
+    Row(modifier = Modifier.fillMaxWidth()) {
+        listOf(false to Color(0xFFF4F3FB), true to Color(0xFF0E0D13)).forEach { (dark, bg) ->
+            MyKompotTheme(darkTheme = dark, dynamicColor = false) {
+                Surface(
+                    modifier = Modifier.weight(1f),
+                    color = bg,
+                ) {
+                    StatusCard(
+                        state = state,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                    )
+                }
+            }
         }
     }
 }

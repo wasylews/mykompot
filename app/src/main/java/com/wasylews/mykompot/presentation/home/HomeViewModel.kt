@@ -83,11 +83,17 @@ class HomeViewModel(
             message = R.string.status_payment_due_message,
             nextChargeLabel = R.string.due,
         )
+
+        AccountStatus.State.SUSPENDED -> StatusCopy(
+            status = R.string.status_suspended,
+            message = R.string.status_suspended_message,
+            nextChargeLabel = null,
+        )
     }
 }
 
 private data class StatusCopy(
     @StringRes val status: Int,
     @StringRes val message: Int,
-    @StringRes val nextChargeLabel: Int,
+    @StringRes val nextChargeLabel: Int?,
 )

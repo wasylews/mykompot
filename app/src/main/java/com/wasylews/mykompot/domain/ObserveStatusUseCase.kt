@@ -44,7 +44,7 @@ class ObserveStatusUseCase(
                     ChronoUnit.DAYS.between(clock.today(), it)
                 }
                 val state = when {
-                    !profile.isActive -> AccountStatus.State.PAYMENT_DUE
+                    !profile.isActive -> AccountStatus.State.SUSPENDED
                     daysLeft != null && daysLeft <= PAYMENT_DUE_WINDOW_DAYS -> AccountStatus.State.PAYMENT_DUE
                     else -> AccountStatus.State.ALL_GOOD
                 }
