@@ -127,6 +127,31 @@ class PortalRepositoryImplTest {
         }
     }
 
+    @Test
+    fun `refresh saves fetched profile when cache is empty`() = runTest {
+        val storage = FakeLocalStorage()
+        storage.saveSession("test-session")
+        val api = FakePortalApi(activeProfile())
+        val repo = createPortalRepository(
+            testScheduler = testScheduler,
+            portalApi = api,
+            localStorage = storage,
+        )
+
+        repo.refresh()
+
+        assertEquals(1, api.fetchCalls)
+        repo.profileFlow().test {
+            assertEquals(
+                profile(),
+                awaitItem(),
+            )
+        }
+        repo.sessionFlow().test {
+            assertEquals("test-session", awaitItem())
+        }
+    }
+
     private fun createPortalRepository(
         testScheduler: TestCoroutineScheduler,
         portalApi: PortalApi = FakePortalApi(activeProfile()),
@@ -177,7 +202,7 @@ private class FakePortalApi(
         )
     }
 
-    override suspend fun fetchProfile(cookie: String): Response<ProfilePageResponse> {
+    override suspend fun fetchProfile(sid: String): Response<ProfilePageResponse> {
         fetchCalls++
         exception?.let { throw it }
         return Response.success(response)

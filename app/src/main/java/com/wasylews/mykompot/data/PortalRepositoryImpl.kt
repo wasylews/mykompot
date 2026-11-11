@@ -94,7 +94,12 @@ class PortalRepositoryImpl(
     override suspend fun refresh() = withContext(dispatcher) {
         try {
             val session = sessionFlow().first() ?: return@withContext
-            api.fetchProfile(session)
+            val response = api.fetchProfile(session)
+            if (!response.isSuccessful) return@withContext
+
+            val page = response.body() ?: return@withContext
+            val profile = page.toProfile() ?: return@withContext
+            localStorage.saveProfile(profile)
         } catch (_: HttpException) {
 
         } catch (_: IOException) {
