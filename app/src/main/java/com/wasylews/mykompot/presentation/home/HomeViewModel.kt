@@ -60,7 +60,7 @@ class HomeViewModel(
         isRefreshing,
     ) { status, isRefreshing ->
         HomeUiState(
-            content = status.toHomeContent(),
+            content = status.toHomeContent(isRefreshing),
             isRefreshing = isRefreshing,
         )
     }
@@ -74,7 +74,7 @@ class HomeViewModel(
             initialValue = HomeUiState(),
         )
 
-    private fun AccountStatus.toHomeContent(): HomeContent = when (this) {
+    private fun AccountStatus.toHomeContent(isRefreshing: Boolean): HomeContent = when (this) {
         is AccountStatus.Known -> {
             val copy = state.toStatusCopy()
             HomeContent.Content(
@@ -86,7 +86,7 @@ class HomeViewModel(
         }
 
         AccountStatus.NoProfile -> {
-            HomeContent.Unavailable
+            if (isRefreshing) HomeContent.Loading else HomeContent.Unavailable
         }
     }
 

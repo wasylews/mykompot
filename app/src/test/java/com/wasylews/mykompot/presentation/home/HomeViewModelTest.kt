@@ -16,6 +16,7 @@
 
 package com.wasylews.mykompot.presentation.home
 
+import app.cash.turbine.test
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.model.AccountStatus
 import com.wasylews.mykompot.presentation.BaseViewModelTest
@@ -48,11 +49,11 @@ class HomeViewModelTest : BaseViewModelTest() {
         // GIVEN
         val vm = HomeViewModel(FakeObserveStatusUseCase(allGoodStatus), FakeRefreshStatus())
 
-        // WHEN
-        val state = vm.uiState.value
-
-        // THEN
-        assertEquals(HomeUiState(), state)
+        // WHEN / THEN
+        vm.uiState.test {
+            assertEquals(HomeContent.Loading, awaitItem().content)
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test
@@ -73,6 +74,7 @@ class HomeViewModelTest : BaseViewModelTest() {
                     message = R.string.status_all_good_message,
                     nextChargeLabel = R.string.next_charge,
                 ),
+                isRefreshing = false,
             ),
             state,
         )
@@ -96,22 +98,41 @@ class HomeViewModelTest : BaseViewModelTest() {
                     message = R.string.status_payment_due_message,
                     nextChargeLabel = R.string.due,
                 ),
+                isRefreshing = false,
             ),
             state,
         )
     }
 
     @Test
-    fun `no cached profile maps to unavailable`() = runTest {
-        // GIVEN
-        val vm = HomeViewModel(FakeObserveStatusUseCase(AccountStatus.NoProfile), FakeRefreshStatus())
+    fun `shows loading while refreshing then unavailable when no cached profile`() = runTest {
+        // GIVEN no cached profile and a refresh that is still in progress
+        val refreshStatus = FakeRefreshStatus().apply { pause() }
+        val vm = HomeViewModel(FakeObserveStatusUseCase(AccountStatus.NoProfile), refreshStatus)
 
-        // WHEN
-        advanceUntilIdle()
-        val state = vm.uiState.value
+        vm.uiState.test {
+            // WHEN the screen opens
+            assertEquals(HomeContent.Loading, awaitItem().content)
 
-        // THEN
-        assertEquals(HomeUiState(content = HomeContent.Unavailable), state)
+            // THEN I see loading while refreshing
+            advanceUntilIdle()
+            assertEquals(
+                HomeUiState(content = HomeContent.Loading, isRefreshing = true),
+                expectMostRecentItem(),
+            )
+
+            // WHEN the refresh completes with no cached profile
+            refreshStatus.resume()
+            advanceUntilIdle()
+
+            // THEN I see the unavailable state
+            assertEquals(
+                HomeUiState(content = HomeContent.Unavailable, isRefreshing = false),
+                awaitItem(),
+            )
+
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test
@@ -124,7 +145,7 @@ class HomeViewModelTest : BaseViewModelTest() {
         val state = vm.uiState.value
 
         // THEN
-        assertEquals(HomeUiState(content = HomeContent.Unavailable), state)
+        assertEquals(HomeUiState(content = HomeContent.Unavailable, isRefreshing = false), state)
     }
 
     @Test

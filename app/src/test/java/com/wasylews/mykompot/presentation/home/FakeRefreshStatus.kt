@@ -17,11 +17,23 @@
 package com.wasylews.mykompot.presentation.home
 
 import com.wasylews.mykompot.domain.RefreshStatus
+import kotlinx.coroutines.CompletableDeferred
 
 class FakeRefreshStatus : RefreshStatus {
     var calls = 0
+    private var gate: CompletableDeferred<Unit>? = null
+
+    fun pause() {
+        gate = CompletableDeferred()
+    }
+
+    fun resume() {
+        gate?.complete(Unit)
+        gate = null
+    }
 
     override suspend fun invoke() {
         calls++
+        gate?.await()
     }
 }
