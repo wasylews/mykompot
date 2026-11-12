@@ -20,17 +20,23 @@ import androidx.annotation.StringRes
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeDown
 import androidx.datastore.core.DataStore
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.wasylews.mykompot.data.LocalStorage
 import com.wasylews.mykompot.data.ProfileEntity
 import com.wasylews.mykompot.domain.model.Profile
+import com.wasylews.mykompot.presentation.home.HOME_LOADING_TEST_TAG
+import com.wasylews.mykompot.presentation.home.HOME_SCREEN_TEST_TAG
 import com.wasylews.mykompot.presentation.main.MainActivity
 import kotlinx.coroutines.runBlocking
 import mockwebserver3.MockResponse
@@ -136,6 +142,15 @@ abstract class BaseAcceptanceTest : KoinTest {
         givenServerResponse(body = HtmlFixtures.profile())
     }
 
+    protected fun givenServerReturnsProfileAfter(delayMillis: Long = 2_000) {
+        server.enqueue(
+            MockResponse.Builder()
+                .body(HtmlFixtures.profile())
+                .bodyDelay(delayMillis, TimeUnit.MILLISECONDS)
+                .build(),
+        )
+    }
+
     protected fun givenServerReturnsLoginSuccess(sid: String = "test-session") {
         givenServerResponse(
             body = HtmlFixtures.profile(),
@@ -147,17 +162,35 @@ abstract class BaseAcceptanceTest : KoinTest {
         givenServerResponse(status = status)
     }
 
-    protected fun givenServerIsUnreachable(body: String = HtmlFixtures.profile()) {
-        server.enqueue(
-            MockResponse.Builder()
-                .body(body)
-                .onResponseBody(SocketEffect.ShutdownConnection)
-                .build(),
-        )
+    protected fun givenServerIsUnreachable(
+        body: String = HtmlFixtures.profile(),
+        delayMillis: Long = 0,
+    ) {
+        val builder = MockResponse.Builder()
+            .body(body)
+            .onResponseBody(SocketEffect.ShutdownConnection)
+        if (delayMillis > 0) {
+            builder.bodyDelay(delayMillis, TimeUnit.MILLISECONDS)
+        }
+        server.enqueue(builder.build())
     }
 
     protected fun assertRefreshRequested() {
         assertNotNull(server.takeRequest(2, TimeUnit.SECONDS))
+    }
+
+    protected fun pullToRefresh() {
+        composeRule.waitUntilExactlyOneExists(hasTestTag(HOME_SCREEN_TEST_TAG), 5_000)
+        composeRule.onNodeWithTag(HOME_SCREEN_TEST_TAG).performTouchInput { swipeDown() }
+    }
+
+    protected fun assertShowsHomeLoading() {
+        composeRule.waitUntilExactlyOneExists(hasTestTag(HOME_LOADING_TEST_TAG), 5_000)
+        composeRule.onNodeWithTag(HOME_LOADING_TEST_TAG).assertIsDisplayed()
+    }
+
+    protected fun assertShowsRefreshError(@StringRes res: Int) {
+        waitForNodeWithStringRes(res).assertIsDisplayed()
     }
 
     protected fun stringRes(

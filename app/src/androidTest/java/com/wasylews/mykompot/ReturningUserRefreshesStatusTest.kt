@@ -16,18 +16,11 @@
 
 package com.wasylews.mykompot
 
-import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.hasTestTag
-import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.swipeDown
 import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.TariffPlan
-import com.wasylews.mykompot.presentation.home.HOME_SCREEN_TEST_TAG
 import org.junit.Test
 import java.time.LocalDate
 
-@OptIn(ExperimentalTestApi::class)
 class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
     @Test
     fun showsCachedStatusWhenOffline() {
@@ -36,8 +29,11 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
         givenServerIsUnreachable()
 
         launch().use {
-            // THEN I see the cached status without an error
+            // THEN I see the cached status without losing it
             assertShows(R.string.status_all_good)
+            assertDoesNotShow(R.string.status_unavailable)
+            // AND a non-blocking refresh error
+            assertShowsRefreshError(R.string.error_no_connection)
             assertRefreshRequested()
         }
     }
@@ -49,8 +45,11 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
         givenServerIsDown()
 
         launch().use {
-            // THEN I see the cached status without an error
+            // THEN I see the cached status without losing it
             assertShows(R.string.status_all_good)
+            assertDoesNotShow(R.string.status_unavailable)
+            // AND a non-blocking refresh error
+            assertShowsRefreshError(R.string.error_server)
             assertRefreshRequested()
         }
     }
@@ -84,6 +83,23 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
     }
 
     @Test
+    fun showsLoadingWhileFetchingWithoutCache() {
+        // GIVEN a stored session with no cached profile and a slow server
+        givenStoredSession()
+        givenServerReturnsProfileAfter()
+
+        launch().use {
+            // THEN I see progress instead of the unavailable status while refreshing
+            assertShowsHomeLoading()
+            assertDoesNotShow(R.string.status_unavailable)
+
+            // AND the status once the server responds
+            assertShows(R.string.status_all_good)
+            assertRefreshRequested()
+        }
+    }
+
+    @Test
     fun showsSuspendedStatusFetchedFromServer() {
         // GIVEN a stored session with no cached profile
         givenStoredSession()
@@ -102,11 +118,38 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
     fun showsUnavailableWhenNoCacheAndOffline() {
         // GIVEN a stored session with no cached profile and no network
         givenStoredSession()
-        givenServerIsUnreachable()
+        givenServerIsUnreachable(delayMillis = 2_000)
 
         launch().use {
-            // THEN I see an error
+            // THEN I see progress instead of the unavailable status while refreshing
+            assertShowsHomeLoading()
+            assertDoesNotShow(R.string.status_unavailable)
+
+            // AND an error once refresh fails with no cache
             assertShows(R.string.status_unavailable)
+            assertRefreshRequested()
+        }
+    }
+
+    @Test
+    fun recoversFromUnavailableOnPullToRefresh() {
+        // GIVEN a stored session with no cached profile and no network
+        givenStoredSession()
+        givenServerIsUnreachable(delayMillis = 2_000)
+
+        launch().use {
+            // THEN I see progress while refreshing, then the unavailable status
+            assertShowsHomeLoading()
+            assertDoesNotShow(R.string.status_unavailable)
+            assertShows(R.string.status_unavailable)
+            assertRefreshRequested()
+
+            // WHEN the server is back and I pull to refresh
+            givenServerReturnsProfile()
+            pullToRefresh()
+
+            // THEN I see the status
+            assertShows(R.string.status_all_good)
             assertRefreshRequested()
         }
     }
@@ -138,11 +181,32 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
             assertRefreshRequested()
 
             // WHEN I pull to refresh
-            composeRule.waitUntilExactlyOneExists(hasTestTag(HOME_SCREEN_TEST_TAG), 5_000)
-            composeRule.onNodeWithTag(HOME_SCREEN_TEST_TAG).performTouchInput { swipeDown() }
+            pullToRefresh()
 
             // THEN the status is refreshed again
             assertRefreshRequested()
+        }
+    }
+
+    @Test
+    fun keepsCachedStatusWhenPullToRefreshFails() {
+        // GIVEN a stored session with a cached profile and a working server
+        givenStoredSession(profile = allGoodProfile())
+        givenServerReturnsProfile()
+
+        launch().use {
+            // THEN I see the refreshed status
+            assertShows(R.string.status_all_good)
+            assertRefreshRequested()
+
+            // WHEN the server fails and I pull to refresh
+            givenServerIsUnreachable()
+            pullToRefresh()
+
+            // THEN the cached status stays and I see a non-blocking error
+            assertShows(R.string.status_all_good)
+            assertDoesNotShow(R.string.status_unavailable)
+            assertShowsRefreshError(R.string.error_no_connection)
         }
     }
 

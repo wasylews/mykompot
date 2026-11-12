@@ -37,10 +37,12 @@ class ReturningUserSkipsLoginTest : BaseAcceptanceTest() {
         }
 
         // WHEN I reopen the app
+        givenServerReturnsProfile()
         launch().use {
             // THEN I see the status without logging in
             assertShows(R.string.status_all_good)
             assertLoginFormIsHidden()
+            assertRefreshRequested()
         }
     }
 

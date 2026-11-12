@@ -38,8 +38,8 @@ import com.wasylews.mykompot.ui.theme.MyKompotTheme
 import com.wasylews.mykompot.ui.theme.Spacing
 
 internal const val HOME_SCREEN_TEST_TAG = "home_screen"
+internal const val HOME_LOADING_TEST_TAG = "home_loading"
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     state: HomeUiState,
