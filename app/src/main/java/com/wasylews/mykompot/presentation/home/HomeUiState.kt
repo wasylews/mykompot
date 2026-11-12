@@ -35,5 +35,5 @@ sealed interface HomeContent {
         @StringRes val nextChargeLabel: Int?,
     ) : HomeContent
 
-    data object Unavailable : HomeContent
+    data object Unknown : HomeContent
 }

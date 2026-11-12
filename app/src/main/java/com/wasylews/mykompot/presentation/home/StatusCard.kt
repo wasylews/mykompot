@@ -71,7 +71,7 @@ fun StatusCard(
             onPayClick = onPayClick,
         )
 
-        HomeContent.Unavailable -> UnavailableCard(
+        HomeContent.Unknown -> UnknownCard(
             modifier = modifier,
         )
 
@@ -137,24 +137,24 @@ private fun ContentCard(
 }
 
 @Composable
-private fun UnavailableCard(modifier: Modifier) {
+private fun UnknownCard(modifier: Modifier) {
     val palettes = LocalStatusPalettes.current
-    val onColor = palettes.unavailable.on
+    val onColor = palettes.unknown.on
 
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(26.dp),
-        colors = CardDefaults.cardColors(containerColor = palettes.unavailable.container),
+        colors = CardDefaults.cardColors(containerColor = palettes.unknown.container),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
     ) {
         Column(
             modifier = Modifier.padding(22.dp),
             verticalArrangement = Arrangement.spacedBy(Spacing.md),
         ) {
-            StatusChip(status = R.string.status_unavailable, onColor = onColor)
+            StatusChip(status = R.string.status_unknown, onColor = onColor)
             StatusWordAndMessage(
-                status = R.string.status_unavailable,
-                message = R.string.status_unavailable_message,
+                status = R.string.status_unknown,
+                message = R.string.status_unknown_message,
                 onColor = onColor,
             )
         }

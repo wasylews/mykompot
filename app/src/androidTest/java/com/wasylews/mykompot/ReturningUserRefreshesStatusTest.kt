@@ -31,7 +31,7 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
         launch().use {
             // THEN I see the cached status without losing it
             assertShows(R.string.status_all_good)
-            assertDoesNotShow(R.string.status_unavailable)
+            assertDoesNotShow(R.string.status_unknown)
             // AND a non-blocking refresh error
             assertShowsRefreshError(R.string.error_no_connection)
             assertRefreshRequested()
@@ -47,7 +47,7 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
         launch().use {
             // THEN I see the cached status without losing it
             assertShows(R.string.status_all_good)
-            assertDoesNotShow(R.string.status_unavailable)
+            assertDoesNotShow(R.string.status_unknown)
             // AND a non-blocking refresh error
             assertShowsRefreshError(R.string.error_server)
             assertRefreshRequested()
@@ -89,9 +89,9 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
         givenServerReturnsProfileAfter()
 
         launch().use {
-            // THEN I see progress instead of the unavailable status while refreshing
+            // THEN I see progress instead of the unknown status while refreshing
             assertShowsHomeLoading()
-            assertDoesNotShow(R.string.status_unavailable)
+            assertDoesNotShow(R.string.status_unknown)
 
             // AND the status once the server responds
             assertShows(R.string.status_all_good)
@@ -115,33 +115,33 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
     }
 
     @Test
-    fun showsUnavailableWhenNoCacheAndOffline() {
+    fun showsUnknownStatusWhenNoCacheAndOffline() {
         // GIVEN a stored session with no cached profile and no network
         givenStoredSession()
         givenServerIsUnreachable(delayMillis = 2_000)
 
         launch().use {
-            // THEN I see progress instead of the unavailable status while refreshing
+            // THEN I see progress instead of the unknown status while refreshing
             assertShowsHomeLoading()
-            assertDoesNotShow(R.string.status_unavailable)
+            assertDoesNotShow(R.string.status_unknown)
 
-            // AND an error once refresh fails with no cache
-            assertShows(R.string.status_unavailable)
+            // AND the unknown status once refresh fails with no cache
+            assertShows(R.string.status_unknown)
             assertRefreshRequested()
         }
     }
 
     @Test
-    fun recoversFromUnavailableOnPullToRefresh() {
+    fun recoversFromUnknownStatusOnPullToRefresh() {
         // GIVEN a stored session with no cached profile and no network
         givenStoredSession()
         givenServerIsUnreachable(delayMillis = 2_000)
 
         launch().use {
-            // THEN I see progress while refreshing, then the unavailable status
+            // THEN I see progress while refreshing, then the unknown status
             assertShowsHomeLoading()
-            assertDoesNotShow(R.string.status_unavailable)
-            assertShows(R.string.status_unavailable)
+            assertDoesNotShow(R.string.status_unknown)
+            assertShows(R.string.status_unknown)
             assertRefreshRequested()
 
             // WHEN the server is back and I pull to refresh
@@ -205,7 +205,7 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
 
             // THEN the cached status stays and I see a non-blocking error
             assertShows(R.string.status_all_good)
-            assertDoesNotShow(R.string.status_unavailable)
+            assertDoesNotShow(R.string.status_unknown)
             assertShowsRefreshError(R.string.error_no_connection)
         }
     }

@@ -66,7 +66,7 @@ class HomeViewModel(
     }
         .catch { error ->
             if (error is CancellationException) throw error
-            emit(HomeUiState(content = HomeContent.Unavailable))
+            emit(HomeUiState(content = HomeContent.Unknown))
         }
         .stateIn(
             scope = viewModelScope,
@@ -86,7 +86,7 @@ class HomeViewModel(
         }
 
         AccountStatus.NoProfile -> {
-            if (isRefreshing) HomeContent.Loading else HomeContent.Unavailable
+            if (isRefreshing) HomeContent.Loading else HomeContent.Unknown
         }
     }
 

@@ -105,7 +105,7 @@ class HomeViewModelTest : BaseViewModelTest() {
     }
 
     @Test
-    fun `shows loading while refreshing then unavailable when no cached profile`() = runTest {
+    fun `shows loading while refreshing then unknown when no cached profile`() = runTest {
         // GIVEN no cached profile and a refresh that is still in progress
         val refreshStatus = FakeRefreshStatus().apply { pause() }
         val vm = HomeViewModel(FakeObserveStatusUseCase(AccountStatus.NoProfile), refreshStatus)
@@ -125,9 +125,9 @@ class HomeViewModelTest : BaseViewModelTest() {
             refreshStatus.resume()
             advanceUntilIdle()
 
-            // THEN I see the unavailable state
+            // THEN I see the unknown status state
             assertEquals(
-                HomeUiState(content = HomeContent.Unavailable, isRefreshing = false),
+                HomeUiState(content = HomeContent.Unknown, isRefreshing = false),
                 awaitItem(),
             )
 
@@ -136,7 +136,7 @@ class HomeViewModelTest : BaseViewModelTest() {
     }
 
     @Test
-    fun `profile load error maps to unavailable`() = runTest {
+    fun `profile load error maps to unknown`() = runTest {
         // GIVEN
         val vm = HomeViewModel(FakeObserveStatusUseCase(error = IOException()), FakeRefreshStatus())
 
@@ -145,11 +145,11 @@ class HomeViewModelTest : BaseViewModelTest() {
         val state = vm.uiState.value
 
         // THEN
-        assertEquals(HomeUiState(content = HomeContent.Unavailable, isRefreshing = false), state)
+        assertEquals(HomeUiState(content = HomeContent.Unknown, isRefreshing = false), state)
     }
 
     @Test
-    fun `cancellation is not mapped to unavailable`() = runTest {
+    fun `cancellation is not mapped to unknown`() = runTest {
         // GIVEN
         val vm = HomeViewModel(FakeObserveStatusUseCase(error = CancellationException()), FakeRefreshStatus())
 
@@ -158,7 +158,7 @@ class HomeViewModelTest : BaseViewModelTest() {
         val state = vm.uiState.value
 
         // THEN
-        assertNotEquals(HomeContent.Unavailable, state.content)
+        assertNotEquals(HomeContent.Unknown, state.content)
     }
 
     @Test

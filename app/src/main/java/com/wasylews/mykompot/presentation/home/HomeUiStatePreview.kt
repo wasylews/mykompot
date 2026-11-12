@@ -82,7 +82,7 @@ class HomeUiStatePreviewParameterProvider : PreviewParameterProvider<HomeUiState
         previewPaymentDueState(),
         previewSuspendedState,
         HomeUiState(content = HomeContent.Loading),
-        HomeUiState(content = HomeContent.Unavailable),
+        HomeUiState(content = HomeContent.Unknown),
     )
 
     override val values: Sequence<HomeUiState>
@@ -97,7 +97,7 @@ class HomeUiStatePreviewParameterProvider : PreviewParameterProvider<HomeUiState
 
         HomeContent.Loading -> "Loading"
 
-        HomeContent.Unavailable -> "Unavailable"
+        HomeContent.Unknown -> "Unknown"
     }
 }
 

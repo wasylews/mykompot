@@ -113,12 +113,12 @@ val StatusColorsPaymentDueDark = StatusColors(
     on = Color(0xFFFFD896),
 )
 
-val StatusColorsUnavailableLight = StatusColors(
+val StatusColorsUnknownLight = StatusColors(
     container = Color(0xFFE9E6F5),
     on = Color(0xFF4A4458),
 )
 
-val StatusColorsUnavailableDark = StatusColors(
+val StatusColorsUnknownDark = StatusColors(
     container = Color(0xFF2B2740),
     on = Color(0xFFCEC5E8),
 )
@@ -137,21 +137,21 @@ data class StatusPalettes(
     val allGood: StatusColors,
     val paymentDue: StatusColors,
     val suspended: StatusColors,
-    val unavailable: StatusColors,
+    val unknown: StatusColors,
 )
 
 val StatusPalettesLight = StatusPalettes(
     allGood = StatusColorsAllGoodLight,
     paymentDue = StatusColorsPaymentDueLight,
     suspended = StatusColorsSuspendedLight,
-    unavailable = StatusColorsUnavailableLight,
+    unknown = StatusColorsUnknownLight,
 )
 
 val StatusPalettesDark = StatusPalettes(
     allGood = StatusColorsAllGoodDark,
     paymentDue = StatusColorsPaymentDueDark,
     suspended = StatusColorsSuspendedDark,
-    unavailable = StatusColorsUnavailableDark,
+    unknown = StatusColorsUnknownDark,
 )
 
 val LocalStatusPalettes = staticCompositionLocalOf { StatusPalettesLight }
