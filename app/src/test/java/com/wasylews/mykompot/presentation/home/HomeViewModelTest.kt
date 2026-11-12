@@ -32,15 +32,15 @@ import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest : BaseViewModelTest() {
-    private val allGoodStatus = AccountStatus.Known(
-        AccountStatus.State.ALL_GOOD,
-        profile(),
+    private val allGoodStatus = AccountStatus(
+        state = AccountStatus.State.ALL_GOOD,
+        profile = profile(),
         daysLeft = 7,
     )
 
-    private val paymentDueStatus = AccountStatus.Known(
-        AccountStatus.State.PAYMENT_DUE,
-        profile(),
+    private val paymentDueStatus = AccountStatus(
+        state = AccountStatus.State.PAYMENT_DUE,
+        profile = profile(),
         daysLeft = 2,
     )
 
@@ -108,7 +108,7 @@ class HomeViewModelTest : BaseViewModelTest() {
     fun `shows loading while refreshing then unknown when no cached profile`() = runTest {
         // GIVEN no cached profile and a refresh that is still in progress
         val refreshStatus = FakeRefreshStatus().apply { pause() }
-        val vm = HomeViewModel(FakeObserveStatusUseCase(AccountStatus.NoProfile), refreshStatus)
+        val vm = HomeViewModel(FakeObserveStatusUseCase(status = null), refreshStatus)
 
         vm.uiState.test {
             // WHEN the screen opens
@@ -177,7 +177,7 @@ class HomeViewModelTest : BaseViewModelTest() {
     @Test
     fun `suspended account without next payment date hides next charge`() = runTest {
         // GIVEN
-        val status = AccountStatus.Known(
+        val status = AccountStatus(
             state = AccountStatus.State.SUSPENDED,
             profile = profile().copy(
                 isActive = false,

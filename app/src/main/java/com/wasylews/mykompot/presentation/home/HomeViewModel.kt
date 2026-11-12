@@ -74,8 +74,12 @@ class HomeViewModel(
             initialValue = HomeUiState(),
         )
 
-    private fun AccountStatus.toHomeContent(isRefreshing: Boolean): HomeContent = when (this) {
-        is AccountStatus.Known -> {
+    private fun AccountStatus?.toHomeContent(isRefreshing: Boolean): HomeContent = when (this) {
+        null -> {
+            if (isRefreshing) HomeContent.Loading else HomeContent.Unknown
+        }
+
+        else -> {
             val copy = state.toStatusCopy()
             HomeContent.Content(
                 account = this,
@@ -83,10 +87,6 @@ class HomeViewModel(
                 message = copy.message,
                 nextChargeLabel = copy.nextChargeLabel.takeIf { daysLeft != null },
             )
-        }
-
-        AccountStatus.NoProfile -> {
-            if (isRefreshing) HomeContent.Loading else HomeContent.Unknown
         }
     }
 

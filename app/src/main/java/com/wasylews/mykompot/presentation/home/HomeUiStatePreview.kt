@@ -27,9 +27,9 @@ import java.time.LocalDate
 
 internal val previewAllGoodState = HomeUiState(
     content = HomeContent.Content(
-        account = AccountStatus.Known(
-            AccountStatus.State.ALL_GOOD,
-            Profile(
+        account = AccountStatus(
+            state = AccountStatus.State.ALL_GOOD,
+            profile = Profile(
                 isActive = true,
                 nextPaymentDate = LocalDate.of(2026, 11, 1),
                 tariffPlan = TariffPlan(name = "Standart 100", speed = 100, price = 300),
@@ -46,9 +46,9 @@ internal fun previewPaymentDueState(): HomeUiState {
     val allGood = previewAllGoodState.content as HomeContent.Content
     return HomeUiState(
         content = allGood.copy(
-            account = AccountStatus.Known(
-                AccountStatus.State.PAYMENT_DUE,
-                allGood.account.profile,
+            account = AccountStatus(
+                state = AccountStatus.State.PAYMENT_DUE,
+                profile = allGood.account.profile,
                 daysLeft = 2,
             ),
             status = R.string.status_payment_due,
@@ -60,7 +60,7 @@ internal fun previewPaymentDueState(): HomeUiState {
 
 internal val previewSuspendedState = HomeUiState(
     content = HomeContent.Content(
-        account = AccountStatus.Known(
+        account = AccountStatus(
             state = AccountStatus.State.SUSPENDED,
             profile = Profile(
                 isActive = false,

@@ -22,10 +22,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
 class FakeObserveStatusUseCase(
-    private val status: AccountStatus = AccountStatus.NoProfile,
+    private val status: AccountStatus? = null,
     private val error: Throwable? = null,
 ) : ObserveStatus {
-    override fun statusFlow(): Flow<AccountStatus> = flow {
+    override fun statusFlow(): Flow<AccountStatus?> = flow {
         error?.let { throw it }
         emit(status)
     }

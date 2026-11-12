@@ -16,15 +16,11 @@
 
 package com.wasylews.mykompot.domain.model
 
-sealed interface AccountStatus {
-    data class Known(
-        val state: State,
-        val profile: Profile,
-        val daysLeft: Long?,
-    ) : AccountStatus
-
-    data object NoProfile : AccountStatus
-
+data class AccountStatus(
+    val state: State,
+    val profile: Profile,
+    val daysLeft: Long?,
+) {
     enum class State {
         ALL_GOOD,
         PAYMENT_DUE,

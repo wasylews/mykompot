@@ -29,7 +29,7 @@ sealed interface HomeContent {
     data object Loading : HomeContent
 
     data class Content(
-        val account: AccountStatus.Known,
+        val account: AccountStatus,
         @StringRes val status: Int,
         @StringRes val message: Int,
         @StringRes val nextChargeLabel: Int?,

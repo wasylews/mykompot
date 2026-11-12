@@ -39,7 +39,7 @@ class ObserveStatusUseCaseTest {
         val result = useCase.statusFlow().first()
 
         // THEN
-        val status = result as AccountStatus.Known
+        val status = result as AccountStatus
         assertEquals(AccountStatus.State.ALL_GOOD, status.state)
     }
 
@@ -56,7 +56,7 @@ class ObserveStatusUseCaseTest {
         val result = useCase.statusFlow().first()
 
         // THEN
-        val status = result as AccountStatus.Known
+        val status = result as AccountStatus
         assertEquals(AccountStatus.State.PAYMENT_DUE, status.state)
         assertEquals(-2L, status.daysLeft)
     }
@@ -79,7 +79,7 @@ class ObserveStatusUseCaseTest {
         val result = useCase.statusFlow().first()
 
         // THEN
-        val status = result as AccountStatus.Known
+        val status = result as AccountStatus
         assertEquals(AccountStatus.State.SUSPENDED, status.state)
     }
 
@@ -101,7 +101,7 @@ class ObserveStatusUseCaseTest {
         val result = useCase.statusFlow().first()
 
         // THEN
-        val status = result as AccountStatus.Known
+        val status = result as AccountStatus
         assertEquals(AccountStatus.State.SUSPENDED, status.state)
         assertEquals(null, status.daysLeft)
     }
@@ -118,6 +118,6 @@ class ObserveStatusUseCaseTest {
         val result = useCase.statusFlow().first()
 
         // THEN
-        assertEquals(AccountStatus.NoProfile, result)
+        assertEquals(null, result)
     }
 }

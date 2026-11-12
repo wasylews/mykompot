@@ -17,6 +17,7 @@
 package com.wasylews.mykompot.domain
 
 import com.wasylews.mykompot.domain.model.AccountStatus
+import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.repository.PortalRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -27,7 +28,7 @@ import java.time.temporal.ChronoUnit
 import kotlin.time.Clock
 
 fun interface ObserveStatus {
-    fun statusFlow(): Flow<AccountStatus>
+    fun statusFlow(): Flow<AccountStatus?>
 }
 
 @Factory
@@ -35,27 +36,23 @@ class ObserveStatusUseCase(
     private val repository: PortalRepository,
     private val clock: Clock,
 ) : ObserveStatus {
-    override fun statusFlow(): Flow<AccountStatus> = repository.profileFlow()
-        .map { profile ->
-            if (profile == null) {
-                AccountStatus.NoProfile
-            } else {
-                val daysLeft = profile.nextPaymentDate?.let {
-                    ChronoUnit.DAYS.between(clock.today(), it)
-                }
-                val state = when {
-                    !profile.isActive -> AccountStatus.State.SUSPENDED
-                    daysLeft != null && daysLeft <= PAYMENT_DUE_WINDOW_DAYS -> AccountStatus.State.PAYMENT_DUE
-                    else -> AccountStatus.State.ALL_GOOD
-                }
-                AccountStatus.Known(state, profile, daysLeft)
-            }
-        }
+    override fun statusFlow(): Flow<AccountStatus?> = repository.profileFlow()
+        .map { profile -> profile?.toAccountStatus(clock.today()) }
 
     private fun Clock.today(): LocalDate = java.time.Instant
         .ofEpochMilli(now().toEpochMilliseconds())
         .atZone(ZoneId.systemDefault())
         .toLocalDate()
+
+    private fun Profile.toAccountStatus(today: LocalDate): AccountStatus {
+        val daysLeft = nextPaymentDate?.let { ChronoUnit.DAYS.between(today, it) }
+        val state = when {
+            !isActive -> AccountStatus.State.SUSPENDED
+            daysLeft != null && daysLeft <= PAYMENT_DUE_WINDOW_DAYS -> AccountStatus.State.PAYMENT_DUE
+            else -> AccountStatus.State.ALL_GOOD
+        }
+        return AccountStatus(state = state, profile = this, daysLeft = daysLeft)
+    }
 
     private companion object {
         const val PAYMENT_DUE_WINDOW_DAYS = 3L
