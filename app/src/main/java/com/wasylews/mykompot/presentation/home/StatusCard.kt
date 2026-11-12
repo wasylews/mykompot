@@ -62,24 +62,24 @@ fun StatusCard(
     modifier: Modifier = Modifier,
     onPayClick: () -> Unit = {},
 ) {
-    when (state) {
-        is HomeUiState.Content -> ContentCard(
-            state = state,
+    when (val content = state.content) {
+        is HomeContent.Content -> ContentCard(
+            state = content,
             modifier = modifier,
             onPayClick = onPayClick,
         )
 
-        HomeUiState.Unavailable -> UnavailableCard(
+        HomeContent.Unavailable -> UnavailableCard(
             modifier = modifier,
         )
 
-        HomeUiState.Loading -> Unit
+        HomeContent.Loading -> Unit
     }
 }
 
 @Composable
 private fun ContentCard(
-    state: HomeUiState.Content,
+    state: HomeContent.Content,
     modifier: Modifier,
     onPayClick: () -> Unit,
 ) {
@@ -213,7 +213,7 @@ private fun StatusWordAndMessage(
 
 @Composable
 private fun NextChargeBlock(
-    state: HomeUiState.Content,
+    state: HomeContent.Content,
     onColor: Color,
 ) {
     Column(
@@ -240,7 +240,7 @@ private fun NextChargeBlock(
 
 @Composable
 private fun ChargeValue(
-    state: HomeUiState.Content,
+    state: HomeContent.Content,
     onColor: Color,
 ) {
     val isPaymentDue = state.account.state == AccountStatus.State.PAYMENT_DUE
@@ -270,7 +270,7 @@ private fun ChargeValue(
 @Composable
 private fun TariffBlock(
     onColor: Color,
-    state: HomeUiState.Content,
+    state: HomeContent.Content,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,

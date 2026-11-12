@@ -27,9 +27,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
@@ -39,8 +38,7 @@ class HomeViewModel(
     observeStatusUseCase: ObserveStatus,
     private val refreshStatus: RefreshStatus,
 ) : ViewModel() {
-    private val _isRefreshing = MutableStateFlow(false)
-    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+    private val isRefreshing = MutableStateFlow(false)
 
     init {
         refresh()
@@ -48,31 +46,38 @@ class HomeViewModel(
 
     fun refresh() {
         viewModelScope.launch {
-            _isRefreshing.value = true
+            isRefreshing.value = true
             try {
                 refreshStatus()
             } finally {
-                _isRefreshing.value = false
+                isRefreshing.value = false
             }
         }
     }
 
-    val uiState: StateFlow<HomeUiState> = observeStatusUseCase.statusFlow()
-        .map { it.toHomeUiState() }
+    val uiState: StateFlow<HomeUiState> = combine(
+        observeStatusUseCase.statusFlow(),
+        isRefreshing,
+    ) { status, isRefreshing ->
+        HomeUiState(
+            content = status.toHomeContent(),
+            isRefreshing = isRefreshing,
+        )
+    }
         .catch { error ->
             if (error is CancellationException) throw error
-            emit(HomeUiState.Unavailable)
+            emit(HomeUiState(content = HomeContent.Unavailable))
         }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
-            initialValue = HomeUiState.Loading,
+            initialValue = HomeUiState(),
         )
 
-    private fun AccountStatus.toHomeUiState(): HomeUiState = when (this) {
+    private fun AccountStatus.toHomeContent(): HomeContent = when (this) {
         is AccountStatus.Known -> {
             val copy = state.toStatusCopy()
-            HomeUiState.Content(
+            HomeContent.Content(
                 account = this,
                 status = copy.status,
                 message = copy.message,
@@ -81,7 +86,7 @@ class HomeViewModel(
         }
 
         AccountStatus.NoProfile -> {
-            HomeUiState.Unavailable
+            HomeContent.Unavailable
         }
     }
 

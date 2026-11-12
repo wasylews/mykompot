@@ -70,14 +70,12 @@ class MainActivity : ComponentActivity() {
                         SessionState.LoggedIn -> {
                             val homeViewModel = koinViewModel<HomeViewModel>()
                             val homeUiState by homeViewModel.uiState.collectAsState()
-                            val isRefreshing by homeViewModel.isRefreshing.collectAsState()
 
                             HomeScreen(
                                 state = homeUiState,
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .padding(innerPadding),
-                                isRefreshing = isRefreshing,
                                 onRefresh = homeViewModel::refresh,
                             )
                         }

@@ -19,15 +19,21 @@ package com.wasylews.mykompot.presentation.home
 import androidx.annotation.StringRes
 import com.wasylews.mykompot.domain.model.AccountStatus
 
-sealed interface HomeUiState {
-    data object Loading : HomeUiState
+data class HomeUiState(
+    val content: HomeContent = HomeContent.Loading,
+    val isRefreshing: Boolean = false,
+    @StringRes val snackbarMessage: Int? = null,
+)
+
+sealed interface HomeContent {
+    data object Loading : HomeContent
 
     data class Content(
         val account: AccountStatus.Known,
         @StringRes val status: Int,
         @StringRes val message: Int,
         @StringRes val nextChargeLabel: Int?,
-    ) : HomeUiState
+    ) : HomeContent
 
-    data object Unavailable : HomeUiState
+    data object Unavailable : HomeContent
 }

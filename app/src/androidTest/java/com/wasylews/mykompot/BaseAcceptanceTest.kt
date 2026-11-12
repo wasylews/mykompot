@@ -189,7 +189,9 @@ abstract class BaseAcceptanceTest : KoinTest {
         composeRule.onNodeWithTag(HOME_LOADING_TEST_TAG).assertIsDisplayed()
     }
 
-    protected fun assertShowsRefreshError(@StringRes res: Int) {
+    protected fun assertShowsRefreshError(
+        @StringRes res: Int,
+    ) {
         waitForNodeWithStringRes(res).assertIsDisplayed()
     }
 

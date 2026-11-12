@@ -25,45 +25,54 @@ import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.TariffPlan
 import java.time.LocalDate
 
-internal val previewAllGoodState = HomeUiState.Content(
-    account = AccountStatus.Known(
-        AccountStatus.State.ALL_GOOD,
-        Profile(
-            isActive = true,
-            nextPaymentDate = LocalDate.of(2026, 11, 1),
-            tariffPlan = TariffPlan(name = "Standart 100", speed = 100, price = 300),
+internal val previewAllGoodState = HomeUiState(
+    content = HomeContent.Content(
+        account = AccountStatus.Known(
+            AccountStatus.State.ALL_GOOD,
+            Profile(
+                isActive = true,
+                nextPaymentDate = LocalDate.of(2026, 11, 1),
+                tariffPlan = TariffPlan(name = "Standart 100", speed = 100, price = 300),
+            ),
+            daysLeft = 20,
         ),
-        daysLeft = 20,
+        status = R.string.status_all_good,
+        message = R.string.status_all_good_message,
+        nextChargeLabel = R.string.next_charge,
     ),
-    status = R.string.status_all_good,
-    message = R.string.status_all_good_message,
-    nextChargeLabel = R.string.next_charge,
 )
 
-internal fun previewPaymentDueState() = previewAllGoodState.copy(
-    account = AccountStatus.Known(
-        AccountStatus.State.PAYMENT_DUE,
-        previewAllGoodState.account.profile,
-        daysLeft = 2,
-    ),
-    status = R.string.status_payment_due,
-    message = R.string.status_payment_due_message,
-    nextChargeLabel = R.string.due,
-)
-
-internal val previewSuspendedState = HomeUiState.Content(
-    account = AccountStatus.Known(
-        state = AccountStatus.State.SUSPENDED,
-        profile = Profile(
-            isActive = false,
-            nextPaymentDate = null,
-            tariffPlan = TariffPlan(name = "Standart 100", speed = 100, price = 300),
+internal fun previewPaymentDueState(): HomeUiState {
+    val allGood = previewAllGoodState.content as HomeContent.Content
+    return HomeUiState(
+        content = allGood.copy(
+            account = AccountStatus.Known(
+                AccountStatus.State.PAYMENT_DUE,
+                allGood.account.profile,
+                daysLeft = 2,
+            ),
+            status = R.string.status_payment_due,
+            message = R.string.status_payment_due_message,
+            nextChargeLabel = R.string.due,
         ),
-        daysLeft = null,
+    )
+}
+
+internal val previewSuspendedState = HomeUiState(
+    content = HomeContent.Content(
+        account = AccountStatus.Known(
+            state = AccountStatus.State.SUSPENDED,
+            profile = Profile(
+                isActive = false,
+                nextPaymentDate = null,
+                tariffPlan = TariffPlan(name = "Standart 100", speed = 100, price = 300),
+            ),
+            daysLeft = null,
+        ),
+        status = R.string.status_suspended,
+        message = R.string.status_suspended_message,
+        nextChargeLabel = null,
     ),
-    status = R.string.status_suspended,
-    message = R.string.status_suspended_message,
-    nextChargeLabel = null,
 )
 
 /** Renders one preview per [HomeUiState] variant. */
@@ -72,23 +81,23 @@ class HomeUiStatePreviewParameterProvider : PreviewParameterProvider<HomeUiState
         previewAllGoodState,
         previewPaymentDueState(),
         previewSuspendedState,
-        HomeUiState.Loading,
-        HomeUiState.Unavailable,
+        HomeUiState(content = HomeContent.Loading),
+        HomeUiState(content = HomeContent.Unavailable),
     )
 
     override val values: Sequence<HomeUiState>
         get() = states.asSequence()
 
-    override fun getDisplayName(index: Int): String = when (val state = states[index]) {
-        is HomeUiState.Content -> when (state.account.state) {
+    override fun getDisplayName(index: Int): String = when (val content = states[index].content) {
+        is HomeContent.Content -> when (content.account.state) {
             AccountStatus.State.ALL_GOOD -> "All good"
             AccountStatus.State.PAYMENT_DUE -> "Payment due"
             AccountStatus.State.SUSPENDED -> "Suspended"
         }
 
-        HomeUiState.Loading -> "Loading"
+        HomeContent.Loading -> "Loading"
 
-        HomeUiState.Unavailable -> "Unavailable"
+        HomeContent.Unavailable -> "Unavailable"
     }
 }
 

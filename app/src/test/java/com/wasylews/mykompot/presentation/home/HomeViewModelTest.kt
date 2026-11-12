@@ -52,7 +52,7 @@ class HomeViewModelTest : BaseViewModelTest() {
         val state = vm.uiState.value
 
         // THEN
-        assertEquals(HomeUiState.Loading, state)
+        assertEquals(HomeUiState(), state)
     }
 
     @Test
@@ -66,11 +66,13 @@ class HomeViewModelTest : BaseViewModelTest() {
 
         // THEN
         assertEquals(
-            HomeUiState.Content(
-                account = allGoodStatus,
-                status = R.string.status_all_good,
-                message = R.string.status_all_good_message,
-                nextChargeLabel = R.string.next_charge,
+            HomeUiState(
+                content = HomeContent.Content(
+                    account = allGoodStatus,
+                    status = R.string.status_all_good,
+                    message = R.string.status_all_good_message,
+                    nextChargeLabel = R.string.next_charge,
+                ),
             ),
             state,
         )
@@ -87,11 +89,13 @@ class HomeViewModelTest : BaseViewModelTest() {
 
         // THEN
         assertEquals(
-            HomeUiState.Content(
-                account = paymentDueStatus,
-                status = R.string.status_payment_due,
-                message = R.string.status_payment_due_message,
-                nextChargeLabel = R.string.due,
+            HomeUiState(
+                content = HomeContent.Content(
+                    account = paymentDueStatus,
+                    status = R.string.status_payment_due,
+                    message = R.string.status_payment_due_message,
+                    nextChargeLabel = R.string.due,
+                ),
             ),
             state,
         )
@@ -107,7 +111,7 @@ class HomeViewModelTest : BaseViewModelTest() {
         val state = vm.uiState.value
 
         // THEN
-        assertEquals(HomeUiState.Unavailable, state)
+        assertEquals(HomeUiState(content = HomeContent.Unavailable), state)
     }
 
     @Test
@@ -120,7 +124,7 @@ class HomeViewModelTest : BaseViewModelTest() {
         val state = vm.uiState.value
 
         // THEN
-        assertEquals(HomeUiState.Unavailable, state)
+        assertEquals(HomeUiState(content = HomeContent.Unavailable), state)
     }
 
     @Test
@@ -133,7 +137,7 @@ class HomeViewModelTest : BaseViewModelTest() {
         val state = vm.uiState.value
 
         // THEN
-        assertNotEquals(HomeUiState.Unavailable, state)
+        assertNotEquals(HomeContent.Unavailable, state.content)
     }
 
     @Test
@@ -168,11 +172,13 @@ class HomeViewModelTest : BaseViewModelTest() {
 
         // THEN
         assertEquals(
-            HomeUiState.Content(
-                account = status,
-                status = R.string.status_suspended,
-                message = R.string.status_suspended_message,
-                nextChargeLabel = null,
+            HomeUiState(
+                content = HomeContent.Content(
+                    account = status,
+                    status = R.string.status_suspended,
+                    message = R.string.status_suspended_message,
+                    nextChargeLabel = null,
+                ),
             ),
             state,
         )
