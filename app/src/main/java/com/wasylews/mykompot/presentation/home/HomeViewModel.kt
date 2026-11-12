@@ -61,7 +61,7 @@ class HomeViewModel(
         .map { it.toHomeUiState() }
         .catch { error ->
             if (error is CancellationException) throw error
-            emit(HomeUiState.Error)
+            emit(HomeUiState.Unavailable)
         }
         .stateIn(
             scope = viewModelScope,
@@ -81,7 +81,7 @@ class HomeViewModel(
         }
 
         AccountStatus.NoProfile -> {
-            HomeUiState.NoAccount
+            HomeUiState.Unavailable
         }
     }
 

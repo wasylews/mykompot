@@ -98,7 +98,7 @@ class HomeViewModelTest : BaseViewModelTest() {
     }
 
     @Test
-    fun `no cached profile maps to no account`() = runTest {
+    fun `no cached profile maps to unavailable`() = runTest {
         // GIVEN
         val vm = HomeViewModel(FakeObserveStatusUseCase(AccountStatus.NoProfile), FakeRefreshStatus())
 
@@ -107,11 +107,11 @@ class HomeViewModelTest : BaseViewModelTest() {
         val state = vm.uiState.value
 
         // THEN
-        assertEquals(HomeUiState.NoAccount, state)
+        assertEquals(HomeUiState.Unavailable, state)
     }
 
     @Test
-    fun `profile load error maps to error`() = runTest {
+    fun `profile load error maps to unavailable`() = runTest {
         // GIVEN
         val vm = HomeViewModel(FakeObserveStatusUseCase(error = IOException()), FakeRefreshStatus())
 
@@ -120,11 +120,11 @@ class HomeViewModelTest : BaseViewModelTest() {
         val state = vm.uiState.value
 
         // THEN
-        assertEquals(HomeUiState.Error, state)
+        assertEquals(HomeUiState.Unavailable, state)
     }
 
     @Test
-    fun `cancellation is not mapped to error`() = runTest {
+    fun `cancellation is not mapped to unavailable`() = runTest {
         // GIVEN
         val vm = HomeViewModel(FakeObserveStatusUseCase(error = CancellationException()), FakeRefreshStatus())
 
@@ -133,7 +133,7 @@ class HomeViewModelTest : BaseViewModelTest() {
         val state = vm.uiState.value
 
         // THEN
-        assertNotEquals(HomeUiState.Error, state)
+        assertNotEquals(HomeUiState.Unavailable, state)
     }
 
     @Test

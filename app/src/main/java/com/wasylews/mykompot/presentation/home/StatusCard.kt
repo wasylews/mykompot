@@ -69,7 +69,7 @@ fun StatusCard(
             onPayClick = onPayClick,
         )
 
-        HomeUiState.NoAccount, HomeUiState.Error -> UnavailableCard(
+        HomeUiState.Unavailable -> UnavailableCard(
             modifier = modifier,
         )
 

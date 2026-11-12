@@ -29,7 +29,5 @@ sealed interface HomeUiState {
         @StringRes val nextChargeLabel: Int?,
     ) : HomeUiState
 
-    data object NoAccount : HomeUiState
-
-    data object Error : HomeUiState
+    data object Unavailable : HomeUiState
 }

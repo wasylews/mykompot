@@ -73,8 +73,7 @@ class HomeUiStatePreviewParameterProvider : PreviewParameterProvider<HomeUiState
         previewPaymentDueState(),
         previewSuspendedState,
         HomeUiState.Loading,
-        HomeUiState.NoAccount,
-        HomeUiState.Error,
+        HomeUiState.Unavailable,
     )
 
     override val values: Sequence<HomeUiState>
@@ -89,9 +88,7 @@ class HomeUiStatePreviewParameterProvider : PreviewParameterProvider<HomeUiState
 
         HomeUiState.Loading -> "Loading"
 
-        HomeUiState.NoAccount -> "No account"
-
-        HomeUiState.Error -> "Error"
+        HomeUiState.Unavailable -> "Unavailable"
     }
 }
 
