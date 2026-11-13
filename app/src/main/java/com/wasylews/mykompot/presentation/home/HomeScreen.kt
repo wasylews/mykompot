@@ -24,9 +24,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -45,25 +49,45 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     onRefresh: () -> Unit = {},
     onPayClick: () -> Unit = {},
+    onErrorConsumed: () -> Unit = {},
 ) {
-    PullToRefreshBox(
-        isRefreshing = state.isRefreshing,
-        onRefresh = onRefresh,
-        modifier = modifier.testTag(HOME_SCREEN_TEST_TAG),
-    ) {
-        Column(
+    val snackbarHostState = remember { SnackbarHostState() }
+    val message = state.errorId?.let { stringResource(it) }.orEmpty()
+
+    LaunchedEffect(message) {
+        if (message.isNotEmpty()) {
+            snackbarHostState.showSnackbar(message)
+            onErrorConsumed()
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.surface,
+    ) { innerPadding ->
+        PullToRefreshBox(
+            isRefreshing = state.isRefreshing,
+            onRefresh = onRefresh,
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(Spacing.lg),
-            verticalArrangement = Arrangement.spacedBy(Spacing.lg),
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .padding(innerPadding)
+                .testTag(HOME_SCREEN_TEST_TAG),
         ) {
-            Text(
-                text = stringResource(R.string.your_internet),
-                style = MaterialTheme.typography.titleLarge,
-            )
-            StatusCard(state, onPayClick = onPayClick)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(Spacing.lg),
+                verticalArrangement = Arrangement.spacedBy(Spacing.lg),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = stringResource(R.string.your_internet),
+                    style = MaterialTheme.typography.titleLarge,
+                )
+                StatusCard(state, onPayClick = onPayClick)
+            }
         }
     }
 }

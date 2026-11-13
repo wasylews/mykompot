@@ -39,9 +39,14 @@ class HomeViewModel(
     private val refreshStatus: RefreshStatus,
 ) : ViewModel() {
     private val isRefreshing = MutableStateFlow(false)
+    private val errorId = MutableStateFlow<Int?>(null)
 
     init {
         refresh()
+    }
+
+    fun clearError() {
+        errorId.value = null
     }
 
     fun refresh() {
@@ -58,10 +63,12 @@ class HomeViewModel(
     val uiState: StateFlow<HomeUiState> = combine(
         observeStatusUseCase.statusFlow(),
         isRefreshing,
-    ) { status, isRefreshing ->
+        errorId,
+    ) { status, isRefreshing, errorId ->
         HomeUiState(
             content = status.toHomeContent(isRefreshing),
             isRefreshing = isRefreshing,
+            errorId = errorId,
         )
     }
         .catch { error ->

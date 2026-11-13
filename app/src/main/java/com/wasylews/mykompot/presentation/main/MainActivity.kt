@@ -77,6 +77,7 @@ class MainActivity : ComponentActivity() {
                                     .fillMaxSize()
                                     .padding(innerPadding),
                                 onRefresh = homeViewModel::refresh,
+                                onErrorConsumed = homeViewModel::clearError,
                             )
                         }
 

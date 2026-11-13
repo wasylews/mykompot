@@ -22,7 +22,7 @@ import com.wasylews.mykompot.domain.model.AccountStatus
 data class HomeUiState(
     val content: HomeContent = HomeContent.Loading,
     val isRefreshing: Boolean = false,
-    @StringRes val snackbarMessage: Int? = null,
+    @StringRes val errorId: Int? = null,
 )
 
 sealed interface HomeContent {
