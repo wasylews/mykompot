@@ -19,6 +19,7 @@ package com.wasylews.mykompot.data
 import app.cash.turbine.test
 import com.wasylews.mykompot.domain.model.LoginResult
 import com.wasylews.mykompot.domain.model.Profile
+import com.wasylews.mykompot.domain.model.RefreshResult
 import com.wasylews.mykompot.domain.model.TariffPlan
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -107,8 +108,9 @@ class PortalRepositoryImplTest {
             api = FakePortalApi(activeProfileResponse(), exception = IOException()),
         )
 
-        repo.refresh()
+        val result = repo.refresh()
 
+        assertEquals(RefreshResult.Failed.Network, result)
         assertEquals(1, api.fetchCalls)
         repo.expectProfile(cachedProfile)
         repo.expectSession("test-session")
@@ -121,8 +123,9 @@ class PortalRepositoryImplTest {
             api = FakePortalApi(activeProfileResponse()),
         )
 
-        repo.refresh()
+        val result = repo.refresh()
 
+        assertEquals(RefreshResult.Updated, result)
         assertEquals(1, api.fetchCalls)
         repo.expectProfile(profile())
         repo.expectSession("test-session")
@@ -135,8 +138,9 @@ class PortalRepositoryImplTest {
             api = FakePortalApi(inactiveProfileResponse()),
         )
 
-        repo.refresh()
+        val result = repo.refresh()
 
+        assertEquals(RefreshResult.Updated, result)
         assertEquals(1, api.fetchCalls)
         repo.expectProfile(inactiveProfile())
         repo.expectSession("test-session")
@@ -150,11 +154,96 @@ class PortalRepositoryImplTest {
             api = FakePortalApi(failedLogin()),
         )
 
-        repo.refresh()
+        val result = repo.refresh()
 
+        assertEquals(RefreshResult.Expired, result)
         assertEquals(1, api.fetchCalls)
         repo.expectProfile(null)
         repo.expectSession(null)
+    }
+
+    @Test
+    fun `refresh returns server error on unsuccessful response`() = runTest {
+        val cachedProfile = profile()
+        val (repo, api) = refreshFixture(
+            testScheduler = testScheduler,
+            profile = cachedProfile,
+            api = FakePortalApi(
+                response = activeProfileResponse(),
+                fetchResponse = Response.error(
+                    502,
+                    "Bad Gateway".toResponseBody("text/plain".toMediaType()),
+                ),
+            ),
+        )
+
+        val result = repo.refresh()
+
+        assertEquals(RefreshResult.Failed.Server, result)
+        assertEquals(1, api.fetchCalls)
+        repo.expectProfile(cachedProfile)
+        repo.expectSession("test-session")
+    }
+
+    @Test
+    fun `refresh returns server error on http exception`() = runTest {
+        val cachedProfile = profile()
+        val errorResponse = Response.error<ProfilePageResponse>(
+            500,
+            "Server side issue".toResponseBody("text/plain".toMediaType()),
+        )
+        val (repo, api) = refreshFixture(
+            testScheduler = testScheduler,
+            profile = cachedProfile,
+            api = FakePortalApi(
+                response = activeProfileResponse(),
+                exception = HttpException(errorResponse),
+            ),
+        )
+
+        val result = repo.refresh()
+
+        assertEquals(RefreshResult.Failed.Server, result)
+        assertEquals(1, api.fetchCalls)
+        repo.expectProfile(cachedProfile)
+        repo.expectSession("test-session")
+    }
+
+    @Test
+    fun `refresh returns parse error on null body`() = runTest {
+        val cachedProfile = profile()
+        val (repo, api) = refreshFixture(
+            testScheduler = testScheduler,
+            profile = cachedProfile,
+            api = FakePortalApi(
+                response = activeProfileResponse(),
+                fetchResponse = Response.success(null),
+            ),
+        )
+
+        val result = repo.refresh()
+
+        assertEquals(RefreshResult.Failed.Parse, result)
+        assertEquals(1, api.fetchCalls)
+        repo.expectProfile(cachedProfile)
+        repo.expectSession("test-session")
+    }
+
+    @Test
+    fun `refresh returns parse error when profile cannot be parsed`() = runTest {
+        val cachedProfile = profile()
+        val (repo, api) = refreshFixture(
+            testScheduler = testScheduler,
+            profile = cachedProfile,
+            api = FakePortalApi(response = ProfilePageResponse(status = "Enable", plan = null)),
+        )
+
+        val result = repo.refresh()
+
+        assertEquals(RefreshResult.Failed.Parse, result)
+        assertEquals(1, api.fetchCalls)
+        repo.expectProfile(cachedProfile)
+        repo.expectSession("test-session")
     }
 
     private fun createPortalRepository(
@@ -234,6 +323,7 @@ class PortalRepositoryImplTest {
 private class FakePortalApi(
     private val response: ProfilePageResponse,
     private val exception: Exception? = null,
+    private val fetchResponse: Response<ProfilePageResponse>? = null,
 ) : PortalApi {
     var fetchCalls = 0
 
@@ -253,7 +343,7 @@ private class FakePortalApi(
     override suspend fun fetchProfile(sid: String): Response<ProfilePageResponse> {
         fetchCalls++
         exception?.let { throw it }
-        return Response.success(response)
+        return fetchResponse ?: Response.success(response)
     }
 }
 

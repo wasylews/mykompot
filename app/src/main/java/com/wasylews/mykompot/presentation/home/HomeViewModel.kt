@@ -23,6 +23,7 @@ import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.ObserveStatus
 import com.wasylews.mykompot.domain.RefreshStatus
 import com.wasylews.mykompot.domain.model.AccountStatus
+import com.wasylews.mykompot.domain.model.RefreshResult
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -41,6 +42,19 @@ class HomeViewModel(
     private val isRefreshing = MutableStateFlow(false)
     private val errorId = MutableStateFlow<Int?>(null)
 
+    // Collected separately from `uiState` so refresh can tell whether cached status exists
+    // without changing `uiState`'s combined-flow error/cancellation semantics.
+    private val latestStatus = observeStatusUseCase.statusFlow()
+        .catch { error ->
+            if (error is CancellationException) throw error
+            emit(null)
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = null,
+        )
+
     init {
         refresh()
     }
@@ -53,7 +67,23 @@ class HomeViewModel(
         viewModelScope.launch {
             isRefreshing.value = true
             try {
-                refreshStatus()
+                when (val result = refreshStatus()) {
+                    is RefreshResult.Failed -> {
+                        if (latestStatus.value != null) {
+                            errorId.value = when (result) {
+                                RefreshResult.Failed.Network -> R.string.error_no_connection
+
+                                RefreshResult.Failed.Server,
+                                RefreshResult.Failed.Parse,
+                                -> R.string.error_server
+                            }
+                        }
+                    }
+
+                    RefreshResult.Updated,
+                    RefreshResult.Expired,
+                    -> Unit
+                }
             } finally {
                 isRefreshing.value = false
             }

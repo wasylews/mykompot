@@ -19,6 +19,7 @@ package com.wasylews.mykompot.presentation.home
 import app.cash.turbine.test
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.model.AccountStatus
+import com.wasylews.mykompot.domain.model.RefreshResult
 import com.wasylews.mykompot.presentation.BaseViewModelTest
 import com.wasylews.mykompot.presentation.profile
 import kotlinx.coroutines.CancellationException
@@ -36,6 +37,13 @@ class HomeViewModelTest : BaseViewModelTest() {
         state = AccountStatus.State.ALL_GOOD,
         profile = profile(),
         daysLeft = 7,
+    )
+
+    private val allGoodContent = HomeContent.Content(
+        account = allGoodStatus,
+        status = R.string.status_all_good,
+        message = R.string.status_all_good_message,
+        nextChargeLabel = R.string.next_charge,
     )
 
     private val paymentDueStatus = AccountStatus(
@@ -67,15 +75,7 @@ class HomeViewModelTest : BaseViewModelTest() {
 
         // THEN
         assertEquals(
-            HomeUiState(
-                content = HomeContent.Content(
-                    account = allGoodStatus,
-                    status = R.string.status_all_good,
-                    message = R.string.status_all_good_message,
-                    nextChargeLabel = R.string.next_charge,
-                ),
-                isRefreshing = false,
-            ),
+            HomeUiState(content = allGoodContent, isRefreshing = false),
             state,
         )
     }
@@ -172,6 +172,79 @@ class HomeViewModelTest : BaseViewModelTest() {
 
         // THEN
         assertEquals(1, refreshStatus.calls)
+    }
+
+    @Test
+    fun `keeps content and shows server error when cached profile refresh fails`() = runTest {
+        // GIVEN a cached profile and a refresh that fails with a server error
+        val refreshStatus = FakeRefreshStatus(result = RefreshResult.Failed.Server)
+
+        // WHEN
+        val vm = HomeViewModel(FakeObserveStatusUseCase(allGoodStatus), refreshStatus)
+        advanceUntilIdle()
+
+        // THEN
+        assertEquals(
+            HomeUiState(
+                content = allGoodContent,
+                isRefreshing = false,
+                errorId = R.string.error_server,
+            ),
+            vm.uiState.value,
+        )
+    }
+
+    @Test
+    fun `keeps content and shows connection error when cached profile refresh fails`() = runTest {
+        // GIVEN a cached profile and a refresh that fails with a network error
+        val refreshStatus = FakeRefreshStatus(result = RefreshResult.Failed.Network)
+
+        // WHEN
+        val vm = HomeViewModel(FakeObserveStatusUseCase(allGoodStatus), refreshStatus)
+        advanceUntilIdle()
+
+        // THEN
+        assertEquals(
+            HomeUiState(
+                content = allGoodContent,
+                isRefreshing = false,
+                errorId = R.string.error_no_connection,
+            ),
+            vm.uiState.value,
+        )
+    }
+
+    @Test
+    fun `shows unknown without error when no cached profile refresh fails`() = runTest {
+        // GIVEN no cached profile and a refresh that fails
+        val refreshStatus = FakeRefreshStatus(result = RefreshResult.Failed.Server)
+
+        // WHEN
+        val vm = HomeViewModel(FakeObserveStatusUseCase(status = null), refreshStatus)
+        advanceUntilIdle()
+
+        // THEN
+        assertEquals(
+            HomeUiState(content = HomeContent.Unknown, isRefreshing = false),
+            vm.uiState.value,
+        )
+    }
+
+    @Test
+    fun `clearError clears refresh error`() = runTest {
+        // GIVEN a cached profile and a failed refresh
+        val vm = HomeViewModel(
+            FakeObserveStatusUseCase(allGoodStatus),
+            FakeRefreshStatus(result = RefreshResult.Failed.Server),
+        )
+        advanceUntilIdle()
+
+        // WHEN
+        vm.clearError()
+        advanceUntilIdle()
+
+        // THEN
+        assertEquals(null, vm.uiState.value.errorId)
     }
 
     @Test

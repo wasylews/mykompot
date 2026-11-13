@@ -18,6 +18,7 @@ package com.wasylews.mykompot.data
 
 import com.wasylews.mykompot.domain.model.LoginResult
 import com.wasylews.mykompot.domain.model.Profile
+import com.wasylews.mykompot.domain.model.RefreshResult
 import com.wasylews.mykompot.domain.model.TariffPlan
 import com.wasylews.mykompot.domain.repository.PortalRepository
 import kotlinx.coroutines.CoroutineDispatcher
@@ -91,23 +92,26 @@ class PortalRepositoryImpl(
         missingDelimiterValue = "",
     ).substringBefore(';').takeIf { it.isNotBlank() }
 
-    override suspend fun refresh() = withContext(dispatcher) {
+    override suspend fun refresh(): RefreshResult = withContext(dispatcher) {
         try {
-            val session = sessionFlow().first() ?: return@withContext
+            val session = sessionFlow().first() ?: return@withContext RefreshResult.Expired
             val response = api.fetchProfile(session)
-            if (!response.isSuccessful) return@withContext
+            if (!response.isSuccessful) return@withContext RefreshResult.Failed.Server
 
-            val page = response.body() ?: return@withContext
+            val page = response.body() ?: return@withContext RefreshResult.Failed.Parse
             if (page.error != null) {
                 localStorage.clearProfile()
                 localStorage.clearSession()
-                return@withContext
+                return@withContext RefreshResult.Expired
             }
 
-            val profile = page.toProfile() ?: return@withContext
+            val profile = page.toProfile() ?: return@withContext RefreshResult.Failed.Parse
             localStorage.saveProfile(profile)
+            RefreshResult.Updated
         } catch (_: HttpException) {
+            RefreshResult.Failed.Server
         } catch (_: IOException) {
+            RefreshResult.Failed.Network
         }
     }
 

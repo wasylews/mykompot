@@ -18,6 +18,7 @@ package com.wasylews.mykompot.domain.repository
 
 import com.wasylews.mykompot.domain.model.LoginResult
 import com.wasylews.mykompot.domain.model.Profile
+import com.wasylews.mykompot.domain.model.RefreshResult
 import kotlinx.coroutines.flow.Flow
 
 interface PortalRepository {
@@ -26,7 +27,7 @@ interface PortalRepository {
         password: String,
     ): LoginResult
 
-    suspend fun refresh()
+    suspend fun refresh(): RefreshResult
 
     fun profileFlow(): Flow<Profile?>
 

@@ -16,16 +16,17 @@
 
 package com.wasylews.mykompot.domain
 
+import com.wasylews.mykompot.domain.model.RefreshResult
 import com.wasylews.mykompot.domain.repository.PortalRepository
 import org.koin.core.annotation.Factory
 
 fun interface RefreshStatus {
-    suspend operator fun invoke()
+    suspend operator fun invoke(): RefreshResult
 }
 
 @Factory
 class RefreshStatusUseCase(
     private val repository: PortalRepository,
 ) : RefreshStatus {
-    override suspend fun invoke() = repository.refresh()
+    override suspend fun invoke(): RefreshResult = repository.refresh()
 }

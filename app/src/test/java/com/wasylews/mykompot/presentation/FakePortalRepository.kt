@@ -18,6 +18,7 @@ package com.wasylews.mykompot.presentation
 
 import com.wasylews.mykompot.domain.model.LoginResult
 import com.wasylews.mykompot.domain.model.Profile
+import com.wasylews.mykompot.domain.model.RefreshResult
 import com.wasylews.mykompot.domain.model.TariffPlan
 import com.wasylews.mykompot.domain.repository.PortalRepository
 import kotlinx.coroutines.flow.Flow
@@ -28,6 +29,7 @@ class FakePortalRepository(
     private val result: LoginResult = successLogin(),
     private val profile: Profile? = profile(),
     private val session: String? = null,
+    var refreshResult: RefreshResult = RefreshResult.Updated,
 ) : PortalRepository {
     var refreshCalls = 0
 
@@ -36,8 +38,9 @@ class FakePortalRepository(
         password: String,
     ): LoginResult = result
 
-    override suspend fun refresh() {
+    override suspend fun refresh(): RefreshResult {
         refreshCalls++
+        return refreshResult
     }
 
     override fun profileFlow(): Flow<Profile?> = flowOf(profile)

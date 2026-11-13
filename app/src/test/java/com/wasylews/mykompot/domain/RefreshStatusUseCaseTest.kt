@@ -16,6 +16,7 @@
 
 package com.wasylews.mykompot.domain
 
+import com.wasylews.mykompot.domain.model.RefreshResult
 import com.wasylews.mykompot.presentation.FakePortalRepository
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -24,11 +25,12 @@ import org.junit.Test
 class RefreshStatusUseCaseTest {
     @Test
     fun `refreshes status from repository`() = runTest {
-        val repository = FakePortalRepository()
+        val repository = FakePortalRepository(refreshResult = RefreshResult.Updated)
         val useCase = RefreshStatusUseCase(repository)
 
-        useCase()
+        val result = useCase()
 
+        assertEquals(RefreshResult.Updated, result)
         assertEquals(1, repository.refreshCalls)
     }
 }
