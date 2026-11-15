@@ -16,6 +16,7 @@
 
 package com.wasylews.mykompot.presentation.main
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -30,10 +31,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.wasylews.mykompot.domain.model.SessionState
 import com.wasylews.mykompot.presentation.home.HomeScreen
 import com.wasylews.mykompot.presentation.home.HomeViewModel
+import com.wasylews.mykompot.presentation.home.PaymentMethod
 import com.wasylews.mykompot.presentation.login.LoginScreen
 import com.wasylews.mykompot.presentation.login.LoginViewModel
 import com.wasylews.mykompot.ui.theme.MyKompotTheme
@@ -77,8 +80,14 @@ class MainActivity : ComponentActivity() {
                                     .fillMaxSize()
                                     .padding(innerPadding),
                                 onRefresh = homeViewModel::refresh,
+                                onPayClick = homeViewModel::openPaymentMethods,
                                 onTariffClick = homeViewModel::openTariffPlans,
                                 onTariffSheetDismiss = homeViewModel::dismissTariffPlans,
+                                onPaymentMethodsDismiss = homeViewModel::dismissPaymentMethods,
+                                onPaymentMethodClick = { method ->
+                                    homeViewModel.dismissPaymentMethods()
+                                    openPaymentMethod(method)
+                                },
                                 onErrorConsumed = homeViewModel::clearError,
                             )
                         }
@@ -96,6 +105,16 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+    }
+
+    private fun openPaymentMethod(method: PaymentMethod) {
+        val launchIntent = method.packageName?.let(packageManager::getLaunchIntentForPackage)
+        if (launchIntent != null) {
+            startActivity(launchIntent)
+        } else {
+            val fallbackUrl = getString(method.fallbackUrlRes)
+            startActivity(Intent(Intent.ACTION_VIEW, fallbackUrl.toUri()))
         }
     }
 }

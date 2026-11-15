@@ -27,6 +27,7 @@ data class HomeUiState(
     val tariffPlans: List<TariffPlan> = emptyList(),
     val isTariffSheetVisible: Boolean = false,
     val selectedTariffPlanIndex: Int? = null,
+    val isPaymentMethodsSheetVisible: Boolean = false,
 )
 
 sealed interface HomeContent {

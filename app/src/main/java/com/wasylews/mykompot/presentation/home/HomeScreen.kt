@@ -51,6 +51,8 @@ fun HomeScreen(
     onPayClick: () -> Unit = {},
     onTariffClick: () -> Unit = {},
     onTariffSheetDismiss: () -> Unit = {},
+    onPaymentMethodsDismiss: () -> Unit = {},
+    onPaymentMethodClick: (PaymentMethod) -> Unit = {},
     onErrorConsumed: () -> Unit = {},
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -101,6 +103,14 @@ fun HomeScreen(
                 plans = state.tariffPlans,
                 currentPlanIndex = state.selectedTariffPlanIndex,
                 onDismissRequest = onTariffSheetDismiss,
+            )
+        }
+
+        if (state.isPaymentMethodsSheetVisible) {
+            PaymentMethodsBottomSheet(
+                methods = paymentMethods,
+                onMethodClick = onPaymentMethodClick,
+                onDismissRequest = onPaymentMethodsDismiss,
             )
         }
     }

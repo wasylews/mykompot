@@ -14,6 +14,13 @@
     <string name="next_charge">Next charge</string>
     <string name="due">Due</string>
     <string name="pay_now">Pay now</string>
+    <string name="payment_methods">Payment methods</string>
+    <string name="payment_method_privat24">Privat24</string>
+    <string name="payment_method_privat24_url">https://next.privat24.ua/payments/form/{\"companyID\":\"3204925\",\"form\":{\"query\":\"Компот\"}}</string>
+    <string name="payment_method_monobank">monobank</string>
+    <string name="payment_method_monobank_url">https://play.google.com/store/apps/details?id=com.ftband.mono</string>
+    <string name="payment_method_easypay">EasyPay</string>
+    <string name="payment_method_easypay_url">https://play.google.com/store/apps/details?id=ua.easypay.clientandroid</string>
     <string name="status_all_good">All good</string>
     <string name="status_all_good_message">Your account is active, and your internet is working.</string>
     <string name="status_payment_due">Payment due</string>

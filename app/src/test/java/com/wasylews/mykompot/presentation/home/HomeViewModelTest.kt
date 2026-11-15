@@ -18,6 +18,10 @@ package com.wasylews.mykompot.presentation.home
 
 import app.cash.turbine.test
 import com.wasylews.mykompot.R
+import com.wasylews.mykompot.domain.ObserveStatus
+import com.wasylews.mykompot.domain.ObserveTariffPlans
+import com.wasylews.mykompot.domain.RefreshStatus
+import com.wasylews.mykompot.domain.RefreshTariffPlans
 import com.wasylews.mykompot.domain.model.AccountStatus
 import com.wasylews.mykompot.domain.model.RefreshResult
 import com.wasylews.mykompot.presentation.BaseViewModelTest
@@ -28,7 +32,9 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import okio.IOException
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -52,11 +58,17 @@ class HomeViewModelTest : BaseViewModelTest() {
         daysLeft = 2,
     )
 
+    private fun createViewModel(
+        observeStatus: ObserveStatus = FakeObserveStatusUseCase(allGoodStatus),
+        observeTariffPlans: ObserveTariffPlans = FakeObserveTariffPlans(),
+        refreshStatus: RefreshStatus = FakeRefreshStatus(),
+        refreshTariffPlans: RefreshTariffPlans = FakeRefreshTariffPlans(),
+    ) = HomeViewModel(observeStatus, observeTariffPlans, refreshStatus, refreshTariffPlans)
+
     @Test
     fun `initial state is loading`() = runTest {
         // GIVEN
-        val vm =
-            HomeViewModel(FakeObserveStatusUseCase(allGoodStatus), FakeObserveTariffPlans(), FakeRefreshStatus(), FakeRefreshTariffPlans())
+        val vm = createViewModel()
 
         // WHEN / THEN
         vm.uiState.test {
@@ -68,34 +80,25 @@ class HomeViewModelTest : BaseViewModelTest() {
     @Test
     fun `get current state`() = runTest {
         // GIVEN
-        val vm =
-            HomeViewModel(FakeObserveStatusUseCase(allGoodStatus), FakeObserveTariffPlans(), FakeRefreshStatus(), FakeRefreshTariffPlans())
+        val vm = createViewModel()
 
         // WHEN
         advanceUntilIdle()
-        val state = vm.uiState.value
 
         // THEN
         assertEquals(
             HomeUiState(content = allGoodContent, isRefreshing = false),
-            state,
+            vm.uiState.value,
         )
     }
 
     @Test
     fun `get payment due state`() = runTest {
         // GIVEN
-        val vm =
-            HomeViewModel(
-                FakeObserveStatusUseCase(paymentDueStatus),
-                FakeObserveTariffPlans(),
-                FakeRefreshStatus(),
-                FakeRefreshTariffPlans(),
-            )
+        val vm = createViewModel(observeStatus = FakeObserveStatusUseCase(paymentDueStatus))
 
         // WHEN
         advanceUntilIdle()
-        val state = vm.uiState.value
 
         // THEN
         assertEquals(
@@ -108,7 +111,7 @@ class HomeViewModelTest : BaseViewModelTest() {
                 ),
                 isRefreshing = false,
             ),
-            state,
+            vm.uiState.value,
         )
     }
 
@@ -116,7 +119,10 @@ class HomeViewModelTest : BaseViewModelTest() {
     fun `shows loading while refreshing then unknown when no cached profile`() = runTest {
         // GIVEN no cached profile and a refresh that is still in progress
         val refreshStatus = FakeRefreshStatus().apply { pause() }
-        val vm = HomeViewModel(FakeObserveStatusUseCase(status = null), FakeObserveTariffPlans(), refreshStatus, FakeRefreshTariffPlans())
+        val vm = createViewModel(
+            observeStatus = FakeObserveStatusUseCase(status = null),
+            refreshStatus = refreshStatus,
+        )
 
         vm.uiState.test {
             // WHEN the screen opens
@@ -146,39 +152,25 @@ class HomeViewModelTest : BaseViewModelTest() {
     @Test
     fun `profile load error maps to unknown`() = runTest {
         // GIVEN
-        val vm =
-            HomeViewModel(
-                FakeObserveStatusUseCase(error = IOException()),
-                FakeObserveTariffPlans(),
-                FakeRefreshStatus(),
-                FakeRefreshTariffPlans(),
-            )
+        val vm = createViewModel(observeStatus = FakeObserveStatusUseCase(error = IOException()))
 
         // WHEN
         advanceUntilIdle()
-        val state = vm.uiState.value
 
         // THEN
-        assertEquals(HomeUiState(content = HomeContent.Unknown, isRefreshing = false), state)
+        assertEquals(HomeUiState(content = HomeContent.Unknown, isRefreshing = false), vm.uiState.value)
     }
 
     @Test
     fun `cancellation is not mapped to unknown`() = runTest {
         // GIVEN
-        val vm =
-            HomeViewModel(
-                FakeObserveStatusUseCase(error = CancellationException()),
-                FakeObserveTariffPlans(),
-                FakeRefreshStatus(),
-                FakeRefreshTariffPlans(),
-            )
+        val vm = createViewModel(observeStatus = FakeObserveStatusUseCase(error = CancellationException()))
 
         // WHEN
         advanceUntilIdle()
-        val state = vm.uiState.value
 
         // THEN
-        assertNotEquals(HomeContent.Unknown, state.content)
+        assertNotEquals(HomeContent.Unknown, vm.uiState.value.content)
     }
 
     @Test
@@ -187,7 +179,7 @@ class HomeViewModelTest : BaseViewModelTest() {
         val refreshStatus = FakeRefreshStatus()
 
         // WHEN
-        HomeViewModel(FakeObserveStatusUseCase(allGoodStatus), FakeObserveTariffPlans(), refreshStatus, FakeRefreshTariffPlans())
+        createViewModel(refreshStatus = refreshStatus)
         advanceUntilIdle()
 
         // THEN
@@ -200,7 +192,7 @@ class HomeViewModelTest : BaseViewModelTest() {
         val refreshStatus = FakeRefreshStatus(result = RefreshResult.Failed.Server)
 
         // WHEN
-        val vm = HomeViewModel(FakeObserveStatusUseCase(allGoodStatus), FakeObserveTariffPlans(), refreshStatus, FakeRefreshTariffPlans())
+        val vm = createViewModel(refreshStatus = refreshStatus)
         advanceUntilIdle()
 
         // THEN
@@ -220,7 +212,7 @@ class HomeViewModelTest : BaseViewModelTest() {
         val refreshStatus = FakeRefreshStatus(result = RefreshResult.Failed.Network)
 
         // WHEN
-        val vm = HomeViewModel(FakeObserveStatusUseCase(allGoodStatus), FakeObserveTariffPlans(), refreshStatus, FakeRefreshTariffPlans())
+        val vm = createViewModel(refreshStatus = refreshStatus)
         advanceUntilIdle()
 
         // THEN
@@ -240,7 +232,10 @@ class HomeViewModelTest : BaseViewModelTest() {
         val refreshStatus = FakeRefreshStatus(result = RefreshResult.Failed.Server)
 
         // WHEN
-        val vm = HomeViewModel(FakeObserveStatusUseCase(status = null), FakeObserveTariffPlans(), refreshStatus, FakeRefreshTariffPlans())
+        val vm = createViewModel(
+            observeStatus = FakeObserveStatusUseCase(status = null),
+            refreshStatus = refreshStatus,
+        )
         advanceUntilIdle()
 
         // THEN
@@ -253,11 +248,8 @@ class HomeViewModelTest : BaseViewModelTest() {
     @Test
     fun `clearError clears refresh error`() = runTest {
         // GIVEN a cached profile and a failed refresh
-        val vm = HomeViewModel(
-            FakeObserveStatusUseCase(allGoodStatus),
-            FakeObserveTariffPlans(),
-            FakeRefreshStatus(result = RefreshResult.Failed.Server),
-            FakeRefreshTariffPlans(),
+        val vm = createViewModel(
+            refreshStatus = FakeRefreshStatus(result = RefreshResult.Failed.Server),
         )
         advanceUntilIdle()
 
@@ -275,12 +267,7 @@ class HomeViewModelTest : BaseViewModelTest() {
         val refreshTariffPlans = FakeRefreshTariffPlans()
 
         // WHEN
-        HomeViewModel(
-            FakeObserveStatusUseCase(allGoodStatus),
-            FakeObserveTariffPlans(),
-            FakeRefreshStatus(),
-            refreshTariffPlans,
-        )
+        createViewModel(refreshTariffPlans = refreshTariffPlans)
         advanceUntilIdle()
 
         // THEN
@@ -298,11 +285,10 @@ class HomeViewModelTest : BaseViewModelTest() {
             ),
             daysLeft = null,
         )
-        val vm = HomeViewModel(FakeObserveStatusUseCase(status), FakeObserveTariffPlans(), FakeRefreshStatus(), FakeRefreshTariffPlans())
+        val vm = createViewModel(observeStatus = FakeObserveStatusUseCase(status))
 
         // WHEN
         advanceUntilIdle()
-        val state = vm.uiState.value
 
         // THEN
         assertEquals(
@@ -314,7 +300,67 @@ class HomeViewModelTest : BaseViewModelTest() {
                     nextChargeLabel = null,
                 ),
             ),
-            state,
+            vm.uiState.value,
         )
+    }
+
+    @Test
+    fun `openTariffPlans shows tariff plans sheet`() = runTest {
+        // GIVEN
+        val vm = createViewModel()
+        advanceUntilIdle()
+
+        // WHEN
+        vm.openTariffPlans()
+        advanceUntilIdle()
+
+        // THEN
+        assertTrue(vm.uiState.value.isTariffSheetVisible)
+    }
+
+    @Test
+    fun `dismissTariffPlans hides tariff plans sheet`() = runTest {
+        // GIVEN
+        val vm = createViewModel()
+        advanceUntilIdle()
+        vm.openTariffPlans()
+        advanceUntilIdle()
+
+        // WHEN
+        vm.dismissTariffPlans()
+        advanceUntilIdle()
+
+        // THEN
+        assertFalse(vm.uiState.value.isTariffSheetVisible)
+    }
+
+    @Test
+    fun `openPaymentMethods shows payment methods sheet`() = runTest {
+        // GIVEN
+        val vm = createViewModel()
+        advanceUntilIdle()
+
+        // WHEN
+        vm.openPaymentMethods()
+        advanceUntilIdle()
+
+        // THEN
+        assertTrue(vm.uiState.value.isPaymentMethodsSheetVisible)
+    }
+
+    @Test
+    fun `dismissPaymentMethods hides payment methods sheet`() = runTest {
+        // GIVEN
+        val vm = createViewModel()
+        advanceUntilIdle()
+        vm.openPaymentMethods()
+        advanceUntilIdle()
+
+        // WHEN
+        vm.dismissPaymentMethods()
+        advanceUntilIdle()
+
+        // THEN
+        assertFalse(vm.uiState.value.isPaymentMethodsSheetVisible)
     }
 }

@@ -26,12 +26,12 @@ import com.wasylews.mykompot.domain.RefreshStatus
 import com.wasylews.mykompot.domain.RefreshTariffPlans
 import com.wasylews.mykompot.domain.model.AccountStatus
 import com.wasylews.mykompot.domain.model.RefreshResult
+import com.wasylews.mykompot.presentation.combine
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
@@ -46,6 +46,7 @@ class HomeViewModel(
     private val isRefreshing = MutableStateFlow(false)
     private val errorId = MutableStateFlow<Int?>(null)
     private val isTariffSheetVisible = MutableStateFlow(false)
+    private val isPaymentMethodsSheetVisible = MutableStateFlow(false)
 
     // Collected separately from `uiState` so refresh can tell whether cached status exists
     // without changing `uiState`'s combined-flow error/cancellation semantics.
@@ -75,6 +76,14 @@ class HomeViewModel(
 
     fun dismissTariffPlans() {
         isTariffSheetVisible.value = false
+    }
+
+    fun openPaymentMethods() {
+        isPaymentMethodsSheetVisible.value = true
+    }
+
+    fun dismissPaymentMethods() {
+        isPaymentMethodsSheetVisible.value = false
     }
 
     fun refresh() {
@@ -112,7 +121,8 @@ class HomeViewModel(
         isRefreshing,
         errorId,
         isTariffSheetVisible,
-    ) { status, tariffPlans, isRefreshing, errorId, isTariffSheetVisible ->
+        isPaymentMethodsSheetVisible,
+    ) { status, tariffPlans, isRefreshing, errorId, isTariffSheetVisible, isPaymentMethodsSheetVisible ->
         val plans = tariffPlans.orEmpty()
         val selectedTariffPlanIndex = status?.profile?.tariffPlan?.id?.let { id ->
             plans.indexOfFirst { it.id == id }.takeIf { index -> index >= 0 }
@@ -124,6 +134,7 @@ class HomeViewModel(
             tariffPlans = plans,
             isTariffSheetVisible = isTariffSheetVisible,
             selectedTariffPlanIndex = selectedTariffPlanIndex,
+            isPaymentMethodsSheetVisible = isPaymentMethodsSheetVisible,
         )
     }
         .catch { error ->
