@@ -81,8 +81,7 @@ class HomeViewModel(
                     }
 
                     RefreshResult.Updated,
-                    RefreshResult.Expired,
-                    -> Unit
+                    RefreshResult.Expired -> Unit
                 }
             } finally {
                 isRefreshing.value = false
