@@ -115,6 +115,35 @@ class PortalRepositoryImplTest {
     }
 
     @Test
+    fun `login derives tariff plan from id when catalog is missing`() = runTest {
+        val repo = createPortalRepository(
+            testScheduler,
+            FakePortalApi(
+                ProfilePageResponse(
+                    status = "Enable",
+                    plan = "[35] 260GRN_50mb",
+                    nextPayment = "Next periodic payments throught days (2026-11-01)",
+                ),
+            ),
+        )
+
+        repo.login("user", "pass")
+
+        repo.expectProfile(
+            Profile(
+                isActive = true,
+                nextPaymentDate = LocalDate.of(2026, 11, 1),
+                tariffPlan = TariffPlan(
+                    id = "260GRN_50mb",
+                    name = "260GRN_50mb",
+                    speed = 50,
+                    price = 260,
+                ),
+            ),
+        )
+    }
+
+    @Test
     fun `session flow emits the saved session`() = runTest {
         val repo = createPortalRepository(testScheduler)
         repo.login("user", "pass")

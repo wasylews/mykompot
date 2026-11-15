@@ -76,13 +76,14 @@ class PortalRepositoryImpl(
     }
 
     private suspend fun getTariffPlan(plan: String?): TariffPlan? = plan?.let {
-        val id = Regex("""\d+GRN_\d+mb""").find(it)?.value ?: it
+        val match = Regex("""(\d+)GRN_(\d+)mb""").find(it)
+        val id = match?.value ?: it
         val catalog = localStorage.tariffPlansFlow().first()
         catalog?.firstOrNull { it.id == id } ?: TariffPlan(
             id = id,
             name = id,
-            speed = 100,
-            price = 300,
+            speed = match?.groupValues?.get(2)?.toInt() ?: 100,
+            price = match?.groupValues?.get(1)?.toInt() ?: 300,
         )
     }
 
