@@ -24,6 +24,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -38,16 +40,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.model.TariffPlan
-import com.wasylews.mykompot.ui.theme.MyKompotTheme
 import com.wasylews.mykompot.presentation.home.PreviewLightDark
+import com.wasylews.mykompot.ui.theme.MyKompotTheme
 import com.wasylews.mykompot.ui.theme.Spacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TariffPlansBottomSheet(
-    plans: List<TariffPlan>,
-    currentPlanIndex: Int?,
+    state: TariffPlansUiState,
     onDismissRequest: () -> Unit,
+    onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     ModalBottomSheet(
@@ -56,8 +58,8 @@ fun TariffPlansBottomSheet(
         modifier = modifier,
     ) {
         TariffPlansContent(
-            plans = plans,
-            currentPlanIndex = currentPlanIndex,
+            state = state,
+            onRetry = onRetry,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = Spacing.lg)
@@ -68,8 +70,8 @@ fun TariffPlansBottomSheet(
 
 @Composable
 fun TariffPlansContent(
-    plans: List<TariffPlan>,
-    currentPlanIndex: Int?,
+    state: TariffPlansUiState,
+    onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -81,15 +83,50 @@ fun TariffPlansContent(
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.SemiBold,
         )
-        Column(
-            verticalArrangement = Arrangement.spacedBy(Spacing.sm),
-            modifier = Modifier.padding(top = Spacing.xs),
-        ) {
-            plans.forEachIndexed { index, plan ->
-                TariffPlanRow(
-                    plan = plan,
-                    isCurrent = index == currentPlanIndex,
-                )
+
+        when {
+            state.isLoading && state.plans.isEmpty() -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = Spacing.xl),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+
+            state.errorId != null && state.plans.isEmpty() -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = Spacing.sm),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.md),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        text = stringResource(state.errorId),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Button(onClick = onRetry) {
+                        Text(text = stringResource(R.string.retry))
+                    }
+                }
+            }
+
+            else -> {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(Spacing.sm),
+                    modifier = Modifier.padding(top = Spacing.xs),
+                ) {
+                    state.plans.forEachIndexed { index, plan ->
+                        TariffPlanRow(
+                            plan = plan,
+                            isCurrent = index == state.selectedPlanIndex,
+                        )
+                    }
+                }
             }
         }
     }
@@ -189,12 +226,15 @@ private fun TariffPlansContentPreview() {
     MyKompotTheme {
         Surface {
             TariffPlansContent(
-                plans = listOf(
-                    TariffPlan(id = "260GRN_50mb", name = "Econom 50", speed = 50, price = 260),
-                    TariffPlan(id = "300GRN_100mb", name = "Standart 100", speed = 100, price = 300),
-                    TariffPlan(id = "350GRN_300mb", name = "LUX 300", speed = 300, price = 350),
+                state = TariffPlansUiState(
+                    plans = listOf(
+                        TariffPlan(id = "260GRN_50mb", name = "Econom 50", speed = 50, price = 260),
+                        TariffPlan(id = "300GRN_100mb", name = "Standart 100", speed = 100, price = 300),
+                        TariffPlan(id = "350GRN_300mb", name = "LUX 300", speed = 300, price = 350),
+                    ),
+                    selectedPlanIndex = 1,
                 ),
-                currentPlanIndex = 1,
+                onRetry = {},
                 modifier = Modifier.padding(Spacing.lg),
             )
         }

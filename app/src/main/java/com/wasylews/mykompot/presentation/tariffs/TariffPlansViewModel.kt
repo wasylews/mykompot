@@ -16,8 +16,10 @@
 
 package com.wasylews.mykompot.presentation.tariffs
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.ObserveStatus
 import com.wasylews.mykompot.domain.ObserveTariffPlans
 import com.wasylews.mykompot.domain.RefreshTariffPlans
@@ -36,6 +38,8 @@ data class TariffPlansUiState(
     val plans: List<TariffPlan> = emptyList(),
     val isVisible: Boolean = false,
     val selectedPlanIndex: Int? = null,
+    val isLoading: Boolean = false,
+    @StringRes val errorId: Int? = null,
 )
 
 @KoinViewModel
@@ -45,19 +49,52 @@ class TariffPlansViewModel(
     private val refreshTariffPlans: RefreshTariffPlans,
 ) : ViewModel() {
     private val isVisible = MutableStateFlow(false)
+    private val isLoading = MutableStateFlow(false)
+    private val loadErrorId = MutableStateFlow<Int?>(null)
+
+    private val latestPlans = observeTariffPlans()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = null,
+        )
 
     init {
-        viewModelScope.launch { refreshTariffPlans() }
+        refresh()
+    }
+
+    fun retry() {
+        refresh()
+    }
+
+    private fun refresh() {
+        viewModelScope.launch {
+            isLoading.value = true
+            loadErrorId.value = null
+            try {
+                refreshTariffPlans()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Throwable) {
+                if (latestPlans.value.isNullOrEmpty()) {
+                    loadErrorId.value = R.string.tariffs_load_error
+                }
+            } finally {
+                isLoading.value = false
+            }
+        }
     }
 
     val uiState: StateFlow<TariffPlansUiState> = combine(
-        observeTariffPlans(),
+        latestPlans,
         observeStatus.statusFlow().catch { error ->
             if (error is CancellationException) throw error
             emit(null)
         },
         isVisible,
-    ) { plans, status, isVisible ->
+        isLoading,
+        loadErrorId,
+    ) { plans, status, isVisible, isLoading, loadErrorId ->
         val list = plans.orEmpty()
         val selectedPlanIndex = status?.profile?.tariffPlan?.id?.let { id ->
             list.indexOfFirst { it.id == id }.takeIf { it >= 0 }
@@ -66,6 +103,8 @@ class TariffPlansViewModel(
             plans = list,
             isVisible = isVisible,
             selectedPlanIndex = selectedPlanIndex,
+            isLoading = isLoading,
+            errorId = loadErrorId,
         )
     }.stateIn(
         scope = viewModelScope,

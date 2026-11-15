@@ -58,6 +58,7 @@ fun HomeScreen(
     onRefresh: () -> Unit = {},
     onPayClick: () -> Unit = {},
     onTariffClick: () -> Unit = {},
+    onTariffRetry: () -> Unit = {},
     onTariffSheetDismiss: () -> Unit = {},
     onPaymentMethodsDismiss: () -> Unit = {},
     onPaymentMethodClick: (PaymentMethod) -> Unit = {},
@@ -108,9 +109,9 @@ fun HomeScreen(
 
         if (tariffPlansState.isVisible) {
             TariffPlansBottomSheet(
-                plans = tariffPlansState.plans,
-                currentPlanIndex = tariffPlansState.selectedPlanIndex,
+                state = tariffPlansState,
                 onDismissRequest = onTariffSheetDismiss,
+                onRetry = onTariffRetry,
             )
         }
 

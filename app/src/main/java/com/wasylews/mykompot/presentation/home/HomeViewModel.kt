@@ -42,8 +42,6 @@ class HomeViewModel(
     private val isRefreshing = MutableStateFlow(false)
     private val errorId = MutableStateFlow<Int?>(null)
 
-    // Collected separately from `uiState` so refresh can tell whether cached status exists
-    // without changing `uiState`'s combined-flow error/cancellation semantics.
     private val latestStatus = observeStatusUseCase.statusFlow()
         .catch { error ->
             if (error is CancellationException) throw error
@@ -93,7 +91,7 @@ class HomeViewModel(
     }
 
     val uiState: StateFlow<HomeUiState> = combine(
-        observeStatusUseCase.statusFlow(),
+        latestStatus,
         isRefreshing,
         errorId,
     ) { status, isRefreshing, errorId ->

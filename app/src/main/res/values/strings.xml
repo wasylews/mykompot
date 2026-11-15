@@ -35,6 +35,8 @@
     <string name="tariff_price_monthly">%1$d ₴/mo</string>
     <string name="tariff_speed">Up to %1$d Mbps</string>
     <string name="your_plan">Your plan</string>
+    <string name="tariffs_load_error">Couldn\'t load tariffs</string>
+    <string name="retry">Retry</string>
     <string name="your_internet">Your internet</string>
 
     <!-- Errors -->

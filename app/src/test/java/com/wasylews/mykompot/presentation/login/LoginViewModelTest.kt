@@ -107,9 +107,8 @@ class LoginViewModelTest : BaseViewModelTest() {
         }
     }
 
-    private fun loginViewModel(result: LoginResult): LoginViewModel =
-        LoginViewModel(FakePortalRepository(result)).apply {
-            usernameState.edit { replace(0, length, "user") }
-            passwordState.edit { replace(0, length, "pass") }
-        }
+    private fun loginViewModel(result: LoginResult): LoginViewModel = LoginViewModel(FakePortalRepository(result)).apply {
+        usernameState.edit { replace(0, length, "user") }
+        passwordState.edit { replace(0, length, "pass") }
+    }
 }

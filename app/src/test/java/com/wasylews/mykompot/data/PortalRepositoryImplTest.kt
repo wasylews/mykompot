@@ -400,7 +400,7 @@ class PortalRepositoryImplTest {
     }
 
     @Test
-    fun `refreshTariffPlans does not save plans when response is unsuccessful`() = runTest {
+    fun `refreshTariffPlans fails when response is unsuccessful`() = runTest {
         val repo = createPortalRepository(
             testScheduler,
             portalApi = FakePortalApi(
@@ -412,7 +412,12 @@ class PortalRepositoryImplTest {
             ),
         )
 
-        repo.refreshTariffPlans()
+        try {
+            repo.refreshTariffPlans()
+            throw AssertionError("Expected refreshTariffPlans to fail")
+        } catch (_: HttpException) {
+            // expected
+        }
 
         repo.tariffPlansFlow().test {
             assertEquals(null, awaitItem())
@@ -420,7 +425,7 @@ class PortalRepositoryImplTest {
     }
 
     @Test
-    fun `refreshTariffPlans does not save plans when body is missing`() = runTest {
+    fun `refreshTariffPlans fails when body is missing`() = runTest {
         val repo = createPortalRepository(
             testScheduler,
             portalApi = FakePortalApi(
@@ -429,7 +434,12 @@ class PortalRepositoryImplTest {
             ),
         )
 
-        repo.refreshTariffPlans()
+        try {
+            repo.refreshTariffPlans()
+            throw AssertionError("Expected refreshTariffPlans to fail")
+        } catch (_: IOException) {
+            // expected
+        }
 
         repo.tariffPlansFlow().test {
             assertEquals(null, awaitItem())

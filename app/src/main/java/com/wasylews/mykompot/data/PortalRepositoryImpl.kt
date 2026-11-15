@@ -131,7 +131,8 @@ class PortalRepositoryImpl(
 
     override suspend fun refreshTariffPlans() = withContext(dispatcher) {
         val response = api.fetchPlans()
-        val items = response.body()?.items ?: return@withContext
+        if (!response.isSuccessful) throw HttpException(response)
+        val items = response.body()?.items ?: throw IOException("Missing tariff plans")
         val plans = items
             .filter { "міс" in it.price }
             .map { item ->

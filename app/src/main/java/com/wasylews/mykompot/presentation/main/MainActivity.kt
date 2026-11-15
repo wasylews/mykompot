@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -36,11 +37,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.wasylews.mykompot.domain.model.SessionState
 import com.wasylews.mykompot.presentation.home.HomeScreen
 import com.wasylews.mykompot.presentation.home.HomeViewModel
+import com.wasylews.mykompot.presentation.login.LoginScreen
+import com.wasylews.mykompot.presentation.login.LoginViewModel
 import com.wasylews.mykompot.presentation.payments.PaymentMethod
 import com.wasylews.mykompot.presentation.payments.PaymentMethodsViewModel
 import com.wasylews.mykompot.presentation.tariffs.TariffPlansViewModel
-import com.wasylews.mykompot.presentation.login.LoginScreen
-import com.wasylews.mykompot.presentation.login.LoginViewModel
 import com.wasylews.mykompot.ui.theme.MyKompotTheme
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -50,67 +51,72 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MyKompotTheme {
-                val mainViewModel = koinViewModel<MainViewModel>()
-                val sessionState by mainViewModel.sessionState.collectAsStateWithLifecycle()
+                MainContent(onPaymentMethodClick = ::openPaymentMethod)
+            }
+        }
+    }
 
-                val loginViewModel = koinViewModel<LoginViewModel>()
-                val uiState by loginViewModel.uiState.collectAsState()
+    @Composable
+    private fun MainContent(onPaymentMethodClick: (PaymentMethod) -> Unit) {
+        val mainViewModel = koinViewModel<MainViewModel>()
+        val sessionState by mainViewModel.sessionState.collectAsStateWithLifecycle()
+        val loginViewModel = koinViewModel<LoginViewModel>()
+        val uiState by loginViewModel.uiState.collectAsState()
 
-                Scaffold(
-                    modifier = Modifier.fillMaxSize(),
-                    containerColor = MaterialTheme.colorScheme.surface,
-                ) { innerPadding ->
-                    when (sessionState) {
-                        SessionState.Loading -> {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(innerPadding),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                CircularProgressIndicator()
-                            }
-                        }
-
-                        SessionState.LoggedIn -> {
-                            val homeViewModel = koinViewModel<HomeViewModel>()
-                            val tariffPlansViewModel = koinViewModel<TariffPlansViewModel>()
-                            val paymentMethodsViewModel = koinViewModel<PaymentMethodsViewModel>()
-                            val homeUiState by homeViewModel.uiState.collectAsState()
-                            val tariffPlansState by tariffPlansViewModel.uiState.collectAsState()
-                            val paymentMethodsState by paymentMethodsViewModel.uiState.collectAsState()
-
-                            HomeScreen(
-                                state = homeUiState,
-                                tariffPlansState = tariffPlansState,
-                                paymentMethodsState = paymentMethodsState,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(innerPadding),
-                                onRefresh = homeViewModel::refresh,
-                                onPayClick = paymentMethodsViewModel::open,
-                                onTariffClick = tariffPlansViewModel::open,
-                                onTariffSheetDismiss = tariffPlansViewModel::dismiss,
-                                onPaymentMethodsDismiss = paymentMethodsViewModel::dismiss,
-                                onPaymentMethodClick = { method ->
-                                    paymentMethodsViewModel.dismiss()
-                                    openPaymentMethod(method)
-                                },
-                                onErrorConsumed = homeViewModel::clearError,
-                            )
-                        }
-
-                        SessionState.LoggedOut -> {
-                            LoginScreen(
-                                uiState = uiState,
-                                onLoginClick = { loginViewModel.login() },
-                                onErrorConsumed = loginViewModel::clearError,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(innerPadding),
-                            )
-                        }
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            containerColor = MaterialTheme.colorScheme.surface,
+        ) { innerPadding ->
+            when (sessionState) {
+                SessionState.Loading -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator()
                     }
+                }
+
+                SessionState.LoggedIn -> {
+                    val homeViewModel = koinViewModel<HomeViewModel>()
+                    val tariffPlansViewModel = koinViewModel<TariffPlansViewModel>()
+                    val paymentMethodsViewModel = koinViewModel<PaymentMethodsViewModel>()
+                    val homeUiState by homeViewModel.uiState.collectAsState()
+                    val tariffPlansState by tariffPlansViewModel.uiState.collectAsState()
+                    val paymentMethodsState by paymentMethodsViewModel.uiState.collectAsState()
+
+                    HomeScreen(
+                        state = homeUiState,
+                        tariffPlansState = tariffPlansState,
+                        paymentMethodsState = paymentMethodsState,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
+                        onRefresh = homeViewModel::refresh,
+                        onPayClick = paymentMethodsViewModel::open,
+                        onTariffClick = tariffPlansViewModel::open,
+                        onTariffRetry = tariffPlansViewModel::retry,
+                        onTariffSheetDismiss = tariffPlansViewModel::dismiss,
+                        onPaymentMethodsDismiss = paymentMethodsViewModel::dismiss,
+                        onPaymentMethodClick = { method ->
+                            paymentMethodsViewModel.dismiss()
+                            onPaymentMethodClick(method)
+                        },
+                        onErrorConsumed = homeViewModel::clearError,
+                    )
+                }
+
+                SessionState.LoggedOut -> {
+                    LoginScreen(
+                        uiState = uiState,
+                        onLoginClick = { loginViewModel.login() },
+                        onErrorConsumed = loginViewModel::clearError,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
+                    )
                 }
             }
         }

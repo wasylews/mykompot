@@ -39,8 +39,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.wasylews.mykompot.R
-import com.wasylews.mykompot.ui.theme.MyKompotTheme
 import com.wasylews.mykompot.presentation.home.PreviewLightDark
+import com.wasylews.mykompot.ui.theme.MyKompotTheme
 import com.wasylews.mykompot.ui.theme.Spacing
 
 @OptIn(ExperimentalMaterial3Api::class)
