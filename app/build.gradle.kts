@@ -50,6 +50,7 @@ android {
     buildTypes {
         debug {
             buildConfigField("String", "BASE_URL", "\"http://127.0.0.1:8080\"")
+            buildConfigField("String", "PLANS_BASE_URL", "\"http://127.0.0.1:8080\"")
         }
 
         release {
@@ -58,6 +59,7 @@ android {
                 packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
             }
             buildConfigField("String", "BASE_URL", "\"https://kompot.uz.ua:9443\"")
+            buildConfigField("String", "PLANS_BASE_URL", "\"http://kompot.uz.ua\"")
         }
     }
     compileOptions {

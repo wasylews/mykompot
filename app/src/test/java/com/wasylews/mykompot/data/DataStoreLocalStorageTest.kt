@@ -20,6 +20,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.Serializer
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
+import com.wasylews.mykompot.domain.model.TariffPlan
 import com.wasylews.mykompot.presentation.profile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -149,9 +150,40 @@ class DataStoreLocalStorageTest {
         assertEquals("test-session", second.sessionFlow().first())
     }
 
+    @Test
+    fun `tariff plans flow emits null when nothing is stored`() = runTest {
+        val store = createLocalStorage()
+
+        val plans = store.tariffPlansFlow().first()
+
+        assertNull(plans)
+    }
+
+    @Test
+    fun `saving tariff plans stores them`() = runTest {
+        val store = createLocalStorage()
+
+        store.saveTariffPlans(tariffPlans())
+
+        assertEquals(tariffPlans(), store.tariffPlansFlow().first())
+    }
+
+    @Test
+    fun `tariff plans survive a new store instance`() = runTest {
+        val plansFile = File(tmp.root, PLANS_FILE)
+        val first = createLocalStorage(plansFile = plansFile)
+        first.saveTariffPlans(tariffPlans())
+        closeStores()
+
+        val second = createLocalStorage(plansFile = plansFile)
+
+        assertEquals(tariffPlans(), second.tariffPlansFlow().first())
+    }
+
     private fun createLocalStorage(
         profileFile: File = File(tmp.root, PROFILE_FILE),
         sessionFile: File = File(tmp.root, SESSION_FILE),
+        plansFile: File = File(tmp.root, PLANS_FILE),
     ) = DataStoreLocalStorage(
         profileDataStore = createStore(
             file = profileFile,
@@ -161,6 +193,11 @@ class DataStoreLocalStorageTest {
         sessionDataStore = createStore(
             file = sessionFile,
             serializer = SessionSerializer,
+            corruptionHandler = ReplaceFileCorruptionHandler { null },
+        ),
+        tariffPlansDataStore = createStore(
+            file = plansFile,
+            serializer = TariffPlansSerializer,
             corruptionHandler = ReplaceFileCorruptionHandler { null },
         ),
     )
@@ -185,8 +222,14 @@ class DataStoreLocalStorageTest {
         scopes.clear()
     }
 
+    private fun tariffPlans() = listOf(
+        TariffPlan(name = "Econom 50", speed = 50, price = 260),
+        TariffPlan(name = "Standart 100", speed = 100, price = 300),
+    )
+
     private companion object {
         const val PROFILE_FILE = "profile.json"
         const val SESSION_FILE = "session.json"
+        const val PLANS_FILE = "tariff_plans.json"
     }
 }

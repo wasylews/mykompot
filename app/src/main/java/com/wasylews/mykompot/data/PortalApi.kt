@@ -16,6 +16,7 @@
 
 package com.wasylews.mykompot.data
 
+import com.wasylews.mykompot.BuildConfig
 import dev.burnoo.kspoon.annotation.Selector
 import kotlinx.serialization.Serializable
 import retrofit2.Response
@@ -37,6 +38,9 @@ interface PortalApi {
     suspend fun fetchProfile(
         @Query("sid") sid: String,
     ): Response<ProfilePageResponse>
+
+    @GET("${BuildConfig.PLANS_BASE_URL}/plans/")
+    suspend fun fetchPlans(): Response<PlansPageResponse>
 }
 
 @Serializable
@@ -55,3 +59,19 @@ data class ProfilePageResponse(
     val accountState: String?
         get() = status?.removePrefix("State: ")?.trim()
 }
+
+@Serializable
+data class PlansPageResponse(
+    @Selector(".ptp-pricing-table .ptp-col")
+    val items: List<ParsedPlanItem> = emptyList(),
+)
+
+@Serializable
+data class ParsedPlanItem(
+    @Selector(".ptp-plan")
+    val name: String = "",
+    @Selector(".ptp-price")
+    val price: String = "",
+    @Selector(".ptp-bullet-item", regex = "(\\d+)")
+    val speed: Int = 0,
+)

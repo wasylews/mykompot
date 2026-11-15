@@ -270,6 +270,28 @@ class PortalRepositoryImplTest {
         repo.expectSession("test-session")
     }
 
+    @Test
+    fun `tariff plans flow emits null when plans are missing`() = runTest {
+        val repo = createPortalRepository(testScheduler)
+
+        repo.tariffPlansFlow().test {
+            assertEquals(null, awaitItem())
+        }
+    }
+
+    @Test
+    fun `refreshTariffPlans fetches plans`() = runTest {
+        val api = FakePortalApi(
+            response = activeProfileResponse(),
+            plansResponse = plansPageResponse(),
+        )
+        val repo = createPortalRepository(testScheduler, portalApi = api)
+
+        repo.refreshTariffPlans()
+
+        assertEquals(1, api.fetchPlansCalls)
+    }
+
     private fun createPortalRepository(
         testScheduler: TestCoroutineScheduler,
         portalApi: PortalApi = FakePortalApi(activeProfileResponse()),
@@ -342,14 +364,25 @@ class PortalRepositoryImplTest {
         speed = 100,
         price = 300,
     )
+
+    private fun plansPageResponse() = PlansPageResponse(
+        items = listOf(
+            ParsedPlanItem(name = "Econom 50", price = "260 грн./міс.", speed = 50),
+            ParsedPlanItem(name = "Standart 100", price = "300 грн./міс.", speed = 100),
+            ParsedPlanItem(name = "LUX 300", price = "350 грн./міс.", speed = 300),
+            ParsedPlanItem(name = "Подобова оплата", price = "15 грн./доба", speed = 50),
+        ),
+    )
 }
 
 private class FakePortalApi(
     private val response: ProfilePageResponse,
     private val exception: Exception? = null,
     private val fetchResponse: Response<ProfilePageResponse>? = null,
+    private val plansResponse: PlansPageResponse? = null,
 ) : PortalApi {
     var fetchCalls = 0
+    var fetchPlansCalls = 0
 
     override suspend fun login(
         username: String,
@@ -369,11 +402,18 @@ private class FakePortalApi(
         exception?.let { throw it }
         return fetchResponse ?: Response.success(response)
     }
+
+    override suspend fun fetchPlans(): Response<PlansPageResponse> {
+        fetchPlansCalls++
+        exception?.let { throw it }
+        return Response.success(plansResponse ?: PlansPageResponse(emptyList()))
+    }
 }
 
 private class FakeLocalStorage : LocalStorage {
     private val savedProfile = MutableStateFlow<Profile?>(null)
     private val savedSession = MutableStateFlow<String?>(null)
+    private val savedTariffPlans = MutableStateFlow<List<TariffPlan>?>(null)
 
     override suspend fun saveProfile(profile: Profile) {
         savedProfile.value = profile
@@ -393,5 +433,11 @@ private class FakeLocalStorage : LocalStorage {
 
     override suspend fun clearSession() {
         savedSession.value = null
+    }
+
+    override fun tariffPlansFlow(): Flow<List<TariffPlan>?> = savedTariffPlans
+
+    override suspend fun saveTariffPlans(plans: List<TariffPlan>) {
+        savedTariffPlans.value = plans
     }
 }

@@ -22,6 +22,7 @@ import androidx.lifecycle.viewModelScope
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.ObserveStatus
 import com.wasylews.mykompot.domain.RefreshStatus
+import com.wasylews.mykompot.domain.RefreshTariffPlans
 import com.wasylews.mykompot.domain.model.AccountStatus
 import com.wasylews.mykompot.domain.model.RefreshResult
 import kotlinx.coroutines.CancellationException
@@ -38,6 +39,7 @@ import org.koin.core.annotation.KoinViewModel
 class HomeViewModel(
     observeStatusUseCase: ObserveStatus,
     private val refreshStatus: RefreshStatus,
+    private val refreshTariffPlans: RefreshTariffPlans,
 ) : ViewModel() {
     private val isRefreshing = MutableStateFlow(false)
     private val errorId = MutableStateFlow<Int?>(null)
@@ -57,6 +59,7 @@ class HomeViewModel(
 
     init {
         refresh()
+        viewModelScope.launch { refreshTariffPlans() }
     }
 
     fun clearError() {

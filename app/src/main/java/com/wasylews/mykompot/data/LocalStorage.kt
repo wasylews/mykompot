@@ -17,6 +17,7 @@
 package com.wasylews.mykompot.data
 
 import com.wasylews.mykompot.domain.model.Profile
+import com.wasylews.mykompot.domain.model.TariffPlan
 import kotlinx.coroutines.flow.Flow
 
 interface LocalStorage {
@@ -34,4 +35,8 @@ interface LocalStorage {
     suspend fun clearProfile()
 
     suspend fun clearSession()
+
+    fun tariffPlansFlow(): Flow<List<TariffPlan>?>
+
+    suspend fun saveTariffPlans(plans: List<TariffPlan>)
 }

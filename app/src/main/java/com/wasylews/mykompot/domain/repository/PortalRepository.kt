@@ -19,6 +19,7 @@ package com.wasylews.mykompot.domain.repository
 import com.wasylews.mykompot.domain.model.LoginResult
 import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.RefreshResult
+import com.wasylews.mykompot.domain.model.TariffPlan
 import kotlinx.coroutines.flow.Flow
 
 interface PortalRepository {
@@ -32,4 +33,8 @@ interface PortalRepository {
     fun profileFlow(): Flow<Profile?>
 
     fun sessionFlow(): Flow<String?>
+
+    fun tariffPlansFlow(): Flow<List<TariffPlan>?>
+
+    suspend fun refreshTariffPlans()
 }

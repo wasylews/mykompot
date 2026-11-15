@@ -30,8 +30,10 @@ class FakePortalRepository(
     private val profile: Profile? = profile(),
     private val session: String? = null,
     var refreshResult: RefreshResult = RefreshResult.Updated,
+    private val tariffPlans: List<TariffPlan>? = null,
 ) : PortalRepository {
     var refreshCalls = 0
+    var refreshTariffPlansCalls = 0
 
     override suspend fun login(
         username: String,
@@ -46,6 +48,12 @@ class FakePortalRepository(
     override fun profileFlow(): Flow<Profile?> = flowOf(profile)
 
     override fun sessionFlow(): Flow<String?> = flowOf(session)
+
+    override fun tariffPlansFlow(): Flow<List<TariffPlan>?> = flowOf(tariffPlans)
+
+    override suspend fun refreshTariffPlans() {
+        refreshTariffPlansCalls++
+    }
 }
 
 fun successLogin() = LoginResult.Success

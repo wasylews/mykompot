@@ -26,6 +26,8 @@ import com.wasylews.mykompot.data.PortalApi
 import com.wasylews.mykompot.data.ProfileEntity
 import com.wasylews.mykompot.data.ProfileEntitySerializer
 import com.wasylews.mykompot.data.SessionSerializer
+import com.wasylews.mykompot.data.TariffPlanEntity
+import com.wasylews.mykompot.data.TariffPlansSerializer
 import dev.burnoo.kspoon.Kspoon
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -72,4 +74,13 @@ class DataModule {
         corruptionHandler = ReplaceFileCorruptionHandler<String?> { null },
         produceFile = { context.dataStoreFile("session.json") },
     )
+
+    @Singleton
+    @Named("tariffPlans")
+    fun provideTariffPlansDataStore(context: Context): DataStore<List<TariffPlanEntity>?> =
+        DataStoreFactory.create(
+            serializer = TariffPlansSerializer,
+            corruptionHandler = ReplaceFileCorruptionHandler<List<TariffPlanEntity>?> { null },
+            produceFile = { context.dataStoreFile("tariff_plans.json") },
+        )
 }

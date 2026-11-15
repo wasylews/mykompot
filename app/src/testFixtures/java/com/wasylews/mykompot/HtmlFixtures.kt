@@ -25,6 +25,8 @@ object HtmlFixtures {
 
     fun loginFailed() = load("login-failed.html")
 
+    fun plans() = load("plans.html")
+
     private fun load(name: String): String = requireNotNull(
         HtmlFixtures::class.java.getResourceAsStream("/html/$name"),
     ) {

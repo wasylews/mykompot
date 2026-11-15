@@ -1,0 +1,44 @@
+/*
+ * Copyright 2026 Vasyl Sabov
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.wasylews.mykompot.data
+
+import androidx.datastore.core.CorruptionException
+import androidx.datastore.core.Serializer
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.json.Json
+import java.io.InputStream
+import java.io.OutputStream
+
+object TariffPlansSerializer : Serializer<List<TariffPlanEntity>?> {
+    override val defaultValue: List<TariffPlanEntity>? = null
+
+    private val json = Json { ignoreUnknownKeys = true }
+
+    override suspend fun readFrom(input: InputStream): List<TariffPlanEntity>? = try {
+        json.decodeFromString<List<TariffPlanEntity>?>(input.readBytes().decodeToString())
+    } catch (e: SerializationException) {
+        throw CorruptionException("Unable to read the stored tariff plans.", e)
+    }
+
+    override suspend fun writeTo(
+        t: List<TariffPlanEntity>?,
+        output: OutputStream,
+    ) {
+        @Suppress("BlockingMethodInNonBlockingContext") // DataStore calls this on its IO scope
+        output.write(json.encodeToString<List<TariffPlanEntity>?>(t).encodeToByteArray())
+    }
+}

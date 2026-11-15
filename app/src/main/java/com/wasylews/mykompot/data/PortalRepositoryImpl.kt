@@ -123,6 +123,13 @@ class PortalRepositoryImpl(
 
     override fun sessionFlow(): Flow<String?> = localStorage.sessionFlow()
 
+    override fun tariffPlansFlow(): Flow<List<TariffPlan>?> = localStorage.tariffPlansFlow()
+
+    override suspend fun refreshTariffPlans() = withContext(dispatcher) {
+        val response = api.fetchPlans()
+        response.body() ?: return@withContext
+    }
+
     private companion object {
         const val STATUS_ACTIVE = "Enable"
         const val SID_COOKIE = "sid"
