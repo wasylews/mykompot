@@ -23,7 +23,11 @@
     <string name="status_unknown">Unknown</string>
     <string name="status_unknown_message">We couldn\'t check your status. Your account may still be fine.</string>
     <string name="tariff">Tariff</string>
+    <string name="tariffs">Tariffs</string>
     <string name="tariff_price">%1$d ₴</string>
+    <string name="tariff_price_monthly">%1$d ₴/mo</string>
+    <string name="tariff_speed">Up to %1$d Mbps</string>
+    <string name="your_plan">Your plan</string>
     <string name="your_internet">Your internet</string>
 
     <!-- Errors -->

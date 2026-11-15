@@ -18,11 +18,15 @@ package com.wasylews.mykompot.presentation.home
 
 import androidx.annotation.StringRes
 import com.wasylews.mykompot.domain.model.AccountStatus
+import com.wasylews.mykompot.domain.model.TariffPlan
 
 data class HomeUiState(
     val content: HomeContent = HomeContent.Loading,
     val isRefreshing: Boolean = false,
     @StringRes val errorId: Int? = null,
+    val tariffPlans: List<TariffPlan> = emptyList(),
+    val isTariffSheetVisible: Boolean = false,
+    val selectedTariffPlanIndex: Int? = null,
 )
 
 sealed interface HomeContent {

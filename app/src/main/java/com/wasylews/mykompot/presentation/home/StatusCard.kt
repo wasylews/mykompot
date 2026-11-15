@@ -18,6 +18,7 @@ package com.wasylews.mykompot.presentation.home
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -63,12 +64,14 @@ fun StatusCard(
     state: HomeUiState,
     modifier: Modifier = Modifier,
     onPayClick: () -> Unit = {},
+    onTariffClick: () -> Unit = {},
 ) {
     when (val content = state.content) {
         is HomeContent.Content -> ContentCard(
             state = content,
             modifier = modifier,
             onPayClick = onPayClick,
+            onTariffClick = onTariffClick,
         )
 
         HomeContent.Unknown -> UnknownCard(
@@ -92,6 +95,7 @@ private fun ContentCard(
     state: HomeContent.Content,
     modifier: Modifier,
     onPayClick: () -> Unit,
+    onTariffClick: () -> Unit,
 ) {
     val palettes = LocalStatusPalettes.current
     val statusColors = statusColorsFor(state.account.state, palettes)
@@ -112,7 +116,11 @@ private fun ContentCard(
                 message = state.message,
                 onColor = statusColors.on,
             )
-            NextChargeBlock(state = state, onColor = statusColors.on)
+            NextChargeBlock(
+                state = state,
+                onColor = statusColors.on,
+                onTariffClick = onTariffClick,
+            )
             if (state.account.state == AccountStatus.State.PAYMENT_DUE ||
                 state.account.state == AccountStatus.State.SUSPENDED
             ) {
@@ -225,6 +233,7 @@ private fun StatusWordAndMessage(
 private fun NextChargeBlock(
     state: HomeContent.Content,
     onColor: Color,
+    onTariffClick: () -> Unit,
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -244,7 +253,7 @@ private fun NextChargeBlock(
             }
         }
         // Tariff link
-        TariffBlock(onColor, state)
+        TariffBlock(onColor = onColor, state = state, onClick = onTariffClick)
     }
 }
 
@@ -281,8 +290,10 @@ private fun ChargeValue(
 private fun TariffBlock(
     onColor: Color,
     state: HomeContent.Content,
+    onClick: () -> Unit,
 ) {
     Row(
+        modifier = Modifier.clickable(onClick = onClick),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
     ) {

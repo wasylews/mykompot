@@ -55,7 +55,8 @@ class HomeViewModelTest : BaseViewModelTest() {
     @Test
     fun `initial state is loading`() = runTest {
         // GIVEN
-        val vm = HomeViewModel(FakeObserveStatusUseCase(allGoodStatus), FakeRefreshStatus(), FakeRefreshTariffPlans())
+        val vm =
+            HomeViewModel(FakeObserveStatusUseCase(allGoodStatus), FakeObserveTariffPlans(), FakeRefreshStatus(), FakeRefreshTariffPlans())
 
         // WHEN / THEN
         vm.uiState.test {
@@ -67,7 +68,8 @@ class HomeViewModelTest : BaseViewModelTest() {
     @Test
     fun `get current state`() = runTest {
         // GIVEN
-        val vm = HomeViewModel(FakeObserveStatusUseCase(allGoodStatus), FakeRefreshStatus(), FakeRefreshTariffPlans())
+        val vm =
+            HomeViewModel(FakeObserveStatusUseCase(allGoodStatus), FakeObserveTariffPlans(), FakeRefreshStatus(), FakeRefreshTariffPlans())
 
         // WHEN
         advanceUntilIdle()
@@ -83,7 +85,13 @@ class HomeViewModelTest : BaseViewModelTest() {
     @Test
     fun `get payment due state`() = runTest {
         // GIVEN
-        val vm = HomeViewModel(FakeObserveStatusUseCase(paymentDueStatus), FakeRefreshStatus(), FakeRefreshTariffPlans())
+        val vm =
+            HomeViewModel(
+                FakeObserveStatusUseCase(paymentDueStatus),
+                FakeObserveTariffPlans(),
+                FakeRefreshStatus(),
+                FakeRefreshTariffPlans(),
+            )
 
         // WHEN
         advanceUntilIdle()
@@ -108,7 +116,7 @@ class HomeViewModelTest : BaseViewModelTest() {
     fun `shows loading while refreshing then unknown when no cached profile`() = runTest {
         // GIVEN no cached profile and a refresh that is still in progress
         val refreshStatus = FakeRefreshStatus().apply { pause() }
-        val vm = HomeViewModel(FakeObserveStatusUseCase(status = null), refreshStatus, FakeRefreshTariffPlans())
+        val vm = HomeViewModel(FakeObserveStatusUseCase(status = null), FakeObserveTariffPlans(), refreshStatus, FakeRefreshTariffPlans())
 
         vm.uiState.test {
             // WHEN the screen opens
@@ -138,7 +146,13 @@ class HomeViewModelTest : BaseViewModelTest() {
     @Test
     fun `profile load error maps to unknown`() = runTest {
         // GIVEN
-        val vm = HomeViewModel(FakeObserveStatusUseCase(error = IOException()), FakeRefreshStatus(), FakeRefreshTariffPlans())
+        val vm =
+            HomeViewModel(
+                FakeObserveStatusUseCase(error = IOException()),
+                FakeObserveTariffPlans(),
+                FakeRefreshStatus(),
+                FakeRefreshTariffPlans(),
+            )
 
         // WHEN
         advanceUntilIdle()
@@ -151,7 +165,13 @@ class HomeViewModelTest : BaseViewModelTest() {
     @Test
     fun `cancellation is not mapped to unknown`() = runTest {
         // GIVEN
-        val vm = HomeViewModel(FakeObserveStatusUseCase(error = CancellationException()), FakeRefreshStatus(), FakeRefreshTariffPlans())
+        val vm =
+            HomeViewModel(
+                FakeObserveStatusUseCase(error = CancellationException()),
+                FakeObserveTariffPlans(),
+                FakeRefreshStatus(),
+                FakeRefreshTariffPlans(),
+            )
 
         // WHEN
         advanceUntilIdle()
@@ -167,7 +187,7 @@ class HomeViewModelTest : BaseViewModelTest() {
         val refreshStatus = FakeRefreshStatus()
 
         // WHEN
-        HomeViewModel(FakeObserveStatusUseCase(allGoodStatus), refreshStatus, FakeRefreshTariffPlans())
+        HomeViewModel(FakeObserveStatusUseCase(allGoodStatus), FakeObserveTariffPlans(), refreshStatus, FakeRefreshTariffPlans())
         advanceUntilIdle()
 
         // THEN
@@ -180,7 +200,7 @@ class HomeViewModelTest : BaseViewModelTest() {
         val refreshStatus = FakeRefreshStatus(result = RefreshResult.Failed.Server)
 
         // WHEN
-        val vm = HomeViewModel(FakeObserveStatusUseCase(allGoodStatus), refreshStatus, FakeRefreshTariffPlans())
+        val vm = HomeViewModel(FakeObserveStatusUseCase(allGoodStatus), FakeObserveTariffPlans(), refreshStatus, FakeRefreshTariffPlans())
         advanceUntilIdle()
 
         // THEN
@@ -200,7 +220,7 @@ class HomeViewModelTest : BaseViewModelTest() {
         val refreshStatus = FakeRefreshStatus(result = RefreshResult.Failed.Network)
 
         // WHEN
-        val vm = HomeViewModel(FakeObserveStatusUseCase(allGoodStatus), refreshStatus, FakeRefreshTariffPlans())
+        val vm = HomeViewModel(FakeObserveStatusUseCase(allGoodStatus), FakeObserveTariffPlans(), refreshStatus, FakeRefreshTariffPlans())
         advanceUntilIdle()
 
         // THEN
@@ -220,7 +240,7 @@ class HomeViewModelTest : BaseViewModelTest() {
         val refreshStatus = FakeRefreshStatus(result = RefreshResult.Failed.Server)
 
         // WHEN
-        val vm = HomeViewModel(FakeObserveStatusUseCase(status = null), refreshStatus, FakeRefreshTariffPlans())
+        val vm = HomeViewModel(FakeObserveStatusUseCase(status = null), FakeObserveTariffPlans(), refreshStatus, FakeRefreshTariffPlans())
         advanceUntilIdle()
 
         // THEN
@@ -235,6 +255,7 @@ class HomeViewModelTest : BaseViewModelTest() {
         // GIVEN a cached profile and a failed refresh
         val vm = HomeViewModel(
             FakeObserveStatusUseCase(allGoodStatus),
+            FakeObserveTariffPlans(),
             FakeRefreshStatus(result = RefreshResult.Failed.Server),
             FakeRefreshTariffPlans(),
         )
@@ -256,6 +277,7 @@ class HomeViewModelTest : BaseViewModelTest() {
         // WHEN
         HomeViewModel(
             FakeObserveStatusUseCase(allGoodStatus),
+            FakeObserveTariffPlans(),
             FakeRefreshStatus(),
             refreshTariffPlans,
         )
@@ -276,7 +298,7 @@ class HomeViewModelTest : BaseViewModelTest() {
             ),
             daysLeft = null,
         )
-        val vm = HomeViewModel(FakeObserveStatusUseCase(status), FakeRefreshStatus(), FakeRefreshTariffPlans())
+        val vm = HomeViewModel(FakeObserveStatusUseCase(status), FakeObserveTariffPlans(), FakeRefreshStatus(), FakeRefreshTariffPlans())
 
         // WHEN
         advanceUntilIdle()

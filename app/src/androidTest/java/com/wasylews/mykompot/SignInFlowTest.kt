@@ -16,6 +16,8 @@
 
 package com.wasylews.mykompot
 
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onNodeWithText
 import org.junit.Test
 
 class SignInFlowTest : BaseAcceptanceTest() {
@@ -43,8 +45,7 @@ class SignInFlowTest : BaseAcceptanceTest() {
             assertShows(R.string.status_all_good)
             assertShows(R.string.tariff)
             composeRule.onNodeWithText("Standart 100").assertIsDisplayed()
-            waitForNodeWithStringRes(R.string.tariff_price, formatArgs = arrayOf(300))
-                .assertIsDisplayed()
+            assertShows(R.string.tariff_price, 300)
         }
     }
 

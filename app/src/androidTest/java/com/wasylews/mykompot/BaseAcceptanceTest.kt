@@ -109,26 +109,18 @@ abstract class BaseAcceptanceTest : KoinTest {
     }
 
     protected fun performLogin() {
-        waitForNodeWithStringRes(R.string.username).performTextInput("user")
-        waitForNodeWithStringRes(R.string.password).performTextInput("pass")
-        waitForNodeWithStringRes(R.string.log_in).performClick()
-    }
-
-    protected fun waitForNodeWithStringRes(
-        res: Int,
-        timeoutMillis: Long = 5_000,
-        vararg formatArgs: Any,
-    ): SemanticsNodeInteraction {
-        val string = stringRes(res, *formatArgs)
-        composeRule.waitUntilExactlyOneExists(hasText(string), timeoutMillis)
-        return composeRule.onNodeWithText(string)
+        assertShows(R.string.username).performTextInput("user")
+        assertShows(R.string.password).performTextInput("pass")
+        assertShows(R.string.log_in).performClick()
     }
 
     protected fun assertShows(
         @StringRes res: Int,
         vararg formatArgs: Any,
-    ) {
-        waitForNodeWithStringRes(res, formatArgs = formatArgs).assertIsDisplayed()
+    ): SemanticsNodeInteraction {
+        val string = stringRes(res, *formatArgs)
+        composeRule.waitUntilExactlyOneExists(hasText(string), 5_000)
+        return composeRule.onNodeWithText(string).assertIsDisplayed()
     }
 
     protected fun assertDoesNotShow(
@@ -205,7 +197,7 @@ abstract class BaseAcceptanceTest : KoinTest {
     protected fun assertShowsRefreshError(
         @StringRes res: Int,
     ) {
-        waitForNodeWithStringRes(res).assertIsDisplayed()
+        assertShows(res)
     }
 
     protected fun stringRes(

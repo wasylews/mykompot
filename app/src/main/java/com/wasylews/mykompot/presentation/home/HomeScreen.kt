@@ -49,6 +49,8 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     onRefresh: () -> Unit = {},
     onPayClick: () -> Unit = {},
+    onTariffClick: () -> Unit = {},
+    onTariffSheetDismiss: () -> Unit = {},
     onErrorConsumed: () -> Unit = {},
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -86,8 +88,20 @@ fun HomeScreen(
                     text = stringResource(R.string.your_internet),
                     style = MaterialTheme.typography.titleLarge,
                 )
-                StatusCard(state, onPayClick = onPayClick)
+                StatusCard(
+                    state = state,
+                    onPayClick = onPayClick,
+                    onTariffClick = onTariffClick,
+                )
             }
+        }
+
+        if (state.isTariffSheetVisible) {
+            TariffPlansBottomSheet(
+                plans = state.tariffPlans,
+                currentPlanIndex = state.selectedTariffPlanIndex,
+                onDismissRequest = onTariffSheetDismiss,
+            )
         }
     }
 }

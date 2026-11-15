@@ -77,6 +77,8 @@ class MainActivity : ComponentActivity() {
                                     .fillMaxSize()
                                     .padding(innerPadding),
                                 onRefresh = homeViewModel::refresh,
+                                onTariffClick = homeViewModel::openTariffPlans,
+                                onTariffSheetDismiss = homeViewModel::dismissTariffPlans,
                                 onErrorConsumed = homeViewModel::clearError,
                             )
                         }

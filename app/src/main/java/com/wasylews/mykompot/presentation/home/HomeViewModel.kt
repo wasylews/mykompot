@@ -21,6 +21,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.ObserveStatus
+import com.wasylews.mykompot.domain.ObserveTariffPlans
 import com.wasylews.mykompot.domain.RefreshStatus
 import com.wasylews.mykompot.domain.RefreshTariffPlans
 import com.wasylews.mykompot.domain.model.AccountStatus
@@ -38,11 +39,13 @@ import org.koin.core.annotation.KoinViewModel
 @KoinViewModel
 class HomeViewModel(
     observeStatusUseCase: ObserveStatus,
+    observeTariffPlans: ObserveTariffPlans,
     private val refreshStatus: RefreshStatus,
     private val refreshTariffPlans: RefreshTariffPlans,
 ) : ViewModel() {
     private val isRefreshing = MutableStateFlow(false)
     private val errorId = MutableStateFlow<Int?>(null)
+    private val isTariffSheetVisible = MutableStateFlow(false)
 
     // Collected separately from `uiState` so refresh can tell whether cached status exists
     // without changing `uiState`'s combined-flow error/cancellation semantics.
@@ -64,6 +67,14 @@ class HomeViewModel(
 
     fun clearError() {
         errorId.value = null
+    }
+
+    fun openTariffPlans() {
+        isTariffSheetVisible.value = true
+    }
+
+    fun dismissTariffPlans() {
+        isTariffSheetVisible.value = false
     }
 
     fun refresh() {
@@ -97,13 +108,22 @@ class HomeViewModel(
 
     val uiState: StateFlow<HomeUiState> = combine(
         observeStatusUseCase.statusFlow(),
+        observeTariffPlans(),
         isRefreshing,
         errorId,
-    ) { status, isRefreshing, errorId ->
+        isTariffSheetVisible,
+    ) { status, tariffPlans, isRefreshing, errorId, isTariffSheetVisible ->
+        val plans = tariffPlans.orEmpty()
+        val selectedTariffPlanIndex = status?.profile?.tariffPlan?.id?.let { id ->
+            plans.indexOfFirst { it.id == id }.takeIf { index -> index >= 0 }
+        }
         HomeUiState(
             content = status.toHomeContent(isRefreshing),
             isRefreshing = isRefreshing,
             errorId = errorId,
+            tariffPlans = plans,
+            isTariffSheetVisible = isTariffSheetVisible,
+            selectedTariffPlanIndex = selectedTariffPlanIndex,
         )
     }
         .catch { error ->
