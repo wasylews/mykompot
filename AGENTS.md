@@ -2,7 +2,7 @@
 
 ## Working style
 - For questions or suggestions, respond with an answer; edit files or implement only when the user explicitly asks for a change.
-- Keep answers concise and grounded in code facts. Cite paths/symbols you inspected; do not guess behavior.
+- Keep answers concise and grounded in code facts. Cite inspected symbols with short-label links (e.g. `[symbol](short/path)` or `[symbol](short/path#L)` when a location helps), using the shortest unambiguous path; avoid repeating references or line ranges. Do not guess behavior.
 - Be methodical. Make the smallest coherent change that advances the task; do not rush a broad implementation.
 
 ## Before changing code
