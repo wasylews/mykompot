@@ -223,6 +223,7 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
     )
 
     private fun defaultTariff() = TariffPlan(
+        id = "300GRN_100mb",
         name = "[35] 300GRN_100mb",
         speed = 100,
         price = 300,

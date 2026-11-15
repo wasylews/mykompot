@@ -54,6 +54,7 @@ class ReturningUserSkipsLoginTest : BaseAcceptanceTest() {
                 isActive = true,
                 nextPaymentDate = LocalDate.of(2026, 10, 2),
                 tariffPlan = TariffPlan(
+                    id = "300GRN_100mb",
                     name = "[35] 300GRN_100mb",
                     speed = 100,
                     price = 300,

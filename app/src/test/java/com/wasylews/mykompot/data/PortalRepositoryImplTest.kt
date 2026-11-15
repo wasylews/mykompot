@@ -280,16 +280,27 @@ class PortalRepositoryImplTest {
     }
 
     @Test
-    fun `refreshTariffPlans fetches plans`() = runTest {
-        val api = FakePortalApi(
-            response = activeProfileResponse(),
-            plansResponse = plansPageResponse(),
+    fun `refreshTariffPlans saves fetched plans`() = runTest {
+        val repo = createPortalRepository(
+            testScheduler,
+            portalApi = FakePortalApi(
+                response = activeProfileResponse(),
+                plansResponse = plansPageResponse(),
+            ),
         )
-        val repo = createPortalRepository(testScheduler, portalApi = api)
 
         repo.refreshTariffPlans()
 
-        assertEquals(1, api.fetchPlansCalls)
+        repo.tariffPlansFlow().test {
+            assertEquals(
+                listOf(
+                    TariffPlan(id = "260GRN_50mb", name = "Econom 50", speed = 50, price = 260),
+                    TariffPlan(id = "300GRN_100mb", name = "Standart 100", speed = 100, price = 300),
+                    TariffPlan(id = "350GRN_300mb", name = "LUX 300", speed = 300, price = 350),
+                ),
+                awaitItem(),
+            )
+        }
     }
 
     private fun createPortalRepository(
@@ -360,6 +371,7 @@ class PortalRepositoryImplTest {
     )
 
     private fun defaultTariffPlan() = TariffPlan(
+        id = "300GRN_100mb",
         name = "300GRN_100mb",
         speed = 100,
         price = 300,

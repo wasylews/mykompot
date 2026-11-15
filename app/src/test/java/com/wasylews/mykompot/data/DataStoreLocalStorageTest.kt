@@ -223,8 +223,8 @@ class DataStoreLocalStorageTest {
     }
 
     private fun tariffPlans() = listOf(
-        TariffPlan(name = "Econom 50", speed = 50, price = 260),
-        TariffPlan(name = "Standart 100", speed = 100, price = 300),
+        TariffPlan(id = "260GRN_50mb", name = "Econom 50", speed = 50, price = 260),
+        TariffPlan(id = "300GRN_100mb", name = "Standart 100", speed = 100, price = 300),
     )
 
     private companion object {

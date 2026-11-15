@@ -17,6 +17,7 @@
 package com.wasylews.mykompot.domain.model
 
 data class TariffPlan(
+    val id: String,
     val name: String,
     val speed: Int,
     val price: Int,

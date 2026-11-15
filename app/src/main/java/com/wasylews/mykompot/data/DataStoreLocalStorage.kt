@@ -70,6 +70,7 @@ data class ProfileEntity(
 
 @Serializable
 data class TariffPlanEntity(
+    val id: String,
     val name: String,
     val speed: Int,
     val price: Int,
@@ -88,12 +89,14 @@ private fun ProfileEntity.toDomain() = Profile(
 )
 
 private fun TariffPlan.toEntity() = TariffPlanEntity(
+    id = id,
     name = name,
     speed = speed,
     price = price,
 )
 
 private fun TariffPlanEntity.toDomain() = TariffPlan(
+    id = id,
     name = name,
     speed = speed,
     price = price,

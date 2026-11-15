@@ -32,7 +32,7 @@ internal val previewAllGoodState = HomeUiState(
             profile = Profile(
                 isActive = true,
                 nextPaymentDate = LocalDate.of(2026, 11, 1),
-                tariffPlan = TariffPlan(name = "Standart 100", speed = 100, price = 300),
+                tariffPlan = TariffPlan(id = "300GRN_100mb", name = "Standart 100", speed = 100, price = 300),
             ),
             daysLeft = 20,
         ),
@@ -65,7 +65,7 @@ internal val previewSuspendedState = HomeUiState(
             profile = Profile(
                 isActive = false,
                 nextPaymentDate = null,
-                tariffPlan = TariffPlan(name = "Standart 100", speed = 100, price = 300),
+                tariffPlan = TariffPlan(id = "300GRN_100mb", name = "Standart 100", speed = 100, price = 300),
             ),
             daysLeft = null,
         ),

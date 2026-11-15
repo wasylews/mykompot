@@ -77,6 +77,7 @@ class PortalRepositoryImpl(
 
     private fun getTariffPlan(id: String?): TariffPlan? = id?.let {
         TariffPlan(
+            id = it,
             name = it,
             speed = 100,
             price = 300,
@@ -127,7 +128,19 @@ class PortalRepositoryImpl(
 
     override suspend fun refreshTariffPlans() = withContext(dispatcher) {
         val response = api.fetchPlans()
-        response.body() ?: return@withContext
+        val items = response.body()?.items ?: return@withContext
+        val plans = items
+            .filter { "міс" in it.price }
+            .map { item ->
+                val price = Regex("""(\d+)""").find(item.price)?.value?.toInt() ?: 0
+                TariffPlan(
+                    id = "${price}GRN_${item.speed}mb",
+                    name = item.name,
+                    speed = item.speed,
+                    price = price,
+                )
+            }
+        localStorage.saveTariffPlans(plans)
     }
 
     private companion object {
