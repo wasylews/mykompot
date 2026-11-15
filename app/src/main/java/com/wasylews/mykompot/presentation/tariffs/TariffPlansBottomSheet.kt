@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.wasylews.mykompot.presentation.home
+package com.wasylews.mykompot.presentation.tariffs
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.model.TariffPlan
 import com.wasylews.mykompot.ui.theme.MyKompotTheme
+import com.wasylews.mykompot.presentation.home.PreviewLightDark
 import com.wasylews.mykompot.ui.theme.Spacing
 
 @OptIn(ExperimentalMaterial3Api::class)

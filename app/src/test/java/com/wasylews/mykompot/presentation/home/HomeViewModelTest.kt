@@ -19,12 +19,12 @@ package com.wasylews.mykompot.presentation.home
 import app.cash.turbine.test
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.ObserveStatus
-import com.wasylews.mykompot.domain.ObserveTariffPlans
 import com.wasylews.mykompot.domain.RefreshStatus
-import com.wasylews.mykompot.domain.RefreshTariffPlans
 import com.wasylews.mykompot.domain.model.AccountStatus
 import com.wasylews.mykompot.domain.model.RefreshResult
 import com.wasylews.mykompot.presentation.BaseViewModelTest
+import com.wasylews.mykompot.presentation.FakeObserveStatusUseCase
+import com.wasylews.mykompot.presentation.FakeRefreshStatus
 import com.wasylews.mykompot.presentation.profile
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -32,9 +32,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import okio.IOException
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -60,10 +58,8 @@ class HomeViewModelTest : BaseViewModelTest() {
 
     private fun createViewModel(
         observeStatus: ObserveStatus = FakeObserveStatusUseCase(allGoodStatus),
-        observeTariffPlans: ObserveTariffPlans = FakeObserveTariffPlans(),
         refreshStatus: RefreshStatus = FakeRefreshStatus(),
-        refreshTariffPlans: RefreshTariffPlans = FakeRefreshTariffPlans(),
-    ) = HomeViewModel(observeStatus, observeTariffPlans, refreshStatus, refreshTariffPlans)
+    ) = HomeViewModel(observeStatus, refreshStatus)
 
     @Test
     fun `initial state is loading`() = runTest {
@@ -262,19 +258,6 @@ class HomeViewModelTest : BaseViewModelTest() {
     }
 
     @Test
-    fun `refreshes tariff plans catalog on init`() = runTest {
-        // GIVEN
-        val refreshTariffPlans = FakeRefreshTariffPlans()
-
-        // WHEN
-        createViewModel(refreshTariffPlans = refreshTariffPlans)
-        advanceUntilIdle()
-
-        // THEN
-        assertEquals(1, refreshTariffPlans.calls)
-    }
-
-    @Test
     fun `suspended account without next payment date hides next charge`() = runTest {
         // GIVEN
         val status = AccountStatus(
@@ -302,65 +285,5 @@ class HomeViewModelTest : BaseViewModelTest() {
             ),
             vm.uiState.value,
         )
-    }
-
-    @Test
-    fun `openTariffPlans shows tariff plans sheet`() = runTest {
-        // GIVEN
-        val vm = createViewModel()
-        advanceUntilIdle()
-
-        // WHEN
-        vm.openTariffPlans()
-        advanceUntilIdle()
-
-        // THEN
-        assertTrue(vm.uiState.value.isTariffSheetVisible)
-    }
-
-    @Test
-    fun `dismissTariffPlans hides tariff plans sheet`() = runTest {
-        // GIVEN
-        val vm = createViewModel()
-        advanceUntilIdle()
-        vm.openTariffPlans()
-        advanceUntilIdle()
-
-        // WHEN
-        vm.dismissTariffPlans()
-        advanceUntilIdle()
-
-        // THEN
-        assertFalse(vm.uiState.value.isTariffSheetVisible)
-    }
-
-    @Test
-    fun `openPaymentMethods shows payment methods sheet`() = runTest {
-        // GIVEN
-        val vm = createViewModel()
-        advanceUntilIdle()
-
-        // WHEN
-        vm.openPaymentMethods()
-        advanceUntilIdle()
-
-        // THEN
-        assertTrue(vm.uiState.value.isPaymentMethodsSheetVisible)
-    }
-
-    @Test
-    fun `dismissPaymentMethods hides payment methods sheet`() = runTest {
-        // GIVEN
-        val vm = createViewModel()
-        advanceUntilIdle()
-        vm.openPaymentMethods()
-        advanceUntilIdle()
-
-        // WHEN
-        vm.dismissPaymentMethods()
-        advanceUntilIdle()
-
-        // THEN
-        assertFalse(vm.uiState.value.isPaymentMethodsSheetVisible)
     }
 }

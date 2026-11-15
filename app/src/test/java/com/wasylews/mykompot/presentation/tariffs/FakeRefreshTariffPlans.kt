@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package com.wasylews.mykompot.presentation.home
+package com.wasylews.mykompot.presentation.tariffs
 
-import com.wasylews.mykompot.domain.ObserveTariffPlans
-import com.wasylews.mykompot.domain.model.TariffPlan
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
+import com.wasylews.mykompot.domain.RefreshTariffPlans
 
-class FakeObserveTariffPlans(
-    private val plans: List<TariffPlan>? = emptyList(),
-) : ObserveTariffPlans {
-    override fun invoke(): Flow<List<TariffPlan>?> = flowOf(plans)
+class FakeRefreshTariffPlans : RefreshTariffPlans {
+    var calls = 0
+
+    override suspend fun invoke() {
+        calls++
+    }
 }

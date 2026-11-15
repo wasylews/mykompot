@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.wasylews.mykompot.presentation.home
+package com.wasylews.mykompot.presentation.payments
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes

@@ -30,9 +30,9 @@ import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasData
 import androidx.test.espresso.intent.matcher.IntentMatchers.isInternal
 import androidx.test.espresso.intent.rule.IntentsRule
-import com.wasylews.mykompot.presentation.home.PaymentMethod
-import com.wasylews.mykompot.presentation.home.PaymentMethodIconRes
-import com.wasylews.mykompot.presentation.home.paymentMethods
+import com.wasylews.mykompot.presentation.payments.PaymentMethod
+import com.wasylews.mykompot.presentation.payments.PaymentMethodIconRes
+import com.wasylews.mykompot.presentation.payments.paymentMethods
 import org.hamcrest.CoreMatchers.allOf
 import org.hamcrest.CoreMatchers.not
 import org.junit.Rule

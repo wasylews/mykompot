@@ -37,6 +37,12 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import com.wasylews.mykompot.R
+import com.wasylews.mykompot.presentation.payments.PaymentMethod
+import com.wasylews.mykompot.presentation.payments.PaymentMethodsBottomSheet
+import com.wasylews.mykompot.presentation.payments.PaymentMethodsUiState
+import com.wasylews.mykompot.presentation.payments.paymentMethods
+import com.wasylews.mykompot.presentation.tariffs.TariffPlansBottomSheet
+import com.wasylews.mykompot.presentation.tariffs.TariffPlansUiState
 import com.wasylews.mykompot.ui.theme.MyKompotTheme
 import com.wasylews.mykompot.ui.theme.Spacing
 
@@ -46,6 +52,8 @@ internal const val HOME_LOADING_TEST_TAG = "home_loading"
 @Composable
 fun HomeScreen(
     state: HomeUiState,
+    tariffPlansState: TariffPlansUiState,
+    paymentMethodsState: PaymentMethodsUiState,
     modifier: Modifier = Modifier,
     onRefresh: () -> Unit = {},
     onPayClick: () -> Unit = {},
@@ -98,15 +106,15 @@ fun HomeScreen(
             }
         }
 
-        if (state.isTariffSheetVisible) {
+        if (tariffPlansState.isVisible) {
             TariffPlansBottomSheet(
-                plans = state.tariffPlans,
-                currentPlanIndex = state.selectedTariffPlanIndex,
+                plans = tariffPlansState.plans,
+                currentPlanIndex = tariffPlansState.selectedPlanIndex,
                 onDismissRequest = onTariffSheetDismiss,
             )
         }
 
-        if (state.isPaymentMethodsSheetVisible) {
+        if (paymentMethodsState.isVisible) {
             PaymentMethodsBottomSheet(
                 methods = paymentMethods,
                 onMethodClick = onPaymentMethodClick,
@@ -128,6 +136,8 @@ fun HomeScreenPreview(
         ) { innerPadding ->
             HomeScreen(
                 state = state,
+                tariffPlansState = TariffPlansUiState(),
+                paymentMethodsState = PaymentMethodsUiState(),
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),

@@ -21,17 +21,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.ObserveStatus
-import com.wasylews.mykompot.domain.ObserveTariffPlans
 import com.wasylews.mykompot.domain.RefreshStatus
-import com.wasylews.mykompot.domain.RefreshTariffPlans
 import com.wasylews.mykompot.domain.model.AccountStatus
 import com.wasylews.mykompot.domain.model.RefreshResult
-import com.wasylews.mykompot.presentation.combine
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
@@ -39,14 +37,10 @@ import org.koin.core.annotation.KoinViewModel
 @KoinViewModel
 class HomeViewModel(
     observeStatusUseCase: ObserveStatus,
-    observeTariffPlans: ObserveTariffPlans,
     private val refreshStatus: RefreshStatus,
-    private val refreshTariffPlans: RefreshTariffPlans,
 ) : ViewModel() {
     private val isRefreshing = MutableStateFlow(false)
     private val errorId = MutableStateFlow<Int?>(null)
-    private val isTariffSheetVisible = MutableStateFlow(false)
-    private val isPaymentMethodsSheetVisible = MutableStateFlow(false)
 
     // Collected separately from `uiState` so refresh can tell whether cached status exists
     // without changing `uiState`'s combined-flow error/cancellation semantics.
@@ -63,27 +57,10 @@ class HomeViewModel(
 
     init {
         refresh()
-        viewModelScope.launch { refreshTariffPlans() }
     }
 
     fun clearError() {
         errorId.value = null
-    }
-
-    fun openTariffPlans() {
-        isTariffSheetVisible.value = true
-    }
-
-    fun dismissTariffPlans() {
-        isTariffSheetVisible.value = false
-    }
-
-    fun openPaymentMethods() {
-        isPaymentMethodsSheetVisible.value = true
-    }
-
-    fun dismissPaymentMethods() {
-        isPaymentMethodsSheetVisible.value = false
     }
 
     fun refresh() {
@@ -117,24 +94,13 @@ class HomeViewModel(
 
     val uiState: StateFlow<HomeUiState> = combine(
         observeStatusUseCase.statusFlow(),
-        observeTariffPlans(),
         isRefreshing,
         errorId,
-        isTariffSheetVisible,
-        isPaymentMethodsSheetVisible,
-    ) { status, tariffPlans, isRefreshing, errorId, isTariffSheetVisible, isPaymentMethodsSheetVisible ->
-        val plans = tariffPlans.orEmpty()
-        val selectedTariffPlanIndex = status?.profile?.tariffPlan?.id?.let { id ->
-            plans.indexOfFirst { it.id == id }.takeIf { index -> index >= 0 }
-        }
+    ) { status, isRefreshing, errorId ->
         HomeUiState(
             content = status.toHomeContent(isRefreshing),
             isRefreshing = isRefreshing,
             errorId = errorId,
-            tariffPlans = plans,
-            isTariffSheetVisible = isTariffSheetVisible,
-            selectedTariffPlanIndex = selectedTariffPlanIndex,
-            isPaymentMethodsSheetVisible = isPaymentMethodsSheetVisible,
         )
     }
         .catch { error ->

@@ -14,19 +14,15 @@
  * limitations under the License.
  */
 
-package com.wasylews.mykompot.presentation.home
+package com.wasylews.mykompot.presentation.tariffs
 
-import com.wasylews.mykompot.domain.ObserveStatus
-import com.wasylews.mykompot.domain.model.AccountStatus
+import com.wasylews.mykompot.domain.ObserveTariffPlans
+import com.wasylews.mykompot.domain.model.TariffPlan
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 
-class FakeObserveStatusUseCase(
-    private val status: AccountStatus? = null,
-    private val error: Throwable? = null,
-) : ObserveStatus {
-    override fun statusFlow(): Flow<AccountStatus?> = flow {
-        error?.let { throw it }
-        emit(status)
-    }
+class FakeObserveTariffPlans(
+    private val plans: List<TariffPlan>? = emptyList(),
+) : ObserveTariffPlans {
+    override fun invoke(): Flow<List<TariffPlan>?> = flowOf(plans)
 }

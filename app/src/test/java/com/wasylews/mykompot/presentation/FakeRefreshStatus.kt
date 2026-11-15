@@ -14,14 +14,30 @@
  * limitations under the License.
  */
 
-package com.wasylews.mykompot.presentation.home
+package com.wasylews.mykompot.presentation
 
-import com.wasylews.mykompot.domain.RefreshTariffPlans
+import com.wasylews.mykompot.domain.RefreshStatus
+import com.wasylews.mykompot.domain.model.RefreshResult
+import kotlinx.coroutines.CompletableDeferred
 
-class FakeRefreshTariffPlans : RefreshTariffPlans {
+class FakeRefreshStatus(
+    var result: RefreshResult = RefreshResult.Updated,
+) : RefreshStatus {
     var calls = 0
+    private var gate: CompletableDeferred<Unit>? = null
 
-    override suspend fun invoke() {
+    fun pause() {
+        gate = CompletableDeferred()
+    }
+
+    fun resume() {
+        gate?.complete(Unit)
+        gate = null
+    }
+
+    override suspend fun invoke(): RefreshResult {
         calls++
+        gate?.await()
+        return result
     }
 }

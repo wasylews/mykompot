@@ -36,7 +36,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.wasylews.mykompot.domain.model.SessionState
 import com.wasylews.mykompot.presentation.home.HomeScreen
 import com.wasylews.mykompot.presentation.home.HomeViewModel
-import com.wasylews.mykompot.presentation.home.PaymentMethod
+import com.wasylews.mykompot.presentation.payments.PaymentMethod
+import com.wasylews.mykompot.presentation.payments.PaymentMethodsViewModel
+import com.wasylews.mykompot.presentation.tariffs.TariffPlansViewModel
 import com.wasylews.mykompot.presentation.login.LoginScreen
 import com.wasylews.mykompot.presentation.login.LoginViewModel
 import com.wasylews.mykompot.ui.theme.MyKompotTheme
@@ -72,20 +74,26 @@ class MainActivity : ComponentActivity() {
 
                         SessionState.LoggedIn -> {
                             val homeViewModel = koinViewModel<HomeViewModel>()
+                            val tariffPlansViewModel = koinViewModel<TariffPlansViewModel>()
+                            val paymentMethodsViewModel = koinViewModel<PaymentMethodsViewModel>()
                             val homeUiState by homeViewModel.uiState.collectAsState()
+                            val tariffPlansState by tariffPlansViewModel.uiState.collectAsState()
+                            val paymentMethodsState by paymentMethodsViewModel.uiState.collectAsState()
 
                             HomeScreen(
                                 state = homeUiState,
+                                tariffPlansState = tariffPlansState,
+                                paymentMethodsState = paymentMethodsState,
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .padding(innerPadding),
                                 onRefresh = homeViewModel::refresh,
-                                onPayClick = homeViewModel::openPaymentMethods,
-                                onTariffClick = homeViewModel::openTariffPlans,
-                                onTariffSheetDismiss = homeViewModel::dismissTariffPlans,
-                                onPaymentMethodsDismiss = homeViewModel::dismissPaymentMethods,
+                                onPayClick = paymentMethodsViewModel::open,
+                                onTariffClick = tariffPlansViewModel::open,
+                                onTariffSheetDismiss = tariffPlansViewModel::dismiss,
+                                onPaymentMethodsDismiss = paymentMethodsViewModel::dismiss,
                                 onPaymentMethodClick = { method ->
-                                    homeViewModel.dismissPaymentMethods()
+                                    paymentMethodsViewModel.dismiss()
                                     openPaymentMethod(method)
                                 },
                                 onErrorConsumed = homeViewModel::clearError,

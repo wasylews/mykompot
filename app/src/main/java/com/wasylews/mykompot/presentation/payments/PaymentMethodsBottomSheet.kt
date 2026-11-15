@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.wasylews.mykompot.presentation.home
+package com.wasylews.mykompot.presentation.payments
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -40,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.ui.theme.MyKompotTheme
+import com.wasylews.mykompot.presentation.home.PreviewLightDark
 import com.wasylews.mykompot.ui.theme.Spacing
 
 @OptIn(ExperimentalMaterial3Api::class)
