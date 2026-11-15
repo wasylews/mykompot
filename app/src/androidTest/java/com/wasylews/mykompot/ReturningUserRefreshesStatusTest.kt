@@ -72,12 +72,17 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
     fun fetchesStatusWhenNoCache() {
         // GIVEN a stored session with no cached profile
         givenStoredSession()
+        givenStoredTariffPlans()
         // AND the server returns a profile
         givenServerReturnsProfile()
 
         launch().use {
             // THEN I see the status
             assertShows(R.string.status_all_good)
+            assertShows(R.string.tariff)
+            composeRule.onNodeWithText("Standart 100").assertIsDisplayed()
+            waitForNodeWithStringRes(R.string.tariff_price, formatArgs = arrayOf(300))
+                .assertIsDisplayed()
             assertRefreshRequested()
         }
     }
@@ -224,7 +229,7 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
 
     private fun defaultTariff() = TariffPlan(
         id = "300GRN_100mb",
-        name = "[35] 300GRN_100mb",
+        name = "300GRN_100mb",
         speed = 100,
         price = 300,
     )

@@ -37,10 +37,15 @@ class ReturningUserSkipsLoginTest : BaseAcceptanceTest() {
         }
 
         // WHEN I reopen the app
+        givenStoredTariffPlans()
         givenServerReturnsProfile()
         launch().use {
             // THEN I see the status without logging in
             assertShows(R.string.status_all_good)
+            assertShows(R.string.tariff)
+            composeRule.onNodeWithText("Standart 100").assertIsDisplayed()
+            waitForNodeWithStringRes(R.string.tariff_price, formatArgs = arrayOf(300))
+                .assertIsDisplayed()
             assertLoginFormIsHidden()
             assertRefreshRequested()
         }
@@ -55,7 +60,7 @@ class ReturningUserSkipsLoginTest : BaseAcceptanceTest() {
                 nextPaymentDate = LocalDate.of(2026, 10, 2),
                 tariffPlan = TariffPlan(
                     id = "300GRN_100mb",
-                    name = "[35] 300GRN_100mb",
+                    name = "300GRN_100mb",
                     speed = 100,
                     price = 300,
                 ),

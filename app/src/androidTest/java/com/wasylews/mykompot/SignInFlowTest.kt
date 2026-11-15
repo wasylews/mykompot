@@ -32,6 +32,7 @@ class SignInFlowTest : BaseAcceptanceTest() {
     @Test
     fun signInSucceedsAndShowsStatus() {
         // GIVEN server is up
+        givenStoredTariffPlans()
         givenServerReturnsProfile()
 
         launch().use {
@@ -40,6 +41,10 @@ class SignInFlowTest : BaseAcceptanceTest() {
 
             // THEN I see the status
             assertShows(R.string.status_all_good)
+            assertShows(R.string.tariff)
+            composeRule.onNodeWithText("Standart 100").assertIsDisplayed()
+            waitForNodeWithStringRes(R.string.tariff_price, formatArgs = arrayOf(300))
+                .assertIsDisplayed()
         }
     }
 

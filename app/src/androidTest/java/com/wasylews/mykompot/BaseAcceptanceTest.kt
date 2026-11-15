@@ -34,7 +34,9 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.wasylews.mykompot.data.LocalStorage
 import com.wasylews.mykompot.data.ProfileEntity
+import com.wasylews.mykompot.data.TariffPlanEntity
 import com.wasylews.mykompot.domain.model.Profile
+import com.wasylews.mykompot.domain.model.TariffPlan
 import com.wasylews.mykompot.presentation.home.HOME_LOADING_TEST_TAG
 import com.wasylews.mykompot.presentation.home.HOME_SCREEN_TEST_TAG
 import com.wasylews.mykompot.presentation.main.MainActivity
@@ -73,6 +75,7 @@ abstract class BaseAcceptanceTest : KoinTest {
         runBlocking {
             getKoin().get<DataStore<ProfileEntity?>>(named("profile")).updateData { null }
             getKoin().get<DataStore<String?>>(named("session")).updateData { null }
+            getKoin().get<DataStore<List<TariffPlanEntity>?>>(named("tariffPlans")).updateData { null }
         }
         loadKoinModules(testModule)
         server.start(8080)
@@ -93,6 +96,16 @@ abstract class BaseAcceptanceTest : KoinTest {
         val storage = get<LocalStorage>()
         storage.saveSession(sid)
         if (profile != null) storage.saveProfile(profile)
+    }
+
+    protected fun givenStoredTariffPlans(
+        plans: List<TariffPlan> = listOf(
+            TariffPlan(id = "260GRN_50mb", name = "Econom 50", speed = 50, price = 260),
+            TariffPlan(id = "300GRN_100mb", name = "Standart 100", speed = 100, price = 300),
+            TariffPlan(id = "350GRN_300mb", name = "LUX 300", speed = 300, price = 350),
+        ),
+    ) = runBlocking {
+        get<LocalStorage>().saveTariffPlans(plans)
     }
 
     protected fun performLogin() {
