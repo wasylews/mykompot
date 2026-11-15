@@ -1,6 +1,7 @@
 # Agent guide
 
 ## Working style
+- For questions or suggestions, respond with an answer; edit files or implement only when the user explicitly asks for a change.
 - Keep answers concise and grounded in code facts. Cite paths/symbols you inspected; do not guess behavior.
 - Be methodical. Make the smallest coherent change that advances the task; do not rush a broad implementation.
 
