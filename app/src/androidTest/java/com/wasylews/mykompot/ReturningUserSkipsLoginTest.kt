@@ -20,10 +20,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
-import com.wasylews.mykompot.domain.model.Profile
-import com.wasylews.mykompot.domain.model.TariffPlan
 import org.junit.Test
-import java.time.LocalDate
 
 @OptIn(ExperimentalTestApi::class)
 class ReturningUserSkipsLoginTest : BaseAcceptanceTest() {
@@ -52,21 +49,8 @@ class ReturningUserSkipsLoginTest : BaseAcceptanceTest() {
 
     @Test
     fun showsPaymentDueStatus() {
-        // GIVEN a saved session with a payment-due profile
-        givenStoredSession(
-            profile = Profile(
-                isActive = true,
-                nextPaymentDate = LocalDate.of(2026, 10, 2),
-                tariffPlan = TariffPlan(
-                    id = "300GRN_100mb",
-                    name = "300GRN_100mb",
-                    speed = 100,
-                    price = 300,
-                ),
-            ),
-        )
-        // AND refresh returns the same payment-due profile
-        givenServerResponse(body = HtmlFixtures.paymentDue())
+        // GIVEN a saved session with a payment-due profile and refresh returns it
+        givenPaymentDueHome()
 
         launch().use {
             // WHEN I open the app

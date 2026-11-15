@@ -18,10 +18,7 @@ package com.wasylews.mykompot
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithText
-import com.wasylews.mykompot.domain.model.Profile
-import com.wasylews.mykompot.domain.model.TariffPlan
 import org.junit.Test
-import java.time.LocalDate
 
 class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
     @Test
@@ -92,7 +89,7 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
     fun showsLoadingWhileFetchingWithoutCache() {
         // GIVEN a stored session with no cached profile and a slow server
         givenStoredSession()
-        givenServerReturnsProfileAfter()
+        givenServerReturnsProfile(delayMillis = 2_000)
 
         launch().use {
             // THEN I see progress instead of the unknown status while refreshing
@@ -110,7 +107,7 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
         // GIVEN a stored session with no cached profile
         givenStoredSession()
         // AND the server returns a suspended profile
-        givenServerResponse(body = HtmlFixtures.suspended())
+        givenHomeResponses(profileBody = HtmlFixtures.suspended())
 
         launch().use {
             // THEN I see the suspended status without a next charge date
@@ -165,7 +162,7 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
         // GIVEN a stored session
         givenStoredSession(profile = allGoodProfile())
         // AND the server treats it as unauthenticated
-        givenServerResponse(body = HtmlFixtures.loginFailed())
+        givenHomeResponses(profileBody = HtmlFixtures.loginFailed())
 
         launch().use {
             // THEN I am taken back to login
@@ -216,22 +213,5 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
         }
     }
 
-    private fun allGoodProfile() = Profile(
-        isActive = true,
-        nextPaymentDate = LocalDate.of(2026, 11, 1),
-        tariffPlan = defaultTariff(),
-    )
 
-    private fun paymentDueProfile() = Profile(
-        isActive = true,
-        nextPaymentDate = LocalDate.of(2026, 10, 2),
-        tariffPlan = defaultTariff(),
-    )
-
-    private fun defaultTariff() = TariffPlan(
-        id = "300GRN_100mb",
-        name = "300GRN_100mb",
-        speed = 100,
-        price = 300,
-    )
 }

@@ -43,6 +43,8 @@ import com.wasylews.mykompot.presentation.main.MainActivity
 import kotlinx.coroutines.runBlocking
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.Dispatcher
+import mockwebserver3.RecordedRequest
 import mockwebserver3.SocketEffect
 import org.junit.After
 import org.junit.Assert.assertNotNull
@@ -54,6 +56,7 @@ import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.koin.test.KoinTest
 import org.koin.test.get
+import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -70,6 +73,8 @@ abstract class BaseAcceptanceTest : KoinTest {
         single<Clock> { clock }
     }
 
+    private val dispatcher = TestDispatcher()
+
     @Before
     fun setup() {
         runBlocking {
@@ -78,6 +83,8 @@ abstract class BaseAcceptanceTest : KoinTest {
             getKoin().get<DataStore<List<TariffPlanEntity>?>>(named("tariffPlans")).updateData { null }
         }
         loadKoinModules(testModule)
+        resetServerResponses()
+        server.dispatcher = dispatcher
         server.start(8080)
     }
 
@@ -99,14 +106,46 @@ abstract class BaseAcceptanceTest : KoinTest {
     }
 
     protected fun givenStoredTariffPlans(
-        plans: List<TariffPlan> = listOf(
-            TariffPlan(id = "260GRN_50mb", name = "Econom 50", speed = 50, price = 260),
-            TariffPlan(id = "300GRN_100mb", name = "Standart 100", speed = 100, price = 300),
-            TariffPlan(id = "350GRN_300mb", name = "LUX 300", speed = 300, price = 350),
-        ),
+        plans: List<TariffPlan> = defaultTariffPlans(),
     ) = runBlocking {
         get<LocalStorage>().saveTariffPlans(plans)
     }
+
+    protected fun givenPaymentDueProfileStored() = givenStoredSession(profile = paymentDueProfile())
+
+    protected fun givenPaymentDueHome() {
+        givenPaymentDueProfileStored()
+        givenHomeResponses(profileBody = HtmlFixtures.paymentDue())
+    }
+
+    protected fun defaultTariffPlan() = TariffPlan(
+        id = "300GRN_100mb",
+        name = "Standart 100",
+        speed = 100,
+        price = 300,
+    )
+
+    protected fun defaultTariffPlans(): List<TariffPlan> = listOf(
+        TariffPlan(id = "260GRN_50mb", name = "Econom 50", speed = 50, price = 260),
+        TariffPlan(id = "300GRN_100mb", name = "Standart 100", speed = 100, price = 300),
+        TariffPlan(id = "350GRN_300mb", name = "LUX 300", speed = 300, price = 350),
+    )
+
+    protected fun allGoodProfile(
+        tariffPlan: TariffPlan = defaultTariffPlan(),
+    ) = Profile(
+        isActive = true,
+        nextPaymentDate = LocalDate.of(2026, 11, 1),
+        tariffPlan = tariffPlan,
+    )
+
+    protected fun paymentDueProfile(
+        tariffPlan: TariffPlan = defaultTariffPlan(),
+    ) = Profile(
+        isActive = true,
+        nextPaymentDate = LocalDate.of(2026, 10, 2),
+        tariffPlan = tariffPlan,
+    )
 
     protected fun performLogin() {
         assertShows(R.string.username).performTextInput("user")
@@ -140,45 +179,84 @@ abstract class BaseAcceptanceTest : KoinTest {
             .code(status)
             .body(body)
         headers.forEach { (name, value) -> builder.addHeader(name, value) }
-        server.enqueue(builder.build())
+        dispatcher.enqueue(builder.build())
     }
 
-    protected fun givenServerReturnsProfile() {
-        givenServerResponse(body = HtmlFixtures.profile())
+    protected fun givenHomeResponses(
+        profileBody: String = HtmlFixtures.profile(),
+        plansBody: String = HtmlFixtures.plans(),
+        profileStatus: Int = 200,
+        plansStatus: Int = 200,
+        profileHeaders: Map<String, String> = emptyMap(),
+        profileDelayMillis: Long = 0,
+        plansDelayMillis: Long = 0,
+    ) {
+        dispatcher.profileResponseFactory = {
+            response(
+                body = profileBody,
+                status = profileStatus,
+                headers = profileHeaders,
+                delayMillis = profileDelayMillis,
+            )
+        }
+        dispatcher.plansResponseFactory = {
+            response(
+                body = plansBody,
+                status = plansStatus,
+                delayMillis = plansDelayMillis,
+            )
+        }
     }
 
-    protected fun givenServerReturnsProfileAfter(delayMillis: Long = 2_000) {
-        server.enqueue(
-            MockResponse.Builder()
-                .body(HtmlFixtures.profile())
-                .bodyDelay(delayMillis, TimeUnit.MILLISECONDS)
-                .build(),
+    protected fun givenServerReturnsProfile(
+        body: String = HtmlFixtures.profile(),
+        headers: Map<String, String> = emptyMap(),
+        delayMillis: Long = 0,
+    ) {
+        givenHomeResponses(
+            profileBody = body,
+            profileHeaders = headers,
+            profileDelayMillis = delayMillis,
         )
     }
 
     protected fun givenServerReturnsLoginSuccess(sid: String = "test-session") {
-        givenServerResponse(
-            body = HtmlFixtures.profile(),
-            headers = mapOf("Set-Cookie" to "sid=$sid"),
-        )
+        givenServerReturnsProfile(headers = mapOf("Set-Cookie" to "sid=$sid"))
     }
 
     protected fun givenServerIsDown(status: Int = 502) {
-        givenServerResponse(status = status)
+        givenHomeResponses(profileStatus = status, plansStatus = status)
     }
 
     protected fun givenServerIsUnreachable(
         body: String = HtmlFixtures.profile(),
         delayMillis: Long = 0,
     ) {
-        val builder = MockResponse.Builder()
-            .body(body)
-            .onResponseBody(SocketEffect.ShutdownConnection)
-        if (delayMillis > 0) {
-            builder.bodyDelay(delayMillis, TimeUnit.MILLISECONDS)
+        dispatcher.profileResponseFactory = {
+            MockResponse.Builder()
+                .body(body)
+                .onResponseBody(SocketEffect.ShutdownConnection)
+                .apply {
+                    if (delayMillis > 0) bodyDelay(delayMillis, TimeUnit.MILLISECONDS)
+                }
+                .build()
         }
-        server.enqueue(builder.build())
+        dispatcher.plansResponseFactory = { response(body = HtmlFixtures.plans()) }
     }
+
+    private fun response(
+        body: String = "",
+        status: Int = 200,
+        headers: Map<String, String> = emptyMap(),
+        delayMillis: Long = 0,
+    ): MockResponse = MockResponse.Builder()
+        .code(status)
+        .body(body)
+        .apply {
+            headers.forEach { (name, value) -> addHeader(name, value) }
+            if (delayMillis > 0) bodyDelay(delayMillis, TimeUnit.MILLISECONDS)
+        }
+        .build()
 
     protected fun assertRefreshRequested() {
         assertNotNull(server.takeRequest(2, TimeUnit.SECONDS))
@@ -204,4 +282,44 @@ abstract class BaseAcceptanceTest : KoinTest {
         res: Int,
         vararg formatArgs: Any,
     ): String = InstrumentationRegistry.getInstrumentation().targetContext.getString(res, *formatArgs)
+
+    protected fun resetServerResponses() {
+        dispatcher.clear()
+        dispatcher.profileResponseFactory = { MockResponse.Builder().code(404).build() }
+        dispatcher.plansResponseFactory = { MockResponse.Builder().body(HtmlFixtures.plans()).build() }
+    }
+
+    private class TestDispatcher : Dispatcher() {
+        private val queuedResponses = ArrayDeque<MockResponse>()
+
+        @Volatile
+        var profileResponseFactory: () -> MockResponse = { MockResponse.Builder().code(404).build() }
+
+        @Volatile
+        var plansResponseFactory: () -> MockResponse = { MockResponse.Builder().body(HtmlFixtures.plans()).build() }
+
+        fun enqueue(response: MockResponse) {
+            synchronized(queuedResponses) { queuedResponses.addLast(response) }
+        }
+
+        fun clear() {
+            synchronized(queuedResponses) { queuedResponses.clear() }
+        }
+
+        override fun dispatch(request: RecordedRequest): MockResponse {
+            synchronized(queuedResponses) {
+                if (queuedResponses.isNotEmpty()) return queuedResponses.removeFirst()
+            }
+            val path = request.url.encodedPath
+            return when {
+                path.contains("/plans") -> plansResponseFactory()
+                path.contains("index.cgi") -> profileResponseFactory()
+                else -> MockResponse.Builder().code(404).build()
+            }
+        }
+
+        override fun close() {
+            clear()
+        }
+    }
 }

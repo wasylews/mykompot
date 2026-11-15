@@ -16,7 +16,6 @@
 
 package com.wasylews.mykompot
 
-import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
@@ -24,15 +23,10 @@ import androidx.compose.ui.test.performClick
 import com.wasylews.mykompot.domain.model.TariffPlan
 import org.junit.Test
 
-@OptIn(ExperimentalTestApi::class)
 class TariffPlansSheetTest : BaseAcceptanceTest() {
     @Test
     fun showsTariffPlansSheet() {
-        val plans = listOf(
-            TariffPlan(id = "260GRN_50mb", name = "Econom 50", speed = 50, price = 260),
-            TariffPlan(id = "300GRN_100mb", name = "Standart 100", speed = 100, price = 300),
-            TariffPlan(id = "350GRN_300mb", name = "LUX 300", speed = 300, price = 350),
-        )
+        val plans = defaultTariffPlans()
 
         // GIVEN a stored session, tariff catalog, and profile from server
         givenStoredSession()
@@ -47,7 +41,7 @@ class TariffPlansSheetTest : BaseAcceptanceTest() {
             composeRule.onAllNodesWithText("Standart 100")[0].performClick()
 
             // THEN I see the tariffs sheet with 3 plans and the selected one indicated
-            composeRule.onNodeWithText("Tariffs").assertIsDisplayed()
+            composeRule.onNodeWithText(stringRes(R.string.tariffs)).assertIsDisplayed()
             assertShowsTariffPlans(plans = plans, selectedPlanId = "300GRN_100mb")
         }
     }
