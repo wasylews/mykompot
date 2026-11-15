@@ -100,6 +100,16 @@ class DataStoreLocalStorageTest {
     }
 
     @Test
+    fun `clearing a session removes it`() = runTest {
+        val store = createLocalStorage()
+        store.saveSession("test-session")
+
+        store.clearSession()
+
+        assertNull(store.sessionFlow().first())
+    }
+
+    @Test
     fun `saving a profile keeps the session`() = runTest {
         val store = createLocalStorage()
         store.saveSession("test-session")
@@ -107,6 +117,16 @@ class DataStoreLocalStorageTest {
         store.saveProfile(profile())
 
         assertEquals("test-session", store.sessionFlow().first())
+    }
+
+    @Test
+    fun `clearing a profile removes it`() = runTest {
+        val store = createLocalStorage()
+        store.saveProfile(profile())
+
+        store.clearProfile()
+
+        assertNull(store.profileFlow().first())
     }
 
     @Test
@@ -148,6 +168,20 @@ class DataStoreLocalStorageTest {
 
         assertNull(second.profileFlow().first())
         assertEquals("test-session", second.sessionFlow().first())
+    }
+
+    @Test
+    fun `corrupt tariff plans read as null`() = runTest {
+        val plansFile = File(tmp.root, PLANS_FILE)
+        val first = createLocalStorage(plansFile = plansFile)
+        first.saveTariffPlans(tariffPlans())
+        closeStores()
+
+        plansFile.writeText("{not json")
+
+        val second = createLocalStorage(plansFile = plansFile)
+
+        assertNull(second.tariffPlansFlow().first())
     }
 
     @Test

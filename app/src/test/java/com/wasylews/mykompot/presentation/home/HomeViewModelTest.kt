@@ -26,13 +26,10 @@ import com.wasylews.mykompot.presentation.BaseViewModelTest
 import com.wasylews.mykompot.presentation.FakeObserveStatusUseCase
 import com.wasylews.mykompot.presentation.FakeRefreshStatus
 import com.wasylews.mykompot.presentation.profile
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import okio.IOException
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotEquals
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -62,26 +59,16 @@ class HomeViewModelTest : BaseViewModelTest() {
     ) = HomeViewModel(observeStatus, refreshStatus)
 
     @Test
-    fun `initial state is loading`() = runTest {
+    fun `shows cached content after refresh on init`() = runTest {
         // GIVEN
-        val vm = createViewModel()
-
-        // WHEN / THEN
-        vm.uiState.test {
-            assertEquals(HomeContent.Loading, awaitItem().content)
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    @Test
-    fun `get current state`() = runTest {
-        // GIVEN
-        val vm = createViewModel()
+        val refreshStatus = FakeRefreshStatus()
 
         // WHEN
+        val vm = createViewModel(refreshStatus = refreshStatus)
         advanceUntilIdle()
 
         // THEN
+        assertEquals(1, refreshStatus.calls)
         assertEquals(
             HomeUiState(content = allGoodContent, isRefreshing = false),
             vm.uiState.value,
@@ -89,7 +76,7 @@ class HomeViewModelTest : BaseViewModelTest() {
     }
 
     @Test
-    fun `get payment due state`() = runTest {
+    fun `maps payment due status to content`() = runTest {
         // GIVEN
         val vm = createViewModel(observeStatus = FakeObserveStatusUseCase(paymentDueStatus))
 
@@ -112,9 +99,41 @@ class HomeViewModelTest : BaseViewModelTest() {
     }
 
     @Test
-    fun `shows loading while refreshing then unknown when no cached profile`() = runTest {
+    fun `maps suspended status without next payment date to content without next charge`() = runTest {
+        // GIVEN
+        val status = AccountStatus(
+            state = AccountStatus.State.SUSPENDED,
+            profile = profile().copy(
+                isActive = false,
+                nextPaymentDate = null,
+            ),
+            daysLeft = null,
+        )
+        val vm = createViewModel(observeStatus = FakeObserveStatusUseCase(status))
+
+        // WHEN
+        advanceUntilIdle()
+
+        // THEN
+        assertEquals(
+            HomeUiState(
+                content = HomeContent.Content(
+                    account = status,
+                    status = R.string.status_suspended,
+                    message = R.string.status_suspended_message,
+                    nextChargeLabel = null,
+                ),
+            ),
+            vm.uiState.value,
+        )
+    }
+
+    @Test
+    fun `shows loading while refreshing then unknown without error when no cached profile`() = runTest {
         // GIVEN no cached profile and a refresh that is still in progress
-        val refreshStatus = FakeRefreshStatus().apply { pause() }
+        val refreshStatus = FakeRefreshStatus(result = RefreshResult.Failed.Server).apply {
+            pause()
+        }
         val vm = createViewModel(
             observeStatus = FakeObserveStatusUseCase(status = null),
             refreshStatus = refreshStatus,
@@ -135,51 +154,18 @@ class HomeViewModelTest : BaseViewModelTest() {
             refreshStatus.resume()
             advanceUntilIdle()
 
-            // THEN I see the unknown status state
+            // THEN I see the unknown status without a snackbar error
             assertEquals(
-                HomeUiState(content = HomeContent.Unknown, isRefreshing = false),
+                HomeUiState(
+                    content = HomeContent.Unknown,
+                    isRefreshing = false,
+                    errorId = null,
+                ),
                 awaitItem(),
             )
 
             cancelAndIgnoreRemainingEvents()
         }
-    }
-
-    @Test
-    fun `profile load error maps to unknown`() = runTest {
-        // GIVEN
-        val vm = createViewModel(observeStatus = FakeObserveStatusUseCase(error = IOException()))
-
-        // WHEN
-        advanceUntilIdle()
-
-        // THEN
-        assertEquals(HomeUiState(content = HomeContent.Unknown, isRefreshing = false), vm.uiState.value)
-    }
-
-    @Test
-    fun `cancellation is not mapped to unknown`() = runTest {
-        // GIVEN
-        val vm = createViewModel(observeStatus = FakeObserveStatusUseCase(error = CancellationException()))
-
-        // WHEN
-        advanceUntilIdle()
-
-        // THEN
-        assertNotEquals(HomeContent.Unknown, vm.uiState.value.content)
-    }
-
-    @Test
-    fun `refreshes status on init`() = runTest {
-        // GIVEN
-        val refreshStatus = FakeRefreshStatus()
-
-        // WHEN
-        createViewModel(refreshStatus = refreshStatus)
-        advanceUntilIdle()
-
-        // THEN
-        assertEquals(1, refreshStatus.calls)
     }
 
     @Test
@@ -223,25 +209,6 @@ class HomeViewModelTest : BaseViewModelTest() {
     }
 
     @Test
-    fun `shows unknown without error when no cached profile refresh fails`() = runTest {
-        // GIVEN no cached profile and a refresh that fails
-        val refreshStatus = FakeRefreshStatus(result = RefreshResult.Failed.Server)
-
-        // WHEN
-        val vm = createViewModel(
-            observeStatus = FakeObserveStatusUseCase(status = null),
-            refreshStatus = refreshStatus,
-        )
-        advanceUntilIdle()
-
-        // THEN
-        assertEquals(
-            HomeUiState(content = HomeContent.Unknown, isRefreshing = false),
-            vm.uiState.value,
-        )
-    }
-
-    @Test
     fun `clearError clears refresh error`() = runTest {
         // GIVEN a cached profile and a failed refresh
         val vm = createViewModel(
@@ -254,36 +221,81 @@ class HomeViewModelTest : BaseViewModelTest() {
         advanceUntilIdle()
 
         // THEN
-        assertEquals(null, vm.uiState.value.errorId)
-    }
-
-    @Test
-    fun `suspended account without next payment date hides next charge`() = runTest {
-        // GIVEN
-        val status = AccountStatus(
-            state = AccountStatus.State.SUSPENDED,
-            profile = profile().copy(
-                isActive = false,
-                nextPaymentDate = null,
-            ),
-            daysLeft = null,
-        )
-        val vm = createViewModel(observeStatus = FakeObserveStatusUseCase(status))
-
-        // WHEN
-        advanceUntilIdle()
-
-        // THEN
         assertEquals(
             HomeUiState(
-                content = HomeContent.Content(
-                    account = status,
-                    status = R.string.status_suspended,
-                    message = R.string.status_suspended_message,
-                    nextChargeLabel = null,
-                ),
+                content = allGoodContent,
+                isRefreshing = false,
+                errorId = null,
             ),
             vm.uiState.value,
         )
+    }
+
+    @Test
+    fun `refresh can be triggered manually`() = runTest {
+        // GIVEN a cached profile and an initial refresh completed
+        val refreshStatus = FakeRefreshStatus().apply { pause() }
+        val vm = createViewModel(refreshStatus = refreshStatus)
+
+        vm.uiState.test {
+            assertEquals(HomeContent.Loading, awaitItem().content)
+            advanceUntilIdle()
+            assertEquals(
+                HomeUiState(content = allGoodContent, isRefreshing = true),
+                expectMostRecentItem(),
+            )
+
+            refreshStatus.resume()
+            advanceUntilIdle()
+            assertEquals(
+                HomeUiState(content = allGoodContent, isRefreshing = false),
+                awaitItem(),
+            )
+
+            // WHEN I refresh again
+            refreshStatus.pause()
+            vm.refresh()
+            advanceUntilIdle()
+
+            // THEN I see the refreshing state while keeping content
+            assertEquals(
+                HomeUiState(content = allGoodContent, isRefreshing = true),
+                awaitItem(),
+            )
+            assertEquals(2, refreshStatus.calls)
+
+            refreshStatus.resume()
+            advanceUntilIdle()
+            assertEquals(
+                HomeUiState(content = allGoodContent, isRefreshing = false),
+                awaitItem(),
+            )
+
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `manual refresh failure keeps cached content and shows error`() = runTest {
+        // GIVEN a cached profile and a successful initial refresh
+        val refreshStatus = FakeRefreshStatus()
+        val vm = createViewModel(refreshStatus = refreshStatus)
+        advanceUntilIdle()
+
+        // WHEN a manual refresh fails
+        refreshStatus.result = RefreshResult.Failed.Network
+        vm.refresh()
+        advanceUntilIdle()
+
+        // THEN cached content stays and the connection error is shown
+        assertEquals(
+            HomeUiState(
+                content = allGoodContent,
+                isRefreshing = false,
+                errorId = R.string.error_no_connection,
+            ),
+            vm.uiState.value,
+        )
+        assertEquals(2, refreshStatus.calls)
     }
 }

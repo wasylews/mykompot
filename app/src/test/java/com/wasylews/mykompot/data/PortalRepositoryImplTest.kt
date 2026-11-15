@@ -326,6 +326,47 @@ class PortalRepositoryImplTest {
     }
 
     @Test
+    fun `refresh returns expired when no session is stored`() = runTest {
+        val api = FakePortalApi(activeProfileResponse())
+        val repo = createPortalRepository(testScheduler, portalApi = api)
+
+        val result = repo.refresh()
+
+        assertEquals(RefreshResult.Expired, result)
+        assertEquals(0, api.fetchCalls)
+    }
+
+    @Test
+    fun `login returns parsing error when response body is missing`() = runTest {
+        val repo = createPortalRepository(
+            testScheduler,
+            FakePortalApi(
+                response = activeProfileResponse(),
+                loginResponse = Response.success(null),
+            ),
+        )
+
+        val result = repo.login("user", "pass")
+
+        assertEquals(LoginResult.ParsingError, result)
+    }
+
+    @Test
+    fun `login returns parsing error when session id is missing`() = runTest {
+        val repo = createPortalRepository(
+            testScheduler,
+            FakePortalApi(
+                response = activeProfileResponse(),
+                loginResponse = Response.success(activeProfileResponse()),
+            ),
+        )
+
+        val result = repo.login("user", "pass")
+
+        assertEquals(LoginResult.ParsingError, result)
+    }
+
+    @Test
     fun `tariff plans flow emits null when plans are missing`() = runTest {
         val repo = createPortalRepository(testScheduler)
 
@@ -335,12 +376,12 @@ class PortalRepositoryImplTest {
     }
 
     @Test
-    fun `refreshTariffPlans saves fetched plans`() = runTest {
+    fun `refreshTariffPlans saves fetched monthly plans`() = runTest {
         val repo = createPortalRepository(
             testScheduler,
             portalApi = FakePortalApi(
                 response = activeProfileResponse(),
-                plansResponse = plansPageResponse(),
+                plansResponse = Response.success(plansPageResponse()),
             ),
         )
 
@@ -355,6 +396,43 @@ class PortalRepositoryImplTest {
                 ),
                 awaitItem(),
             )
+        }
+    }
+
+    @Test
+    fun `refreshTariffPlans does not save plans when response is unsuccessful`() = runTest {
+        val repo = createPortalRepository(
+            testScheduler,
+            portalApi = FakePortalApi(
+                response = activeProfileResponse(),
+                plansResponse = Response.error(
+                    502,
+                    "Bad Gateway".toResponseBody("text/plain".toMediaType()),
+                ),
+            ),
+        )
+
+        repo.refreshTariffPlans()
+
+        repo.tariffPlansFlow().test {
+            assertEquals(null, awaitItem())
+        }
+    }
+
+    @Test
+    fun `refreshTariffPlans does not save plans when body is missing`() = runTest {
+        val repo = createPortalRepository(
+            testScheduler,
+            portalApi = FakePortalApi(
+                response = activeProfileResponse(),
+                plansResponse = Response.success(null),
+            ),
+        )
+
+        repo.refreshTariffPlans()
+
+        repo.tariffPlansFlow().test {
+            assertEquals(null, awaitItem())
         }
     }
 
@@ -445,8 +523,11 @@ class PortalRepositoryImplTest {
 private class FakePortalApi(
     private val response: ProfilePageResponse,
     private val exception: Exception? = null,
+    private val fetchException: Exception? = exception,
     private val fetchResponse: Response<ProfilePageResponse>? = null,
-    private val plansResponse: PlansPageResponse? = null,
+    private val loginResponse: Response<ProfilePageResponse>? = null,
+    private val plansException: Exception? = null,
+    private val plansResponse: Response<PlansPageResponse>? = null,
 ) : PortalApi {
     var fetchCalls = 0
     var fetchPlansCalls = 0
@@ -456,7 +537,7 @@ private class FakePortalApi(
         password: String,
     ): Response<ProfilePageResponse> {
         exception?.let { throw it }
-        return Response.success(
+        return loginResponse ?: Response.success(
             response,
             Headers.Builder()
                 .add("Set-Cookie", "sid=test-session")
@@ -466,14 +547,14 @@ private class FakePortalApi(
 
     override suspend fun fetchProfile(sid: String): Response<ProfilePageResponse> {
         fetchCalls++
-        exception?.let { throw it }
+        fetchException?.let { throw it }
         return fetchResponse ?: Response.success(response)
     }
 
     override suspend fun fetchPlans(): Response<PlansPageResponse> {
         fetchPlansCalls++
-        exception?.let { throw it }
-        return Response.success(plansResponse ?: PlansPageResponse(emptyList()))
+        plansException?.let { throw it }
+        return plansResponse ?: Response.success(PlansPageResponse(emptyList()))
     }
 }
 

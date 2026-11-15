@@ -27,10 +27,13 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class PaymentMethodsViewModelTest : BaseViewModelTest() {
     @Test
-    fun `open shows payment methods sheet`() = runTest {
+    fun `open and dismiss toggle sheet visibility`() = runTest {
         // GIVEN
         val vm = PaymentMethodsViewModel()
         advanceUntilIdle()
+
+        // THEN initial state is hidden
+        assertFalse(vm.uiState.value.isVisible)
 
         // WHEN
         vm.open()
@@ -38,15 +41,6 @@ class PaymentMethodsViewModelTest : BaseViewModelTest() {
 
         // THEN
         assertTrue(vm.uiState.value.isVisible)
-    }
-
-    @Test
-    fun `dismiss hides payment methods sheet`() = runTest {
-        // GIVEN
-        val vm = PaymentMethodsViewModel()
-        advanceUntilIdle()
-        vm.open()
-        advanceUntilIdle()
 
         // WHEN
         vm.dismiss()

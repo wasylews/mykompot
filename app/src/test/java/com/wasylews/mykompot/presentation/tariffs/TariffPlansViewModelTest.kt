@@ -16,6 +16,8 @@
 
 package com.wasylews.mykompot.presentation.tariffs
 
+import app.cash.turbine.test
+import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.ObserveStatus
 import com.wasylews.mykompot.domain.ObserveTariffPlans
 import com.wasylews.mykompot.domain.RefreshTariffPlans
@@ -27,8 +29,10 @@ import com.wasylews.mykompot.presentation.profile
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import okio.IOException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -53,27 +57,16 @@ class TariffPlansViewModelTest : BaseViewModelTest() {
     ) = TariffPlansViewModel(observeStatus, observeTariffPlans, refreshTariffPlans)
 
     @Test
-    fun `refreshes tariff plans on init`() = runTest {
+    fun `refreshes tariff plans on init and exposes plans with selection`() = runTest {
         // GIVEN
         val refreshTariffPlans = FakeRefreshTariffPlans()
 
         // WHEN
-        createViewModel(refreshTariffPlans = refreshTariffPlans)
+        val vm = createViewModel(refreshTariffPlans = refreshTariffPlans)
         advanceUntilIdle()
 
         // THEN
         assertEquals(1, refreshTariffPlans.calls)
-    }
-
-    @Test
-    fun `exposes tariff plans and selected plan`() = runTest {
-        // GIVEN
-        val vm = createViewModel()
-
-        // WHEN
-        advanceUntilIdle()
-
-        // THEN
         assertEquals(
             TariffPlansUiState(plans = plans, isVisible = false, selectedPlanIndex = 1),
             vm.uiState.value,
@@ -81,32 +74,173 @@ class TariffPlansViewModelTest : BaseViewModelTest() {
     }
 
     @Test
-    fun `open shows tariff plans sheet`() = runTest {
+    fun `open and dismiss toggle sheet visibility`() = runTest {
         // GIVEN
         val vm = createViewModel()
         advanceUntilIdle()
 
-        // WHEN
+        // WHEN / THEN
         vm.open()
         advanceUntilIdle()
-
-        // THEN
         assertTrue(vm.uiState.value.isVisible)
+
+        vm.dismiss()
+        advanceUntilIdle()
+        assertFalse(vm.uiState.value.isVisible)
     }
 
     @Test
-    fun `dismiss hides tariff plans sheet`() = runTest {
-        // GIVEN
-        val vm = createViewModel()
-        advanceUntilIdle()
-        vm.open()
-        advanceUntilIdle()
+    fun `shows loading while refreshing with no cached plans`() = runTest {
+        // GIVEN no cached plans and a refresh that is still in progress
+        val refreshTariffPlans = FakeRefreshTariffPlans().apply { pause() }
+        val vm = createViewModel(
+            observeTariffPlans = FakeObserveTariffPlans(plans = null),
+            refreshTariffPlans = refreshTariffPlans,
+        )
+
+        vm.uiState.test {
+            awaitItem()
+
+            // WHEN the screen opens
+            advanceUntilIdle()
+
+            // THEN loading is shown without plans or error
+            assertEquals(
+                TariffPlansUiState(
+                    plans = emptyList(),
+                    isVisible = false,
+                    selectedPlanIndex = null,
+                    isLoading = true,
+                    errorId = null,
+                ),
+                expectMostRecentItem(),
+            )
+
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `shows error when refresh fails without cached plans`() = runTest {
+        // GIVEN no cached plans and refresh fails
+        val refreshTariffPlans = FakeRefreshTariffPlans().apply { error = IOException() }
+        val vm = createViewModel(
+            observeTariffPlans = FakeObserveTariffPlans(plans = null),
+            refreshTariffPlans = refreshTariffPlans,
+        )
 
         // WHEN
-        vm.dismiss()
         advanceUntilIdle()
 
         // THEN
-        assertFalse(vm.uiState.value.isVisible)
+        assertEquals(
+            TariffPlansUiState(
+                plans = emptyList(),
+                isVisible = false,
+                selectedPlanIndex = null,
+                isLoading = false,
+                errorId = R.string.tariffs_load_error,
+            ),
+            vm.uiState.value,
+        )
+    }
+
+    @Test
+    fun `keeps cached plans and hides error when refresh fails`() = runTest {
+        // GIVEN cached plans and refresh fails
+        val refreshTariffPlans = FakeRefreshTariffPlans().apply { error = IOException() }
+        val vm = createViewModel(
+            observeTariffPlans = FakeObserveTariffPlans(plans),
+            refreshTariffPlans = refreshTariffPlans,
+        )
+
+        // WHEN
+        advanceUntilIdle()
+
+        // THEN
+        assertEquals(
+            TariffPlansUiState(
+                plans = plans,
+                isVisible = false,
+                selectedPlanIndex = 1,
+                isLoading = false,
+                errorId = null,
+            ),
+            vm.uiState.value,
+        )
+    }
+
+    @Test
+    fun `retry loads plans after failure`() = runTest {
+        // GIVEN refresh fails initially with no cached plans
+        val observeTariffPlans = FakeObserveTariffPlans(plans = null)
+        val refreshTariffPlans = FakeRefreshTariffPlans().apply { error = IOException() }
+        val vm = createViewModel(
+            observeTariffPlans = observeTariffPlans,
+            refreshTariffPlans = refreshTariffPlans,
+        )
+        advanceUntilIdle()
+        assertEquals(R.string.tariffs_load_error, vm.uiState.value.errorId)
+
+        // WHEN refresh succeeds on retry and plans become available
+        refreshTariffPlans.error = null
+        refreshTariffPlans.pause()
+        vm.retry()
+        advanceUntilIdle()
+        assertTrue(vm.uiState.value.isLoading)
+        assertNull(vm.uiState.value.errorId)
+
+        observeTariffPlans.setPlans(plans)
+        refreshTariffPlans.resume()
+        advanceUntilIdle()
+
+        // THEN
+        assertEquals(2, refreshTariffPlans.calls)
+        assertEquals(
+            TariffPlansUiState(
+                plans = plans,
+                isVisible = false,
+                selectedPlanIndex = 1,
+                isLoading = false,
+                errorId = null,
+            ),
+            vm.uiState.value,
+        )
+    }
+
+    @Test
+    fun `retry shows loading then error when refresh fails again`() = runTest {
+        // GIVEN refresh fails with no cached plans
+        val refreshTariffPlans = FakeRefreshTariffPlans().apply { error = IOException() }
+        val vm = createViewModel(
+            observeTariffPlans = FakeObserveTariffPlans(plans = null),
+            refreshTariffPlans = refreshTariffPlans,
+        )
+        advanceUntilIdle()
+
+        vm.uiState.test {
+            assertEquals(R.string.tariffs_load_error, expectMostRecentItem().errorId)
+
+            // WHEN retry starts
+            refreshTariffPlans.pause()
+            vm.retry()
+            advanceUntilIdle()
+
+            // THEN loading is shown and error cleared
+            val loading = expectMostRecentItem()
+            assertTrue(loading.isLoading)
+            assertNull(loading.errorId)
+
+            // WHEN retry completes with failure
+            refreshTariffPlans.resume()
+            advanceUntilIdle()
+
+            // THEN error is shown again
+            val failed = awaitItem()
+            assertFalse(failed.isLoading)
+            assertEquals(R.string.tariffs_load_error, failed.errorId)
+
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 }

@@ -16,55 +16,77 @@
 
 package com.wasylews.mykompot.domain
 
+import app.cash.turbine.test
 import com.wasylews.mykompot.domain.model.AccountStatus
 import com.wasylews.mykompot.presentation.FakePortalRepository
 import com.wasylews.mykompot.presentation.profile
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 import java.time.LocalDate
 
 class ObserveStatusUseCaseTest {
     @Test
-    fun `load account status`() = runTest {
-        // GIVEN
-        val clock = MutableClock(LocalDate.of(2026, 10, 20))
+    fun `active profile outside due window is all good`() = runTest {
+        // GIVEN next payment is more than 3 days away
         val useCase = ObserveStatusUseCase(
-            repository = FakePortalRepository(),
-            clock = clock,
+            repository = FakePortalRepository(
+                profile = profile().copy(nextPaymentDate = LocalDate.of(2026, 10, 27)),
+            ),
+            clock = MutableClock(LocalDate.of(2026, 10, 20)),
         )
 
-        // WHEN
-        val result = useCase.statusFlow().first()
-
-        // THEN
-        val status = result as AccountStatus
-        assertEquals(AccountStatus.State.ALL_GOOD, status.state)
+        // WHEN / THEN
+        useCase.statusFlow().test {
+            val status = awaitItem() as AccountStatus
+            assertEquals(AccountStatus.State.ALL_GOOD, status.state)
+            assertEquals(7L, status.daysLeft)
+            awaitComplete()
+        }
     }
 
     @Test
-    fun `load user profile 3 days before due date`() = runTest {
-        // GIVEN
-        val clock = MutableClock(LocalDate.of(2026, 10, 29))
+    fun `active profile within due window is payment due`() = runTest {
+        // GIVEN next payment is in 3 days
         val useCase = ObserveStatusUseCase(
-            repository = FakePortalRepository(profile = profile()),
-            clock = clock,
+            repository = FakePortalRepository(
+                profile = profile().copy(nextPaymentDate = LocalDate.of(2026, 10, 27)),
+            ),
+            clock = MutableClock(LocalDate.of(2026, 10, 24)),
         )
 
-        // WHEN
-        val result = useCase.statusFlow().first()
-
-        // THEN
-        val status = result as AccountStatus
-        assertEquals(AccountStatus.State.PAYMENT_DUE, status.state)
-        assertEquals(-2L, status.daysLeft)
+        // WHEN / THEN
+        useCase.statusFlow().test {
+            val status = awaitItem() as AccountStatus
+            assertEquals(AccountStatus.State.PAYMENT_DUE, status.state)
+            assertEquals(3L, status.daysLeft)
+            awaitComplete()
+        }
     }
 
     @Test
-    fun `inactive profile is suspended regardless of date`() = runTest {
+    fun `active profile past due date is payment due`() = runTest {
+        // GIVEN next payment date has passed
+        val useCase = ObserveStatusUseCase(
+            repository = FakePortalRepository(
+                profile = profile().copy(nextPaymentDate = LocalDate.of(2026, 10, 27)),
+            ),
+            clock = MutableClock(LocalDate.of(2026, 10, 29)),
+        )
+
+        // WHEN / THEN
+        useCase.statusFlow().test {
+            val status = awaitItem() as AccountStatus
+            assertEquals(AccountStatus.State.PAYMENT_DUE, status.state)
+            assertEquals(-2L, status.daysLeft)
+            awaitComplete()
+        }
+    }
+
+    @Test
+    fun `inactive profile is suspended regardless of due date`() = runTest {
         // GIVEN
-        val clock = MutableClock(LocalDate.of(2026, 10, 20))
         val useCase = ObserveStatusUseCase(
             repository = FakePortalRepository(
                 profile = profile().copy(
@@ -72,21 +94,20 @@ class ObserveStatusUseCaseTest {
                     nextPaymentDate = LocalDate.of(2027, 12, 31),
                 ),
             ),
-            clock = clock,
+            clock = MutableClock(LocalDate.of(2026, 10, 20)),
         )
 
-        // WHEN
-        val result = useCase.statusFlow().first()
-
-        // THEN
-        val status = result as AccountStatus
-        assertEquals(AccountStatus.State.SUSPENDED, status.state)
+        // WHEN / THEN
+        useCase.statusFlow().test {
+            val status = awaitItem() as AccountStatus
+            assertEquals(AccountStatus.State.SUSPENDED, status.state)
+            awaitComplete()
+        }
     }
 
     @Test
     fun `inactive profile without next payment date is suspended`() = runTest {
         // GIVEN
-        val clock = MutableClock(LocalDate.of(2026, 10, 20))
         val useCase = ObserveStatusUseCase(
             repository = FakePortalRepository(
                 profile = profile().copy(
@@ -94,30 +115,30 @@ class ObserveStatusUseCaseTest {
                     nextPaymentDate = null,
                 ),
             ),
-            clock = clock,
+            clock = MutableClock(LocalDate.of(2026, 10, 20)),
         )
 
-        // WHEN
-        val result = useCase.statusFlow().first()
-
-        // THEN
-        val status = result as AccountStatus
-        assertEquals(AccountStatus.State.SUSPENDED, status.state)
-        assertEquals(null, status.daysLeft)
+        // WHEN / THEN
+        useCase.statusFlow().test {
+            val status = awaitItem() as AccountStatus
+            assertEquals(AccountStatus.State.SUSPENDED, status.state)
+            assertNull(status.daysLeft)
+            awaitComplete()
+        }
     }
 
     @Test
-    fun `no cached profile`() = runTest {
+    fun `no cached profile emits null`() = runTest {
         // GIVEN
         val useCase = ObserveStatusUseCase(
             repository = FakePortalRepository(profile = null),
             clock = MutableClock(LocalDate.of(2026, 10, 20)),
         )
 
-        // WHEN
-        val result = useCase.statusFlow().first()
-
-        // THEN
-        assertEquals(null, result)
+        // WHEN / THEN
+        useCase.statusFlow().test {
+            assertNull(awaitItem())
+            awaitComplete()
+        }
     }
 }

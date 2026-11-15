@@ -16,31 +16,68 @@
 
 package com.wasylews.mykompot.presentation.main
 
+import app.cash.turbine.test
 import com.wasylews.mykompot.domain.ObserveSession
 import com.wasylews.mykompot.domain.model.SessionState
 import com.wasylews.mykompot.presentation.BaseViewModelTest
-import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MainViewModelTest : BaseViewModelTest() {
     @Test
-    fun `async stored session resolves to logged in`() = runTest {
+    fun `starts in loading then resolves to logged in`() = runTest {
         val observeSession = FakeObserveSession()
         val vm = MainViewModel(observeSession)
 
-        advanceUntilIdle()
-        assertEquals(SessionState.Loading, vm.sessionState.value)
+        vm.sessionState.test {
+            assertEquals(SessionState.Loading, awaitItem())
 
-        observeSession.setState(SessionState.LoggedIn)
-        advanceUntilIdle()
+            observeSession.setState(SessionState.LoggedIn)
+            advanceUntilIdle()
 
-        assertEquals(SessionState.LoggedIn, vm.sessionState.value)
+            assertEquals(SessionState.LoggedIn, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `starts in loading then resolves to logged out`() = runTest {
+        val observeSession = FakeObserveSession()
+        val vm = MainViewModel(observeSession)
+
+        vm.sessionState.test {
+            assertEquals(SessionState.Loading, awaitItem())
+
+            observeSession.setState(SessionState.LoggedOut)
+            advanceUntilIdle()
+
+            assertEquals(SessionState.LoggedOut, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `updates session state when session changes`() = runTest {
+        val observeSession = FakeObserveSession(SessionState.LoggedIn)
+        val vm = MainViewModel(observeSession)
+
+        vm.sessionState.test {
+            assertEquals(SessionState.Loading, awaitItem())
+            advanceUntilIdle()
+            assertEquals(SessionState.LoggedIn, expectMostRecentItem())
+
+            observeSession.setState(SessionState.LoggedOut)
+            advanceUntilIdle()
+            assertEquals(SessionState.LoggedOut, awaitItem())
+
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 }
 
