@@ -90,4 +90,21 @@ class SignInFlowTest : BaseAcceptanceTest() {
             assertShows(R.string.error_server)
         }
     }
+
+    @Test
+    fun signInFailsWhenResponseCannotBeParsed() {
+        // GIVEN server returns a successful response without a parseable profile
+        givenServerResponse(
+            body = "<html></html>",
+            headers = mapOf("Set-Cookie" to "sid=test-session"),
+        )
+
+        launch().use {
+            // WHEN I log in
+            performLogin()
+
+            // THEN I see a parsing error
+            assertShows(R.string.error_parsing)
+        }
+    }
 }

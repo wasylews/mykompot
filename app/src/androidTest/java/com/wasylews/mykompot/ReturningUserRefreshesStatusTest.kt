@@ -135,6 +135,23 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
     }
 
     @Test
+    fun showsUnknownStatusWhenNoCacheAndServerFails() {
+        // GIVEN a stored session with no cached profile and the server fails
+        givenStoredSession()
+        givenHomeResponses(profileStatus = 502, profileDelayMillis = 2_000)
+
+        launch().use {
+            // THEN I see progress while refreshing
+            assertShowsHomeLoading()
+            assertDoesNotShow(R.string.status_unknown)
+
+            // AND the unknown status once refresh fails with no cache
+            assertShows(R.string.status_unknown)
+            assertRefreshRequested()
+        }
+    }
+
+    @Test
     fun recoversFromUnknownStatusOnPullToRefresh() {
         // GIVEN a stored session with no cached profile and no network
         givenStoredSession()
@@ -212,6 +229,4 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
             assertShowsRefreshError(R.string.error_no_connection)
         }
     }
-
-
 }

@@ -41,9 +41,9 @@ import com.wasylews.mykompot.presentation.home.HOME_LOADING_TEST_TAG
 import com.wasylews.mykompot.presentation.home.HOME_SCREEN_TEST_TAG
 import com.wasylews.mykompot.presentation.main.MainActivity
 import kotlinx.coroutines.runBlocking
+import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.Dispatcher
 import mockwebserver3.RecordedRequest
 import mockwebserver3.SocketEffect
 import org.junit.After
@@ -105,9 +105,7 @@ abstract class BaseAcceptanceTest : KoinTest {
         if (profile != null) storage.saveProfile(profile)
     }
 
-    protected fun givenStoredTariffPlans(
-        plans: List<TariffPlan> = defaultTariffPlans(),
-    ) = runBlocking {
+    protected fun givenStoredTariffPlans(plans: List<TariffPlan> = defaultTariffPlans()) = runBlocking {
         get<LocalStorage>().saveTariffPlans(plans)
     }
 
@@ -131,17 +129,13 @@ abstract class BaseAcceptanceTest : KoinTest {
         TariffPlan(id = "350GRN_300mb", name = "LUX 300", speed = 300, price = 350),
     )
 
-    protected fun allGoodProfile(
-        tariffPlan: TariffPlan = defaultTariffPlan(),
-    ) = Profile(
+    protected fun allGoodProfile(tariffPlan: TariffPlan = defaultTariffPlan()) = Profile(
         isActive = true,
         nextPaymentDate = LocalDate.of(2026, 11, 1),
         tariffPlan = tariffPlan,
     )
 
-    protected fun paymentDueProfile(
-        tariffPlan: TariffPlan = defaultTariffPlan(),
-    ) = Profile(
+    protected fun paymentDueProfile(tariffPlan: TariffPlan = defaultTariffPlan()) = Profile(
         isActive = true,
         nextPaymentDate = LocalDate.of(2026, 10, 2),
         tariffPlan = tariffPlan,
@@ -259,7 +253,23 @@ abstract class BaseAcceptanceTest : KoinTest {
         .build()
 
     protected fun assertRefreshRequested() {
-        assertNotNull(server.takeRequest(2, TimeUnit.SECONDS))
+        assertProfileRefreshRequested()
+    }
+
+    protected fun assertProfileRefreshRequested() {
+        assertNotNull(takeRequestMatching { path -> path?.contains("index.cgi") == true })
+    }
+
+    protected fun assertPlansRefreshRequested() {
+        assertNotNull(takeRequestMatching { path -> path?.contains("/plans") == true })
+    }
+
+    protected fun takeRequestMatching(predicate: (String?) -> Boolean): RecordedRequest? {
+        repeat(10) {
+            val request = server.takeRequest(2, TimeUnit.SECONDS) ?: return null
+            if (predicate(request.url.encodedPath)) return request
+        }
+        return null
     }
 
     protected fun pullToRefresh() {

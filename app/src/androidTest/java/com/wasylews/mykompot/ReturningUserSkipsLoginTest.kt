@@ -26,16 +26,12 @@ import org.junit.Test
 class ReturningUserSkipsLoginTest : BaseAcceptanceTest() {
     @Test
     fun skipsLoginAndShowsStatus() {
-        // GIVEN a saved session
-        givenServerReturnsLoginSuccess()
-        launch().use {
-            performLogin()
-            assertShows(R.string.status_all_good)
-        }
-
-        // WHEN I reopen the app
+        // GIVEN a stored session, tariff catalog, and a server profile
+        givenStoredSession(profile = allGoodProfile())
         givenStoredTariffPlans()
         givenServerReturnsProfile()
+
+        // WHEN I open the app
         launch().use {
             // THEN I see the status without logging in
             assertShows(R.string.status_all_good)
@@ -43,7 +39,7 @@ class ReturningUserSkipsLoginTest : BaseAcceptanceTest() {
             composeRule.onNodeWithText("Standart 100").assertIsDisplayed()
             assertShows(R.string.tariff_price, 300)
             assertLoginFormIsHidden()
-            assertRefreshRequested()
+            assertProfileRefreshRequested()
         }
     }
 

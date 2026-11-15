@@ -20,6 +20,7 @@ import android.app.Activity
 import android.app.Instrumentation
 import android.content.Intent
 import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithText
@@ -63,54 +64,32 @@ class PaymentMethodsSheetTest : BaseAcceptanceTest() {
 
     @Test
     fun opensPrivat24() {
-        // GIVEN a saved session with a payment-due profile and the payment methods sheet open
-        givenPaymentDueHome()
-        stubExternalIntents()
-
-        launch().use {
-            openPaymentMethods()
-
-            // WHEN I tap Privat24
-            composeRule
-                .onNodeWithText(stringRes(R.string.payment_method_privat24))
-                .performClick()
-
-            // THEN it opens the Privat24 payment URL
-            intended(
-                allOf(
-                    hasAction(Intent.ACTION_VIEW),
-                    hasData(stringRes(R.string.payment_method_privat24_url)),
-                ),
-            )
-        }
+        assertOpensPaymentMethod(
+            titleRes = R.string.payment_method_privat24,
+            urlRes = R.string.payment_method_privat24_url,
+        )
     }
 
     @Test
     fun opensMonobank() {
-        // GIVEN a saved session with a payment-due profile and the payment methods sheet open
-        givenPaymentDueHome()
-        stubExternalIntents()
-
-        launch().use {
-            openPaymentMethods()
-
-            // WHEN I tap monobank
-            composeRule
-                .onNodeWithText(stringRes(R.string.payment_method_monobank))
-                .performClick()
-
-            // THEN it opens the monobank fallback URL
-            intended(
-                allOf(
-                    hasAction(Intent.ACTION_VIEW),
-                    hasData(stringRes(R.string.payment_method_monobank_url)),
-                ),
-            )
-        }
+        assertOpensPaymentMethod(
+            titleRes = R.string.payment_method_monobank,
+            urlRes = R.string.payment_method_monobank_url,
+        )
     }
 
     @Test
     fun opensEasyPay() {
+        assertOpensPaymentMethod(
+            titleRes = R.string.payment_method_easypay,
+            urlRes = R.string.payment_method_easypay_url,
+        )
+    }
+
+    private fun assertOpensPaymentMethod(
+        @StringRes titleRes: Int,
+        @StringRes urlRes: Int,
+    ) {
         // GIVEN a saved session with a payment-due profile and the payment methods sheet open
         givenPaymentDueHome()
         stubExternalIntents()
@@ -118,16 +97,16 @@ class PaymentMethodsSheetTest : BaseAcceptanceTest() {
         launch().use {
             openPaymentMethods()
 
-            // WHEN I tap EasyPay
+            // WHEN I tap a payment method
             composeRule
-                .onNodeWithText(stringRes(R.string.payment_method_easypay))
+                .onNodeWithText(stringRes(titleRes))
                 .performClick()
 
-            // THEN it opens the EasyPay fallback URL
+            // THEN it opens the payment URL
             intended(
                 allOf(
                     hasAction(Intent.ACTION_VIEW),
-                    hasData(stringRes(R.string.payment_method_easypay_url)),
+                    hasData(stringRes(urlRes)),
                 ),
             )
         }

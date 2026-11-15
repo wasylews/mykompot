@@ -35,15 +35,80 @@ class TariffPlansSheetTest : BaseAcceptanceTest() {
 
         launch().use {
             assertShows(R.string.status_all_good)
-            composeRule.onNodeWithText("Standart 100").assertIsDisplayed()
 
             // WHEN I open the tariff plans
-            composeRule.onAllNodesWithText("Standart 100")[0].performClick()
+            openTariffPlans()
 
             // THEN I see the tariffs sheet with 3 plans and the selected one indicated
             composeRule.onNodeWithText(stringRes(R.string.tariffs)).assertIsDisplayed()
             assertShowsTariffPlans(plans = plans, selectedPlanId = "300GRN_100mb")
         }
+    }
+
+    @Test
+    fun showsCachedTariffPlansWhenRefreshFails() {
+        val plans = defaultTariffPlans()
+
+        // GIVEN a stored session, cached tariff catalog, and the plans refresh fails
+        givenStoredSession()
+        givenStoredTariffPlans(plans)
+        givenHomeResponses(plansStatus = 502)
+
+        launch().use {
+            assertShows(R.string.status_all_good)
+
+            // WHEN I open the tariff plans
+            openTariffPlans()
+
+            // THEN I see the cached tariff plans
+            composeRule.onNodeWithText(stringRes(R.string.tariffs)).assertIsDisplayed()
+            assertShowsTariffPlans(plans = plans, selectedPlanId = "300GRN_100mb")
+        }
+    }
+
+    @Test
+    fun showsErrorWhenTariffsUnavailableAndNoneStored() {
+        // GIVEN a stored session with no cached tariff plans and the plans refresh fails
+        givenStoredSession()
+        givenHomeResponses(plansStatus = 502)
+
+        launch().use {
+            assertShows(R.string.status_all_good)
+
+            // WHEN I open the tariff plans
+            openTariffPlans()
+
+            // THEN I see an error state with retry
+            composeRule.onNodeWithText(stringRes(R.string.tariffs)).assertIsDisplayed()
+            composeRule.onNodeWithText(stringRes(R.string.tariffs_load_error)).assertIsDisplayed()
+            composeRule.onNodeWithText(stringRes(R.string.retry)).assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun retriesLoadingTariffPlans() {
+        val plans = defaultTariffPlans()
+
+        // GIVEN a stored session with no cached tariff plans and the plans refresh fails
+        givenStoredSession()
+        givenHomeResponses(plansStatus = 502)
+
+        launch().use {
+            assertShows(R.string.status_all_good)
+            openTariffPlans()
+            composeRule.onNodeWithText(stringRes(R.string.tariffs_load_error)).assertIsDisplayed()
+
+            // WHEN the server returns tariffs and I retry
+            givenHomeResponses()
+            composeRule.onNodeWithText(stringRes(R.string.retry)).performClick()
+
+            // THEN I see the tariff plans
+            assertShowsTariffPlans(plans = plans, selectedPlanId = "300GRN_100mb")
+        }
+    }
+
+    private fun openTariffPlans() {
+        composeRule.onNodeWithText(stringRes(R.string.tariff)).performClick()
     }
 
     private fun assertShowsTariffPlans(
@@ -59,6 +124,7 @@ class TariffPlansSheetTest : BaseAcceptanceTest() {
                 .onAllNodesWithText(plan.price.toString(), substring = true)[0]
                 .assertIsDisplayed()
         }
+
         plans.first { it.id == selectedPlanId }
         composeRule
             .onNodeWithText(stringRes(R.string.your_plan), substring = true)
