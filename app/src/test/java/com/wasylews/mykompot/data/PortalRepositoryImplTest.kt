@@ -147,6 +147,30 @@ class PortalRepositoryImplTest {
     }
 
     @Test
+    fun `refresh persists rotated sid when server returns it`() = runTest {
+        val (repo, api) = refreshFixture(
+            testScheduler = testScheduler,
+            profile = profile(),
+            api = FakePortalApi(
+                activeProfileResponse(),
+                fetchResponse = Response.success(
+                    activeProfileResponse(),
+                    Headers.Builder()
+                        .add("Set-Cookie", "sid=rotated-session")
+                        .build(),
+                ),
+            ),
+        )
+
+        val result = repo.refresh()
+
+        assertEquals(RefreshResult.Updated, result)
+        assertEquals(1, api.fetchCalls)
+        repo.expectProfile(profile())
+        repo.expectSession("rotated-session")
+    }
+
+    @Test
     fun `refresh clears session when server returns login page`() = runTest {
         val (repo, api) = refreshFixture(
             testScheduler = testScheduler,

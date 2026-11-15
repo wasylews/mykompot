@@ -106,7 +106,11 @@ class PortalRepositoryImpl(
             }
 
             val profile = page.toProfile() ?: return@withContext RefreshResult.Failed.Parse
+            val sid = response.sid() ?: page.sid
             localStorage.saveProfile(profile)
+            if (sid != null) {
+                localStorage.saveSession(sid)
+            }
             RefreshResult.Updated
         } catch (_: HttpException) {
             RefreshResult.Failed.Server
