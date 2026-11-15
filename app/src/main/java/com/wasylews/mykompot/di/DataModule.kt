@@ -77,10 +77,9 @@ class DataModule {
 
     @Singleton
     @Named("tariffPlans")
-    fun provideTariffPlansDataStore(context: Context): DataStore<List<TariffPlanEntity>?> =
-        DataStoreFactory.create(
-            serializer = TariffPlansSerializer,
-            corruptionHandler = ReplaceFileCorruptionHandler<List<TariffPlanEntity>?> { null },
-            produceFile = { context.dataStoreFile("tariff_plans.json") },
-        )
+    fun provideTariffPlansDataStore(context: Context): DataStore<List<TariffPlanEntity>?> = DataStoreFactory.create(
+        serializer = TariffPlansSerializer,
+        corruptionHandler = ReplaceFileCorruptionHandler<List<TariffPlanEntity>?> { null },
+        produceFile = { context.dataStoreFile("tariff_plans.json") },
+    )
 }

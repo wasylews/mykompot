@@ -248,7 +248,6 @@ class HomeViewModelTest : BaseViewModelTest() {
         assertEquals(null, vm.uiState.value.errorId)
     }
 
-
     @Test
     fun `refreshes tariff plans catalog on init`() = runTest {
         // GIVEN

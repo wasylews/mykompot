@@ -20,7 +20,6 @@ import androidx.datastore.core.DataStore
 import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.TariffPlan
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import org.koin.core.annotation.Named
@@ -53,8 +52,7 @@ class DataStoreLocalStorage(
         sessionDataStore.updateData { null }
     }
 
-    override fun tariffPlansFlow(): Flow<List<TariffPlan>?> =
-        tariffPlansDataStore.data.map { entities -> entities?.map { it.toDomain() } }
+    override fun tariffPlansFlow(): Flow<List<TariffPlan>?> = tariffPlansDataStore.data.map { entities -> entities?.map { it.toDomain() } }
 
     override suspend fun saveTariffPlans(plans: List<TariffPlan>) {
         tariffPlansDataStore.updateData { plans.map { it.toEntity() } }

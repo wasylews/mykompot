@@ -89,6 +89,32 @@ class PortalRepositoryImplTest {
     }
 
     @Test
+    fun `login resolves tariff plan from catalog`() = runTest {
+        val storage = FakeLocalStorage().apply {
+            saveTariffPlans(
+                listOf(
+                    TariffPlan(id = "260GRN_50mb", name = "Econom 50", speed = 50, price = 260),
+                    TariffPlan(id = "300GRN_100mb", name = "Standart 100", speed = 100, price = 300),
+                ),
+            )
+        }
+        val repo = createPortalRepository(testScheduler, localStorage = storage)
+
+        repo.login("user", "pass")
+
+        repo.expectProfile(
+            profile().copy(
+                tariffPlan = TariffPlan(
+                    id = "300GRN_100mb",
+                    name = "Standart 100",
+                    speed = 100,
+                    price = 300,
+                ),
+            ),
+        )
+    }
+
+    @Test
     fun `session flow emits the saved session`() = runTest {
         val repo = createPortalRepository(testScheduler)
         repo.login("user", "pass")
@@ -344,13 +370,13 @@ class PortalRepositoryImplTest {
 
     private fun activeProfileResponse() = ProfilePageResponse(
         status = "Enable",
-        plan = "300GRN_100mb",
+        plan = "[35] 300GRN_100mb",
         nextPayment = "Next periodic payments throught days (2026-11-01)",
     )
 
     private fun inactiveProfileResponse() = ProfilePageResponse(
         status = "Too Small Deposit",
-        plan = "300GRN_100mb",
+        plan = "[35] 300GRN_100mb",
         nextPayment = null,
     )
 

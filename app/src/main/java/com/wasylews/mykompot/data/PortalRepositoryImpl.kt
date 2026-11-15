@@ -61,7 +61,7 @@ class PortalRepositoryImpl(
         }
     }
 
-    private fun ProfilePageResponse.toProfile(): Profile? = Profile(
+    private suspend fun ProfilePageResponse.toProfile(): Profile? = Profile(
         isActive = accountState == STATUS_ACTIVE,
         nextPaymentDate = getPaymentDate(nextPayment),
         tariffPlan = getTariffPlan(plan) ?: return null,
@@ -75,10 +75,12 @@ class PortalRepositoryImpl(
             ?.let(LocalDate::parse)
     }
 
-    private fun getTariffPlan(id: String?): TariffPlan? = id?.let {
-        TariffPlan(
-            id = it,
-            name = it,
+    private suspend fun getTariffPlan(plan: String?): TariffPlan? = plan?.let {
+        val id = Regex("""\d+GRN_\d+mb""").find(it)?.value ?: it
+        val catalog = localStorage.tariffPlansFlow().first()
+        catalog?.firstOrNull { it.id == id } ?: TariffPlan(
+            id = id,
+            name = id,
             speed = 100,
             price = 300,
         )
