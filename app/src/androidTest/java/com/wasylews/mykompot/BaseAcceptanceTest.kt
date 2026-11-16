@@ -16,6 +16,9 @@
 
 package com.wasylews.mykompot
 
+import android.app.Notification
+import android.app.NotificationManager
+import android.content.Context
 import androidx.annotation.StringRes
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsNodeInteraction
@@ -41,6 +44,7 @@ import com.wasylews.mykompot.domain.model.TariffPlans
 import com.wasylews.mykompot.presentation.home.HOME_LOADING_TEST_TAG
 import com.wasylews.mykompot.presentation.home.HOME_SCREEN_TEST_TAG
 import com.wasylews.mykompot.presentation.main.MainActivity
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
@@ -48,7 +52,10 @@ import mockwebserver3.MockWebServer
 import mockwebserver3.RecordedRequest
 import mockwebserver3.SocketEffect
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.koin.core.context.loadKoinModules
@@ -66,6 +73,8 @@ import kotlin.time.Instant
 abstract class BaseAcceptanceTest : KoinTest {
     @get:Rule
     val composeRule = createEmptyComposeRule()
+
+    protected val context: Context = InstrumentationRegistry.getInstrumentation().targetContext
 
     protected val server = MockWebServer()
 
@@ -292,7 +301,30 @@ abstract class BaseAcceptanceTest : KoinTest {
     protected fun stringRes(
         res: Int,
         vararg formatArgs: Any,
-    ): String = InstrumentationRegistry.getInstrumentation().targetContext.getString(res, *formatArgs)
+    ): String = context.getString(res, *formatArgs)
+
+    protected fun assertSessionCleared() = runBlocking {
+        val storage = get<LocalStorage>()
+        assertNull(storage.sessionFlow().first())
+        assertNull(storage.profileFlow().first())
+    }
+
+    protected fun assertNotificationPosted(
+        @StringRes titleRes: Int,
+        @StringRes textRes: Int,
+    ) {
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notifications = notificationManager.activeNotifications
+        assertTrue("Expected a notification to be posted", notifications.isNotEmpty())
+
+        val notification = notifications.first().notification
+        val title = notification.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString()
+        val text = notification.extras.getCharSequence(Notification.EXTRA_TEXT)?.toString()
+        assertEquals(stringRes(titleRes), title)
+        assertEquals(stringRes(textRes), text)
+        assertNotNull("Expected notification to open the app", notification.contentIntent)
+    }
 
     protected fun resetServerResponses() {
         dispatcher.clear()

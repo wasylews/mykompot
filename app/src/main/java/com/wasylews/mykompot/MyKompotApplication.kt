@@ -18,6 +18,7 @@ package com.wasylews.mykompot
 
 import android.app.Application
 import org.koin.android.ext.koin.androidContext
+import org.koin.androidx.workmanager.koin.workManagerFactory
 import org.koin.core.annotation.KoinApplication
 import org.koin.plugin.module.dsl.startKoin
 
@@ -27,6 +28,7 @@ class MyKompotApplication : Application() {
         super.onCreate()
         startKoin<MyKompotApplication> {
             androidContext(this@MyKompotApplication)
+            workManagerFactory()
         }
     }
 }

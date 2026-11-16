@@ -45,6 +45,10 @@
     <string name="error_server">Something went wrong. Try again later.</string>
     <string name="error_parsing">We couldn\'t check your status. Your account may still be fine.</string>
 
+    <!-- Notifications -->
+    <string name="session_expired_notification_title">Session expired</string>
+    <string name="session_expired_notification_text">Log in again to see your account status.</string>
+
     <!-- Relative dates -->
     <string name="today">today</string>
     <string name="tomorrow">tomorrow</string>

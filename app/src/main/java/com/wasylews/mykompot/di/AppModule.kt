@@ -16,6 +16,8 @@
 
 package com.wasylews.mykompot.di
 
+import android.app.NotificationManager
+import android.content.Context
 import org.koin.core.annotation.ComponentScan
 import org.koin.core.annotation.Configuration
 import org.koin.core.annotation.Module
@@ -28,4 +30,8 @@ import kotlin.time.Clock
 class AppModule {
     @Singleton
     fun provideClock(): Clock = Clock.System
+
+    @Singleton
+    fun provideNotificationManager(context: Context): NotificationManager =
+        context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 }
