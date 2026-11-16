@@ -17,11 +17,14 @@
 package com.wasylews.mykompot.data
 
 import androidx.datastore.core.DataStore
+import com.wasylews.mykompot.data.model.ProfileEntity
+import com.wasylews.mykompot.data.model.TariffPlanEntity
+import com.wasylews.mykompot.data.model.TariffPlansEntity
 import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.TariffPlan
+import com.wasylews.mykompot.domain.model.TariffPlans
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.serialization.Serializable
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Singleton
 import java.time.LocalDate
@@ -30,7 +33,7 @@ import java.time.LocalDate
 class DataStoreLocalStorage(
     @Named("profile") private val profileDataStore: DataStore<ProfileEntity?>,
     @Named("session") private val sessionDataStore: DataStore<String?>,
-    @Named("tariffPlans") private val tariffPlansDataStore: DataStore<List<TariffPlanEntity>?>,
+    @Named("tariffPlans") private val tariffPlansDataStore: DataStore<TariffPlansEntity?>,
 ) : LocalStorage {
     override suspend fun saveProfile(profile: Profile) {
         profileDataStore.updateData { profile.toEntity() }
@@ -52,26 +55,23 @@ class DataStoreLocalStorage(
         sessionDataStore.updateData { null }
     }
 
-    override fun tariffPlansFlow(): Flow<List<TariffPlan>?> = tariffPlansDataStore.data.map { entities -> entities?.map { it.toDomain() } }
+    override fun tariffPlansFlow(): Flow<TariffPlans?> = tariffPlansDataStore.data.map { it?.toDomain() }
 
-    override suspend fun saveTariffPlans(plans: List<TariffPlan>) {
-        tariffPlansDataStore.updateData { plans.map { it.toEntity() } }
+    override suspend fun saveTariffPlans(tariffPlans: TariffPlans) {
+        tariffPlansDataStore.updateData { tariffPlans.toEntity() }
     }
 }
 
-@Serializable
-data class ProfileEntity(
-    val isActive: Boolean,
-    val nextPaymentDate: String?,
-    val tariffPlan: TariffPlanEntity,
+private fun TariffPlansEntity.toDomain() = TariffPlans(
+    plans = plans.map { it.toDomain() },
+    etag = etag,
+    lastModified = lastModified,
 )
 
-@Serializable
-data class TariffPlanEntity(
-    val id: String,
-    val name: String,
-    val speed: Int,
-    val price: Int,
+private fun TariffPlans.toEntity() = TariffPlansEntity(
+    plans = plans.map { it.toEntity() },
+    etag = etag,
+    lastModified = lastModified,
 )
 
 private fun Profile.toEntity() = ProfileEntity(

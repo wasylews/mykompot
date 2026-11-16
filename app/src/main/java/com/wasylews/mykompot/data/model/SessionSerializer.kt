@@ -14,31 +14,22 @@
  * limitations under the License.
  */
 
-package com.wasylews.mykompot.data
+package com.wasylews.mykompot.data.model
 
-import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.Serializer
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.json.Json
 import java.io.InputStream
 import java.io.OutputStream
 
-object ProfileEntitySerializer : Serializer<ProfileEntity?> {
-    override val defaultValue: ProfileEntity? = null
+object SessionSerializer : Serializer<String?> {
+    override val defaultValue: String? = null
 
-    private val json = Json { ignoreUnknownKeys = true }
-
-    override suspend fun readFrom(input: InputStream): ProfileEntity? = try {
-        json.decodeFromString<ProfileEntity?>(input.readBytes().decodeToString())
-    } catch (e: SerializationException) {
-        throw CorruptionException("Unable to read the stored profile.", e)
-    }
+    override suspend fun readFrom(input: InputStream): String? = input.readBytes().decodeToString().ifBlank { null }
 
     override suspend fun writeTo(
-        t: ProfileEntity?,
+        t: String?,
         output: OutputStream,
     ) {
         @Suppress("BlockingMethodInNonBlockingContext") // DataStore calls this on its IO scope
-        output.write(json.encodeToString<ProfileEntity?>(t).encodeToByteArray())
+        output.write(t.orEmpty().encodeToByteArray())
     }
 }

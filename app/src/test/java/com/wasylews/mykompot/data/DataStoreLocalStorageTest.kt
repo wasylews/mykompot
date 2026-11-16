@@ -20,7 +20,11 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.Serializer
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
+import com.wasylews.mykompot.data.model.ProfileEntitySerializer
+import com.wasylews.mykompot.data.model.SessionSerializer
+import com.wasylews.mykompot.data.model.TariffPlansSerializer
 import com.wasylews.mykompot.domain.model.TariffPlan
+import com.wasylews.mykompot.domain.model.TariffPlans
 import com.wasylews.mykompot.presentation.profile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -256,9 +260,12 @@ class DataStoreLocalStorageTest {
         scopes.clear()
     }
 
-    private fun tariffPlans() = listOf(
-        TariffPlan(id = "260GRN_50mb", name = "Econom 50", speed = 50, price = 260),
-        TariffPlan(id = "300GRN_100mb", name = "Standart 100", speed = 100, price = 300),
+    private fun tariffPlans() = TariffPlans(
+        plans = listOf(
+            TariffPlan(id = "260GRN_50mb", name = "Econom 50", speed = 50, price = 260),
+            TariffPlan(id = "300GRN_100mb", name = "Standart 100", speed = 100, price = 300),
+            TariffPlan(id = "350GRN_300mb", name = "LUX 300", speed = 300, price = 350),
+        ),
     )
 
     private companion object {

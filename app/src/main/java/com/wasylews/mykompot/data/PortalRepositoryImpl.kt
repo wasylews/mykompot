@@ -20,6 +20,7 @@ import com.wasylews.mykompot.domain.model.LoginResult
 import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.RefreshResult
 import com.wasylews.mykompot.domain.model.TariffPlan
+import com.wasylews.mykompot.domain.model.TariffPlans
 import com.wasylews.mykompot.domain.repository.PortalRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
@@ -79,7 +80,7 @@ class PortalRepositoryImpl(
         val match = Regex("""(\d+)GRN_(\d+)mb""").find(it)
         val id = match?.value ?: it
         val catalog = localStorage.tariffPlansFlow().first()
-        catalog?.firstOrNull { it.id == id } ?: TariffPlan(
+        catalog?.plans?.firstOrNull { it.id == id } ?: TariffPlan(
             id = id,
             name = id,
             speed = match?.groupValues?.get(2)?.toInt() ?: 100,
@@ -127,11 +128,17 @@ class PortalRepositoryImpl(
 
     override fun sessionFlow(): Flow<String?> = localStorage.sessionFlow()
 
-    override fun tariffPlansFlow(): Flow<List<TariffPlan>?> = localStorage.tariffPlansFlow()
+    override fun tariffPlansFlow(): Flow<TariffPlans?> = localStorage.tariffPlansFlow()
 
     override suspend fun refreshTariffPlans() = withContext(dispatcher) {
-        val response = api.fetchPlans()
+        val cached = localStorage.tariffPlansFlow().first()
+        val response = api.fetchPlans(
+            ifNoneMatch = cached?.etag,
+            ifModifiedSince = cached?.lastModified,
+        )
+        if (response.code() == 304) return@withContext
         if (!response.isSuccessful) throw HttpException(response)
+
         val items = response.body()?.items ?: throw IOException("Missing tariff plans")
         val plans = items
             .filter { "міс" in it.price }
@@ -144,7 +151,13 @@ class PortalRepositoryImpl(
                     price = price,
                 )
             }
-        localStorage.saveTariffPlans(plans)
+        localStorage.saveTariffPlans(
+            TariffPlans(
+                plans = plans,
+                etag = response.headers()["ETag"],
+                lastModified = response.headers()["Last-Modified"],
+            ),
+        )
     }
 
     private companion object {

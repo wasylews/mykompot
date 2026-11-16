@@ -76,7 +76,7 @@ class TariffPlansViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (_: Throwable) {
-                if (latestPlans.value.isNullOrEmpty()) {
+                if (latestPlans.value?.plans.isNullOrEmpty()) {
                     loadErrorId.value = R.string.tariffs_load_error
                 }
             } finally {
@@ -94,8 +94,8 @@ class TariffPlansViewModel(
         isVisible,
         isLoading,
         loadErrorId,
-    ) { plans, status, isVisible, isLoading, loadErrorId ->
-        val list = plans.orEmpty()
+    ) { tariffPlans, status, isVisible, isLoading, loadErrorId ->
+        val list = tariffPlans?.plans.orEmpty()
         val selectedPlanIndex = status?.profile?.tariffPlan?.id?.let { id ->
             list.indexOfFirst { it.id == id }.takeIf { it >= 0 }
         }

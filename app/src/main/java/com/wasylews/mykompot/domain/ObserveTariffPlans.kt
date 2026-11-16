@@ -16,9 +16,9 @@
 
 package com.wasylews.mykompot.domain
 
-import com.wasylews.mykompot.domain.model.TariffPlan
+import com.wasylews.mykompot.domain.model.TariffPlans
 import kotlinx.coroutines.flow.Flow
 
 fun interface ObserveTariffPlans {
-    operator fun invoke(): Flow<List<TariffPlan>?>
+    operator fun invoke(): Flow<TariffPlans?>
 }

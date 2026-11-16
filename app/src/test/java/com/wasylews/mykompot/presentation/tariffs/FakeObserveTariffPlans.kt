@@ -18,17 +18,18 @@ package com.wasylews.mykompot.presentation.tariffs
 
 import com.wasylews.mykompot.domain.ObserveTariffPlans
 import com.wasylews.mykompot.domain.model.TariffPlan
+import com.wasylews.mykompot.domain.model.TariffPlans
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class FakeObserveTariffPlans(
     plans: List<TariffPlan>? = emptyList(),
 ) : ObserveTariffPlans {
-    private val plansFlow = MutableStateFlow(plans)
+    private val plansFlow = MutableStateFlow(plans?.let { TariffPlans(it) })
 
     fun setPlans(plans: List<TariffPlan>?) {
-        plansFlow.value = plans
+        plansFlow.value = plans?.let { TariffPlans(it) }
     }
 
-    override fun invoke(): Flow<List<TariffPlan>?> = plansFlow
+    override fun invoke(): Flow<TariffPlans?> = plansFlow
 }

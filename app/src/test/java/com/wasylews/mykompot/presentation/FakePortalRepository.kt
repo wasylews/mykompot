@@ -20,6 +20,7 @@ import com.wasylews.mykompot.domain.model.LoginResult
 import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.RefreshResult
 import com.wasylews.mykompot.domain.model.TariffPlan
+import com.wasylews.mykompot.domain.model.TariffPlans
 import com.wasylews.mykompot.domain.repository.PortalRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -30,8 +31,9 @@ class FakePortalRepository(
     private val profile: Profile? = profile(),
     private val session: String? = null,
     var refreshResult: RefreshResult = RefreshResult.Updated,
-    private val tariffPlans: List<TariffPlan>? = null,
+    tariffPlans: List<TariffPlan>? = null,
 ) : PortalRepository {
+    private val tariffPlans = tariffPlans?.let { TariffPlans(it) }
     var refreshCalls = 0
     var refreshTariffPlansCalls = 0
 
@@ -49,7 +51,7 @@ class FakePortalRepository(
 
     override fun sessionFlow(): Flow<String?> = flowOf(session)
 
-    override fun tariffPlansFlow(): Flow<List<TariffPlan>?> = flowOf(tariffPlans)
+    override fun tariffPlansFlow(): Flow<TariffPlans?> = flowOf(tariffPlans)
 
     override suspend fun refreshTariffPlans() {
         refreshTariffPlansCalls++

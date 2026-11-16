@@ -16,7 +16,7 @@
 
 package com.wasylews.mykompot.domain
 
-import com.wasylews.mykompot.domain.model.TariffPlan
+import com.wasylews.mykompot.domain.model.TariffPlans
 import com.wasylews.mykompot.domain.repository.PortalRepository
 import kotlinx.coroutines.flow.Flow
 import org.koin.core.annotation.Factory
@@ -25,5 +25,5 @@ import org.koin.core.annotation.Factory
 class ObserveTariffPlansUseCase(
     private val repository: PortalRepository,
 ) : ObserveTariffPlans {
-    override fun invoke(): Flow<List<TariffPlan>?> = repository.tariffPlansFlow()
+    override fun invoke(): Flow<TariffPlans?> = repository.tariffPlansFlow()
 }

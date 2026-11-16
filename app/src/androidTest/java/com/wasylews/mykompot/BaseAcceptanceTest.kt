@@ -33,10 +33,11 @@ import androidx.datastore.core.DataStore
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.wasylews.mykompot.data.LocalStorage
-import com.wasylews.mykompot.data.ProfileEntity
-import com.wasylews.mykompot.data.TariffPlanEntity
+import com.wasylews.mykompot.data.model.ProfileEntity
+import com.wasylews.mykompot.data.model.TariffPlansEntity
 import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.TariffPlan
+import com.wasylews.mykompot.domain.model.TariffPlans
 import com.wasylews.mykompot.presentation.home.HOME_LOADING_TEST_TAG
 import com.wasylews.mykompot.presentation.home.HOME_SCREEN_TEST_TAG
 import com.wasylews.mykompot.presentation.main.MainActivity
@@ -80,7 +81,7 @@ abstract class BaseAcceptanceTest : KoinTest {
         runBlocking {
             getKoin().get<DataStore<ProfileEntity?>>(named("profile")).updateData { null }
             getKoin().get<DataStore<String?>>(named("session")).updateData { null }
-            getKoin().get<DataStore<List<TariffPlanEntity>?>>(named("tariffPlans")).updateData { null }
+            getKoin().get<DataStore<TariffPlansEntity?>>(named("tariffPlans")).updateData { null }
         }
         loadKoinModules(testModule)
         resetServerResponses()
@@ -106,7 +107,7 @@ abstract class BaseAcceptanceTest : KoinTest {
     }
 
     protected fun givenStoredTariffPlans(plans: List<TariffPlan> = defaultTariffPlans()) = runBlocking {
-        get<LocalStorage>().saveTariffPlans(plans)
+        get<LocalStorage>().saveTariffPlans(TariffPlans(plans))
     }
 
     protected fun givenPaymentDueProfileStored() = givenStoredSession(profile = paymentDueProfile())

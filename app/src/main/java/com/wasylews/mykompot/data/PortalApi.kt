@@ -23,6 +23,7 @@ import retrofit2.Response
 import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.Query
 
@@ -40,7 +41,10 @@ interface PortalApi {
     ): Response<ProfilePageResponse>
 
     @GET("${BuildConfig.PLANS_BASE_URL}/plans/")
-    suspend fun fetchPlans(): Response<PlansPageResponse>
+    suspend fun fetchPlans(
+        @Header("If-None-Match") ifNoneMatch: String? = null,
+        @Header("If-Modified-Since") ifModifiedSince: String? = null,
+    ): Response<PlansPageResponse>
 }
 
 @Serializable

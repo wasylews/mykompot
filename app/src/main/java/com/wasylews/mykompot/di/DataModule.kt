@@ -23,11 +23,11 @@ import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.dataStoreFile
 import com.wasylews.mykompot.BuildConfig
 import com.wasylews.mykompot.data.PortalApi
-import com.wasylews.mykompot.data.ProfileEntity
-import com.wasylews.mykompot.data.ProfileEntitySerializer
-import com.wasylews.mykompot.data.SessionSerializer
-import com.wasylews.mykompot.data.TariffPlanEntity
-import com.wasylews.mykompot.data.TariffPlansSerializer
+import com.wasylews.mykompot.data.model.ProfileEntity
+import com.wasylews.mykompot.data.model.ProfileEntitySerializer
+import com.wasylews.mykompot.data.model.SessionSerializer
+import com.wasylews.mykompot.data.model.TariffPlansEntity
+import com.wasylews.mykompot.data.model.TariffPlansSerializer
 import dev.burnoo.kspoon.Kspoon
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -63,7 +63,7 @@ class DataModule {
     @Named("profile")
     fun provideProfileDataStore(context: Context): DataStore<ProfileEntity?> = DataStoreFactory.create(
         serializer = ProfileEntitySerializer,
-        corruptionHandler = ReplaceFileCorruptionHandler<ProfileEntity?> { null },
+        corruptionHandler = ReplaceFileCorruptionHandler { null },
         produceFile = { context.dataStoreFile("profile.json") },
     )
 
@@ -71,15 +71,15 @@ class DataModule {
     @Named("session")
     fun provideSessionDataStore(context: Context): DataStore<String?> = DataStoreFactory.create(
         serializer = SessionSerializer,
-        corruptionHandler = ReplaceFileCorruptionHandler<String?> { null },
+        corruptionHandler = ReplaceFileCorruptionHandler { null },
         produceFile = { context.dataStoreFile("session.json") },
     )
 
     @Singleton
     @Named("tariffPlans")
-    fun provideTariffPlansDataStore(context: Context): DataStore<List<TariffPlanEntity>?> = DataStoreFactory.create(
+    fun provideTariffPlansDataStore(context: Context): DataStore<TariffPlansEntity?> = DataStoreFactory.create(
         serializer = TariffPlansSerializer,
-        corruptionHandler = ReplaceFileCorruptionHandler<List<TariffPlanEntity>?> { null },
+        corruptionHandler = ReplaceFileCorruptionHandler { null },
         produceFile = { context.dataStoreFile("tariff_plans.json") },
     )
 }
