@@ -17,6 +17,8 @@
 package com.wasylews.mykompot.domain.repository
 
 import com.wasylews.mykompot.domain.model.LoginResult
+import com.wasylews.mykompot.domain.model.Payments
+import com.wasylews.mykompot.domain.model.PaymentsActionResult
 import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.RefreshResult
 import com.wasylews.mykompot.domain.model.TariffPlans
@@ -37,4 +39,10 @@ interface PortalRepository {
     fun tariffPlansFlow(): Flow<TariffPlans?>
 
     suspend fun refreshTariffPlans()
+
+    fun paymentsFlow(): Flow<Payments?>
+
+    suspend fun refreshPayments(): PaymentsActionResult
+
+    suspend fun loadMorePayments(): PaymentsActionResult
 }

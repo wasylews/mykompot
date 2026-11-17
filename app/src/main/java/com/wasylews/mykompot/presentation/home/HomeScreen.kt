@@ -18,10 +18,10 @@ package com.wasylews.mykompot.presentation.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -33,8 +33,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.presentation.payments.PaymentMethod
@@ -54,6 +56,7 @@ fun HomeScreen(
     state: HomeUiState,
     tariffPlansState: TariffPlansUiState,
     paymentMethodsState: PaymentMethodsUiState,
+    paymentsState: PaymentsUiState = PaymentsUiState(),
     modifier: Modifier = Modifier,
     onRefresh: () -> Unit = {},
     onPayClick: () -> Unit = {},
@@ -62,6 +65,9 @@ fun HomeScreen(
     onTariffSheetDismiss: () -> Unit = {},
     onPaymentMethodsDismiss: () -> Unit = {},
     onPaymentMethodClick: (PaymentMethod) -> Unit = {},
+    onLoadMorePayments: () -> Unit = {},
+    onRetryLoadMorePayments: () -> Unit = {},
+    onRetryPayments: () -> Unit = {},
     onErrorConsumed: () -> Unit = {},
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -79,70 +85,141 @@ fun HomeScreen(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.surface,
     ) { innerPadding ->
-        PullToRefreshBox(
-            isRefreshing = state.isRefreshing,
+        HomeContent(
+            state = state,
+            paymentsState = paymentsState,
             onRefresh = onRefresh,
+            onPayClick = onPayClick,
+            onTariffClick = onTariffClick,
+            onLoadMorePayments = onLoadMorePayments,
+            onRetryLoadMorePayments = onRetryLoadMorePayments,
+            onRetryPayments = onRetryPayments,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .testTag(HOME_SCREEN_TEST_TAG),
+                .padding(innerPadding),
+        )
+
+        HomeSheets(
+            tariffPlansState = tariffPlansState,
+            paymentMethodsState = paymentMethodsState,
+            onTariffRetry = onTariffRetry,
+            onTariffSheetDismiss = onTariffSheetDismiss,
+            onPaymentMethodsDismiss = onPaymentMethodsDismiss,
+            onPaymentMethodClick = onPaymentMethodClick,
+        )
+    }
+}
+
+@Composable
+private fun HomeContent(
+    state: HomeUiState,
+    paymentsState: PaymentsUiState,
+    onRefresh: () -> Unit,
+    onPayClick: () -> Unit,
+    onTariffClick: () -> Unit,
+    onLoadMorePayments: () -> Unit,
+    onRetryLoadMorePayments: () -> Unit,
+    onRetryPayments: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    PullToRefreshBox(
+        isRefreshing = state.isRefreshing,
+        onRefresh = onRefresh,
+        modifier = modifier.testTag(HOME_SCREEN_TEST_TAG),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = Spacing.lg, vertical = Spacing.lg),
+            verticalArrangement = Arrangement.spacedBy(Spacing.md),
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(Spacing.lg),
-                verticalArrangement = Arrangement.spacedBy(Spacing.lg),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text = stringResource(R.string.your_internet),
-                    style = MaterialTheme.typography.titleLarge,
-                )
-                StatusCard(
-                    state = state,
-                    onPayClick = onPayClick,
-                    onTariffClick = onTariffClick,
-                )
-            }
-        }
-
-        if (tariffPlansState.isVisible) {
-            TariffPlansBottomSheet(
-                state = tariffPlansState,
-                onDismissRequest = onTariffSheetDismiss,
-                onRetry = onTariffRetry,
+            HomeHeader(
+                state = state,
+                onPayClick = onPayClick,
+                onTariffClick = onTariffClick,
             )
-        }
-
-        if (paymentMethodsState.isVisible) {
-            PaymentMethodsBottomSheet(
-                methods = paymentMethods,
-                onMethodClick = onPaymentMethodClick,
-                onDismissRequest = onPaymentMethodsDismiss,
+            PaymentsList(
+                paymentsState = paymentsState,
+                onLoadMorePayments = onLoadMorePayments,
+                onRetryLoadMorePayments = onRetryLoadMorePayments,
+                onRetry = onRetryPayments,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
             )
         }
     }
 }
 
-@PreviewLightDark
 @Composable
-fun HomeScreenPreview(
+private fun HomeHeader(
+    state: HomeUiState,
+    onPayClick: () -> Unit,
+    onTariffClick: () -> Unit,
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(Spacing.lg),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = stringResource(R.string.your_internet),
+            style = MaterialTheme.typography.titleLarge,
+        )
+        StatusCard(
+            state = state,
+            onPayClick = onPayClick,
+            onTariffClick = onTariffClick,
+        )
+    }
+}
+
+@Composable
+private fun HomeSheets(
+    tariffPlansState: TariffPlansUiState,
+    paymentMethodsState: PaymentMethodsUiState,
+    onTariffRetry: () -> Unit,
+    onTariffSheetDismiss: () -> Unit,
+    onPaymentMethodsDismiss: () -> Unit,
+    onPaymentMethodClick: (PaymentMethod) -> Unit,
+) {
+    if (tariffPlansState.isVisible) {
+        TariffPlansBottomSheet(
+            state = tariffPlansState,
+            onDismissRequest = onTariffSheetDismiss,
+            onRetry = onTariffRetry,
+        )
+    }
+
+    if (paymentMethodsState.isVisible) {
+        PaymentMethodsBottomSheet(
+            methods = paymentMethods,
+            onMethodClick = onPaymentMethodClick,
+            onDismissRequest = onPaymentMethodsDismiss,
+        )
+    }
+}
+
+@Preview(name = "States (Light | Dark)", showBackground = true, widthDp = 800)
+@Composable
+fun HomeScreenStatesPreview(
     @PreviewParameter(HomeUiStatePreviewParameterProvider::class) state: HomeUiState,
 ) {
-    MyKompotTheme {
-        Scaffold(
-            modifier = Modifier.fillMaxSize(),
-            containerColor = MaterialTheme.colorScheme.surface,
-        ) { innerPadding ->
-            HomeScreen(
-                state = state,
-                tariffPlansState = TariffPlansUiState(),
-                paymentMethodsState = PaymentMethodsUiState(),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-            )
+    Row(modifier = Modifier.fillMaxWidth()) {
+        listOf(false to Color(0xFFF4F3FB), true to Color(0xFF0E0D13)).forEach { (dark, bg) ->
+            MyKompotTheme(darkTheme = dark, dynamicColor = false) {
+                androidx.compose.material3.Surface(
+                    modifier = Modifier.weight(1f),
+                    color = bg,
+                ) {
+                    HomeScreen(
+                        state = state,
+                        tariffPlansState = TariffPlansUiState(),
+                        paymentMethodsState = PaymentMethodsUiState(),
+                        paymentsState = samplePaymentsState(),
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+            }
         }
     }
 }

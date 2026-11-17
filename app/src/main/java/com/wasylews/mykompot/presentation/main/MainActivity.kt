@@ -37,6 +37,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.wasylews.mykompot.domain.model.SessionState
 import com.wasylews.mykompot.presentation.home.HomeScreen
 import com.wasylews.mykompot.presentation.home.HomeViewModel
+import com.wasylews.mykompot.presentation.home.PaymentsViewModel
 import com.wasylews.mykompot.presentation.login.LoginScreen
 import com.wasylews.mykompot.presentation.login.LoginViewModel
 import com.wasylews.mykompot.presentation.payments.PaymentMethod
@@ -79,47 +80,63 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                SessionState.LoggedIn -> {
-                    val homeViewModel = koinViewModel<HomeViewModel>()
-                    val tariffPlansViewModel = koinViewModel<TariffPlansViewModel>()
-                    val paymentMethodsViewModel = koinViewModel<PaymentMethodsViewModel>()
-                    val homeUiState by homeViewModel.uiState.collectAsState()
-                    val tariffPlansState by tariffPlansViewModel.uiState.collectAsState()
-                    val paymentMethodsState by paymentMethodsViewModel.uiState.collectAsState()
+                SessionState.LoggedIn -> LoggedInContent(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                    onPaymentMethodClick = onPaymentMethodClick,
+                )
 
-                    HomeScreen(
-                        state = homeUiState,
-                        tariffPlansState = tariffPlansState,
-                        paymentMethodsState = paymentMethodsState,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding),
-                        onRefresh = homeViewModel::refresh,
-                        onPayClick = paymentMethodsViewModel::open,
-                        onTariffClick = tariffPlansViewModel::open,
-                        onTariffRetry = tariffPlansViewModel::retry,
-                        onTariffSheetDismiss = tariffPlansViewModel::dismiss,
-                        onPaymentMethodsDismiss = paymentMethodsViewModel::dismiss,
-                        onPaymentMethodClick = { method ->
-                            paymentMethodsViewModel.dismiss()
-                            onPaymentMethodClick(method)
-                        },
-                        onErrorConsumed = homeViewModel::clearError,
-                    )
-                }
-
-                SessionState.LoggedOut -> {
-                    LoginScreen(
-                        uiState = uiState,
-                        onLoginClick = { loginViewModel.login() },
-                        onErrorConsumed = loginViewModel::clearError,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding),
-                    )
-                }
+                SessionState.LoggedOut -> LoginScreen(
+                    uiState = uiState,
+                    onLoginClick = { loginViewModel.login() },
+                    onErrorConsumed = loginViewModel::clearError,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                )
             }
         }
+    }
+
+    @Composable
+    private fun LoggedInContent(
+        modifier: Modifier,
+        onPaymentMethodClick: (PaymentMethod) -> Unit,
+    ) {
+        val homeViewModel = koinViewModel<HomeViewModel>()
+        val tariffPlansViewModel = koinViewModel<TariffPlansViewModel>()
+        val paymentMethodsViewModel = koinViewModel<PaymentMethodsViewModel>()
+        val paymentsViewModel = koinViewModel<PaymentsViewModel>()
+        val homeUiState by homeViewModel.uiState.collectAsState()
+        val tariffPlansState by tariffPlansViewModel.uiState.collectAsState()
+        val paymentMethodsState by paymentMethodsViewModel.uiState.collectAsState()
+        val paymentsState by paymentsViewModel.uiState.collectAsState()
+
+        HomeScreen(
+            state = homeUiState,
+            tariffPlansState = tariffPlansState,
+            paymentMethodsState = paymentMethodsState,
+            paymentsState = paymentsState,
+            modifier = modifier,
+            onRefresh = {
+                homeViewModel.refresh()
+                paymentsViewModel.refresh()
+            },
+            onPayClick = paymentMethodsViewModel::open,
+            onTariffClick = tariffPlansViewModel::open,
+            onTariffRetry = tariffPlansViewModel::retry,
+            onTariffSheetDismiss = tariffPlansViewModel::dismiss,
+            onPaymentMethodsDismiss = paymentMethodsViewModel::dismiss,
+            onPaymentMethodClick = { method ->
+                paymentMethodsViewModel.dismiss()
+                onPaymentMethodClick(method)
+            },
+            onLoadMorePayments = paymentsViewModel::loadMorePayments,
+            onRetryLoadMorePayments = paymentsViewModel::retryLoadMorePayments,
+            onRetryPayments = paymentsViewModel::refresh,
+            onErrorConsumed = homeViewModel::clearError,
+        )
     }
 
     private fun openPaymentMethod(method: PaymentMethod) {

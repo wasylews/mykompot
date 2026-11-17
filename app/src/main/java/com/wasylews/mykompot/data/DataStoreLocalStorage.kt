@@ -17,9 +17,14 @@
 package com.wasylews.mykompot.data
 
 import androidx.datastore.core.DataStore
+import com.wasylews.mykompot.data.model.PaymentEntity
+import com.wasylews.mykompot.data.model.PaymentsEntity
 import com.wasylews.mykompot.data.model.ProfileEntity
 import com.wasylews.mykompot.data.model.TariffPlanEntity
 import com.wasylews.mykompot.data.model.TariffPlansEntity
+import com.wasylews.mykompot.domain.model.Payment
+import com.wasylews.mykompot.domain.model.PaymentSource
+import com.wasylews.mykompot.domain.model.Payments
 import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.TariffPlan
 import com.wasylews.mykompot.domain.model.TariffPlans
@@ -28,12 +33,14 @@ import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Singleton
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 @Singleton
 class DataStoreLocalStorage(
     @Named("profile") private val profileDataStore: DataStore<ProfileEntity?>,
     @Named("session") private val sessionDataStore: DataStore<String?>,
     @Named("tariffPlans") private val tariffPlansDataStore: DataStore<TariffPlansEntity?>,
+    @Named("payments") private val paymentsDataStore: DataStore<PaymentsEntity?>,
 ) : LocalStorage {
     override suspend fun saveProfile(profile: Profile) {
         profileDataStore.updateData { profile.toEntity() }
@@ -60,7 +67,41 @@ class DataStoreLocalStorage(
     override suspend fun saveTariffPlans(tariffPlans: TariffPlans) {
         tariffPlansDataStore.updateData { tariffPlans.toEntity() }
     }
+
+    override fun paymentsFlow(): Flow<Payments?> = paymentsDataStore.data.map { it?.toDomain() }
+
+    override suspend fun savePayments(payments: Payments) {
+        paymentsDataStore.updateData { payments.toEntity() }
+    }
+
+    override suspend fun clearPayments() {
+        paymentsDataStore.updateData { null }
+    }
 }
+
+private fun PaymentsEntity.toDomain() = Payments(
+    items = items.map { it.toDomain() },
+    hasMore = hasMore,
+)
+
+private fun Payments.toEntity() = PaymentsEntity(
+    items = items.map { it.toEntity() },
+    hasMore = hasMore,
+)
+
+private fun PaymentEntity.toDomain() = Payment(
+    dateTime = LocalDateTime.parse(dateTime),
+    amount = amount,
+    tariffName = tariffName,
+    source = runCatching { PaymentSource.valueOf(source) }.getOrDefault(PaymentSource.UNKNOWN),
+)
+
+private fun Payment.toEntity() = PaymentEntity(
+    dateTime = dateTime.toString(),
+    amount = amount,
+    tariffName = tariffName,
+    source = source.name,
+)
 
 private fun TariffPlansEntity.toDomain() = TariffPlans(
     plans = plans.map { it.toDomain() },

@@ -187,11 +187,14 @@ abstract class BaseAcceptanceTest : KoinTest {
     protected fun givenHomeResponses(
         profileBody: String = HtmlFixtures.profile(),
         plansBody: String = HtmlFixtures.plans(),
+        feesBody: String = HtmlFixtures.fees(),
         profileStatus: Int = 200,
         plansStatus: Int = 200,
+        feesStatus: Int = 200,
         profileHeaders: Map<String, String> = emptyMap(),
         profileDelayMillis: Long = 0,
         plansDelayMillis: Long = 0,
+        feesDelayMillis: Long = 0,
     ) {
         dispatcher.profileResponseFactory = {
             response(
@@ -206,6 +209,13 @@ abstract class BaseAcceptanceTest : KoinTest {
                 body = plansBody,
                 status = plansStatus,
                 delayMillis = plansDelayMillis,
+            )
+        }
+        dispatcher.feesResponseFactory = { _ ->
+            response(
+                body = feesBody,
+                status = feesStatus,
+                delayMillis = feesDelayMillis,
             )
         }
     }
@@ -338,6 +348,17 @@ abstract class BaseAcceptanceTest : KoinTest {
         dispatcher.clear()
         dispatcher.profileResponseFactory = { MockResponse.Builder().code(404).build() }
         dispatcher.plansResponseFactory = { MockResponse.Builder().body(HtmlFixtures.plans()).build() }
+        dispatcher.feesResponseFactory = { _ -> MockResponse.Builder().body(HtmlFixtures.fees()).build() }
+    }
+
+    protected fun givenFeesPages(
+        page1: String = HtmlFixtures.fees(),
+        page2: String = HtmlFixtures.feesPage2(),
+    ) {
+        dispatcher.feesResponseFactory = { request ->
+            val pg = request.url.queryParameter("pg")
+            response(body = if (pg == "25") page2 else page1)
+        }
     }
 
     private class TestDispatcher : Dispatcher() {
@@ -348,6 +369,11 @@ abstract class BaseAcceptanceTest : KoinTest {
 
         @Volatile
         var plansResponseFactory: () -> MockResponse = { MockResponse.Builder().body(HtmlFixtures.plans()).build() }
+
+        @Volatile
+        var feesResponseFactory: (RecordedRequest) -> MockResponse = { _ ->
+            MockResponse.Builder().body(HtmlFixtures.fees()).build()
+        }
 
         fun enqueue(response: MockResponse) {
             synchronized(queuedResponses) { queuedResponses.addLast(response) }
@@ -362,8 +388,10 @@ abstract class BaseAcceptanceTest : KoinTest {
                 if (queuedResponses.isNotEmpty()) return queuedResponses.removeFirst()
             }
             val path = request.url.encodedPath
+            val index = request.url.queryParameter("index")
             return when {
                 path.contains("/plans") -> plansResponseFactory()
+                path.contains("index.cgi") && index == "41" -> feesResponseFactory(request)
                 path.contains("index.cgi") -> profileResponseFactory()
                 else -> MockResponse.Builder().code(404).build()
             }

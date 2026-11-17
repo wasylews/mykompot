@@ -17,6 +17,8 @@
 package com.wasylews.mykompot.presentation
 
 import com.wasylews.mykompot.domain.model.LoginResult
+import com.wasylews.mykompot.domain.model.Payments
+import com.wasylews.mykompot.domain.model.PaymentsActionResult
 import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.RefreshResult
 import com.wasylews.mykompot.domain.model.TariffPlan
@@ -32,10 +34,15 @@ class FakePortalRepository(
     private val session: String? = null,
     var refreshResult: RefreshResult = RefreshResult.Updated(profile ?: profile()),
     tariffPlans: List<TariffPlan>? = null,
+    private val payments: Payments? = null,
+    var paymentsRefreshResult: PaymentsActionResult = PaymentsActionResult.Success,
+    var paymentsLoadMoreResult: PaymentsActionResult = PaymentsActionResult.Success,
 ) : PortalRepository {
     private val tariffPlans = tariffPlans?.let { TariffPlans(it) }
     var refreshCalls = 0
     var refreshTariffPlansCalls = 0
+    var refreshPaymentsCalls = 0
+    var loadMorePaymentsCalls = 0
 
     override suspend fun login(
         username: String,
@@ -55,6 +62,18 @@ class FakePortalRepository(
 
     override suspend fun refreshTariffPlans() {
         refreshTariffPlansCalls++
+    }
+
+    override fun paymentsFlow(): Flow<Payments?> = flowOf(payments)
+
+    override suspend fun refreshPayments(): PaymentsActionResult {
+        refreshPaymentsCalls++
+        return paymentsRefreshResult
+    }
+
+    override suspend fun loadMorePayments(): PaymentsActionResult {
+        loadMorePaymentsCalls++
+        return paymentsLoadMoreResult
     }
 }
 

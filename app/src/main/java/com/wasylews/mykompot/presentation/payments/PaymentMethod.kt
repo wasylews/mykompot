@@ -20,6 +20,7 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsPropertyReceiver
+import com.wasylews.mykompot.R
 
 data class PaymentMethod(
     @param:DrawableRes val iconRes: Int,
@@ -33,21 +34,21 @@ var SemanticsPropertyReceiver.paymentMethodIconRes by PaymentMethodIconRes
 
 val paymentMethods = listOf(
     PaymentMethod(
-        iconRes = com.wasylews.mykompot.R.drawable.ic_payment_privat24,
-        titleRes = com.wasylews.mykompot.R.string.payment_method_privat24,
+        iconRes = R.drawable.ic_payment_privat24,
+        titleRes = R.string.payment_method_privat24,
         packageName = null,
-        fallbackUrlRes = com.wasylews.mykompot.R.string.payment_method_privat24_url,
+        fallbackUrlRes = R.string.payment_method_privat24_url,
     ),
     PaymentMethod(
-        iconRes = com.wasylews.mykompot.R.drawable.ic_payment_monobank,
-        titleRes = com.wasylews.mykompot.R.string.payment_method_monobank,
+        iconRes = R.drawable.ic_payment_monobank,
+        titleRes = R.string.payment_method_monobank,
         packageName = "com.ftband.mono",
-        fallbackUrlRes = com.wasylews.mykompot.R.string.payment_method_monobank_url,
+        fallbackUrlRes = R.string.payment_method_monobank_url,
     ),
     PaymentMethod(
-        iconRes = com.wasylews.mykompot.R.drawable.ic_payment_easypay,
-        titleRes = com.wasylews.mykompot.R.string.payment_method_easypay,
+        iconRes = R.drawable.ic_payment_easypay,
+        titleRes = R.string.payment_method_easypay,
         packageName = "ua.easypay.clientandroid",
-        fallbackUrlRes = com.wasylews.mykompot.R.string.payment_method_easypay_url,
+        fallbackUrlRes = R.string.payment_method_easypay_url,
     ),
 )

@@ -17,6 +17,10 @@
 package com.wasylews.mykompot.data
 
 import com.wasylews.mykompot.domain.model.LoginResult
+import com.wasylews.mykompot.domain.model.Payment
+import com.wasylews.mykompot.domain.model.PaymentSource
+import com.wasylews.mykompot.domain.model.Payments
+import com.wasylews.mykompot.domain.model.PaymentsActionResult
 import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.RefreshResult
 import com.wasylews.mykompot.domain.model.TariffPlan
@@ -31,6 +35,8 @@ import org.koin.core.annotation.Singleton
 import retrofit2.HttpException
 import retrofit2.Response
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @Singleton
 class PortalRepositoryImpl(
@@ -160,8 +166,100 @@ class PortalRepositoryImpl(
         )
     }
 
+    override fun paymentsFlow(): Flow<Payments?> = localStorage.paymentsFlow()
+
+    override suspend fun refreshPayments(): PaymentsActionResult = withContext(dispatcher) {
+        fetchPayments(pg = null, append = false)
+    }
+
+    override suspend fun loadMorePayments(): PaymentsActionResult = withContext(dispatcher) {
+        val cached = localStorage.paymentsFlow().first() ?: return@withContext PaymentsActionResult.Success
+        if (!cached.hasMore) return@withContext PaymentsActionResult.Success
+        fetchPayments(pg = cached.items.size, append = true)
+    }
+
+    private suspend fun fetchPayments(
+        pg: Int?,
+        append: Boolean,
+    ): PaymentsActionResult = try {
+        val session = sessionFlow().first()
+        when {
+            session == null -> PaymentsActionResult.Expired
+
+            else -> {
+                val response = api.fetchFees(session, pg)
+                when {
+                    !response.isSuccessful -> PaymentsActionResult.Failed.Server
+                    else -> handleFeesResponse(response.body(), append)
+                }
+            }
+        }
+    } catch (_: HttpException) {
+        PaymentsActionResult.Failed.Server
+    } catch (_: IOException) {
+        PaymentsActionResult.Failed.Network
+    }
+
+    private suspend fun handleFeesResponse(
+        page: FeesPageResponse?,
+        append: Boolean,
+    ): PaymentsActionResult = when {
+        page == null -> PaymentsActionResult.Failed.Parse
+
+        page.error != null -> {
+            localStorage.clearProfile()
+            localStorage.clearSession()
+            localStorage.clearPayments()
+            PaymentsActionResult.Expired
+        }
+
+        else -> {
+            val catalog = localStorage.tariffPlansFlow().first()?.plans.orEmpty()
+            val payments = page.items.mapNotNull { it.toDomain(catalog) }
+            if (page.items.isNotEmpty() && payments.isEmpty()) {
+                PaymentsActionResult.Failed.Parse
+            } else {
+                val merged = if (append) {
+                    localStorage.paymentsFlow().first()?.items.orEmpty() + payments
+                } else {
+                    payments
+                }
+                localStorage.savePayments(
+                    Payments(
+                        items = merged,
+                        hasMore = payments.size == PAGE_SIZE,
+                    ),
+                )
+                PaymentsActionResult.Success
+            }
+        }
+    }
+
+    private fun ParsedFeeItem.toDomain(catalog: List<TariffPlan>): Payment? {
+        val dateTime = runCatching {
+            LocalDateTime.parse(date, FEES_DATE_FORMATTER)
+        }.getOrNull() ?: return null
+        val amount = sum.trim().toIntOrNull() ?: return null
+        val tariffName = catalog.firstOrNull { it.price == amount }?.name ?: amount.toString()
+        return Payment(
+            dateTime = dateTime,
+            amount = amount,
+            tariffName = tariffName,
+            source = description.toPaymentSource(),
+        )
+    }
+
+    private fun String.toPaymentSource(): PaymentSource = when {
+        "abonplata_privatbank" in this -> PaymentSource.PRIVAT24
+        "abonplata_easypay" in this -> PaymentSource.EASYPAY
+        "abonplata_monobank" in this -> PaymentSource.MONOBANK
+        else -> PaymentSource.UNKNOWN
+    }
+
     private companion object {
         const val STATUS_ACTIVE = "Enable"
         const val SID_COOKIE = "sid"
+        const val PAGE_SIZE = 25
+        val FEES_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
     }
 }

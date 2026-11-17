@@ -78,11 +78,7 @@ class HomeViewModel(
                         }
                     }
 
-                    is RefreshResult.Updated,
-                    RefreshResult.Expired,
-                    -> {
-                        Unit
-                    }
+                    is RefreshResult.Updated, RefreshResult.Expired -> Unit
                 }
             } finally {
                 isRefreshing.value = false

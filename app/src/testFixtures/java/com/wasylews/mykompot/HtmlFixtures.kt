@@ -27,6 +27,10 @@ object HtmlFixtures {
 
     fun plans() = load("plans.html")
 
+    fun fees() = load("fees.html")
+
+    fun feesPage2() = load("fees-page2.html")
+
     private fun load(name: String): String = requireNotNull(
         HtmlFixtures::class.java.getResourceAsStream("/html/$name"),
     ) {

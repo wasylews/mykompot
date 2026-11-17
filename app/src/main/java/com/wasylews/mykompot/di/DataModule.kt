@@ -23,6 +23,8 @@ import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.dataStoreFile
 import com.wasylews.mykompot.BuildConfig
 import com.wasylews.mykompot.data.PortalApi
+import com.wasylews.mykompot.data.model.PaymentsEntity
+import com.wasylews.mykompot.data.model.PaymentsSerializer
 import com.wasylews.mykompot.data.model.ProfileEntity
 import com.wasylews.mykompot.data.model.ProfileEntitySerializer
 import com.wasylews.mykompot.data.model.SessionSerializer
@@ -81,5 +83,13 @@ class DataModule {
         serializer = TariffPlansSerializer,
         corruptionHandler = ReplaceFileCorruptionHandler { null },
         produceFile = { context.dataStoreFile("tariff_plans.json") },
+    )
+
+    @Singleton
+    @Named("payments")
+    fun providePaymentsDataStore(context: Context): DataStore<PaymentsEntity?> = DataStoreFactory.create(
+        serializer = PaymentsSerializer,
+        corruptionHandler = ReplaceFileCorruptionHandler { null },
+        produceFile = { context.dataStoreFile("payments.json") },
     )
 }

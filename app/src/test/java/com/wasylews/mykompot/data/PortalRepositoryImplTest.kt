@@ -18,12 +18,17 @@ package com.wasylews.mykompot.data
 
 import app.cash.turbine.test
 import com.wasylews.mykompot.domain.model.LoginResult
+import com.wasylews.mykompot.domain.model.Payment
+import com.wasylews.mykompot.domain.model.PaymentSource
+import com.wasylews.mykompot.domain.model.Payments
+import com.wasylews.mykompot.domain.model.PaymentsActionResult
 import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.RefreshResult
 import com.wasylews.mykompot.domain.model.TariffPlan
 import com.wasylews.mykompot.domain.model.TariffPlans
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.runTest
@@ -37,6 +42,7 @@ import org.junit.Test
 import retrofit2.HttpException
 import retrofit2.Response
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 class PortalRepositoryImplTest {
     @Test
@@ -619,6 +625,298 @@ class PortalRepositoryImplTest {
     )
 }
 
+class PortalRepositoryPaymentsTest {
+    @Test
+    fun `payments flow emits null when payments are missing`() = runTest {
+        val repo = createPortalRepository(testScheduler)
+
+        repo.paymentsFlow().test {
+            assertEquals(null, awaitItem())
+        }
+    }
+
+    @Test
+    fun `refreshPayments fetches first page and saves mapped payments`() = runTest {
+        val storage = FakeLocalStorage().apply {
+            saveSession("test-session")
+            saveTariffPlans(
+                TariffPlans(
+                    plans = listOf(
+                        TariffPlan(id = "300GRN_100mb", name = "Standart 100", speed = 100, price = 300),
+                    ),
+                ),
+            )
+        }
+        val api = FakePortalApi(
+            response = activeProfileResponse(),
+            feesResponse = Response.success(
+                FeesPageResponse(
+                    items = listOf(
+                        ParsedFeeItem(
+                            date = "2026-10-01 10:05:08",
+                            description = "abonplata_privatbank",
+                            sum = "300",
+                        ),
+                        ParsedFeeItem(
+                            date = "2024-10-15 09:39:29",
+                            description = "abonplata_easypay",
+                            sum = "250",
+                        ),
+                    ),
+                ),
+            ),
+        )
+        val repo = createPortalRepository(testScheduler, portalApi = api, localStorage = storage)
+
+        val result = repo.refreshPayments()
+
+        assertEquals(PaymentsActionResult.Success, result)
+        assertEquals(1, api.fetchFeesCalls)
+        assertEquals(listOf<Int?>(null), api.feesPgRequests)
+        repo.paymentsFlow().test {
+            assertEquals(
+                Payments(
+                    items = listOf(
+                        Payment(
+                            dateTime = LocalDateTime.of(2026, 10, 1, 10, 5, 8),
+                            amount = 300,
+                            tariffName = "Standart 100",
+                            source = PaymentSource.PRIVAT24,
+                        ),
+                        Payment(
+                            dateTime = LocalDateTime.of(2024, 10, 15, 9, 39, 29),
+                            amount = 250,
+                            tariffName = "250",
+                            source = PaymentSource.EASYPAY,
+                        ),
+                    ),
+                    hasMore = false,
+                ),
+                awaitItem(),
+            )
+        }
+    }
+
+    @Test
+    fun `refreshPayments marks hasMore when page is full`() = runTest {
+        val storage = FakeLocalStorage().apply { saveSession("test-session") }
+        val api = FakePortalApi(
+            response = activeProfileResponse(),
+            feesResponse = Response.success(
+                FeesPageResponse(items = List(25) { feeItem(index = it) }),
+            ),
+        )
+        val repo = createPortalRepository(testScheduler, portalApi = api, localStorage = storage)
+
+        val result = repo.refreshPayments()
+
+        assertEquals(PaymentsActionResult.Success, result)
+        repo.paymentsFlow().test {
+            val payments = awaitItem()
+            assertEquals(25, payments?.items?.size)
+            assertEquals(true, payments?.hasMore)
+        }
+    }
+
+    @Test
+    fun `loadMorePayments appends next page using item count offset`() = runTest {
+        val storage = FakeLocalStorage().apply {
+            saveSession("test-session")
+            savePayments(
+                Payments(
+                    items = List(25) { index ->
+                        Payment(
+                            dateTime = LocalDateTime.of(2026, 10, 1, 10, 0).minusDays(index.toLong()),
+                            amount = 300,
+                            tariffName = "300",
+                            source = PaymentSource.PRIVAT24,
+                        )
+                    },
+                    hasMore = true,
+                ),
+            )
+        }
+        val api = FakePortalApi(
+            response = activeProfileResponse(),
+            feesResponse = Response.success(
+                FeesPageResponse(
+                    items = listOf(
+                        ParsedFeeItem(
+                            date = "2024-10-15 09:39:29",
+                            description = "abonplata_easypay",
+                            sum = "250",
+                        ),
+                    ),
+                ),
+            ),
+        )
+        val repo = createPortalRepository(testScheduler, portalApi = api, localStorage = storage)
+
+        val result = repo.loadMorePayments()
+
+        assertEquals(PaymentsActionResult.Success, result)
+        assertEquals(1, api.fetchFeesCalls)
+        assertEquals(listOf<Int?>(25), api.feesPgRequests)
+        repo.paymentsFlow().test {
+            val payments = awaitItem()
+            assertEquals(26, payments?.items?.size)
+            assertEquals(
+                Payment(
+                    dateTime = LocalDateTime.of(2024, 10, 15, 9, 39, 29),
+                    amount = 250,
+                    tariffName = "250",
+                    source = PaymentSource.EASYPAY,
+                ),
+                payments?.items?.last(),
+            )
+            assertEquals(false, payments?.hasMore)
+        }
+    }
+
+    @Test
+    fun `refreshPayments replaces cached pages`() = runTest {
+        val storage = FakeLocalStorage().apply {
+            saveSession("test-session")
+            savePayments(
+                Payments(
+                    items = listOf(
+                        Payment(
+                            dateTime = LocalDateTime.of(2024, 1, 1, 0, 0),
+                            amount = 100,
+                            tariffName = "old",
+                            source = PaymentSource.UNKNOWN,
+                        ),
+                    ),
+                    hasMore = true,
+                ),
+            )
+        }
+        val api = FakePortalApi(
+            response = activeProfileResponse(),
+            feesResponse = Response.success(
+                FeesPageResponse(
+                    items = listOf(
+                        ParsedFeeItem(
+                            date = "2026-10-01 10:05:08",
+                            description = "abonplata_monobank",
+                            sum = "300",
+                        ),
+                    ),
+                ),
+            ),
+        )
+        val repo = createPortalRepository(testScheduler, portalApi = api, localStorage = storage)
+
+        val result = repo.refreshPayments()
+
+        assertEquals(PaymentsActionResult.Success, result)
+        assertEquals(listOf<Int?>(null), api.feesPgRequests)
+        repo.paymentsFlow().test {
+            assertEquals(
+                Payments(
+                    items = listOf(
+                        Payment(
+                            dateTime = LocalDateTime.of(2026, 10, 1, 10, 5, 8),
+                            amount = 300,
+                            tariffName = "300",
+                            source = PaymentSource.MONOBANK,
+                        ),
+                    ),
+                    hasMore = false,
+                ),
+                awaitItem(),
+            )
+        }
+    }
+
+    @Test
+    fun `refreshPayments returns network error and keeps cache`() = runTest {
+        val cached = Payments(items = emptyList(), hasMore = true)
+        val storage = FakeLocalStorage().apply {
+            saveSession("test-session")
+            savePayments(cached)
+        }
+        val api = FakePortalApi(
+            response = activeProfileResponse(),
+            feesException = IOException(),
+        )
+        val repo = createPortalRepository(testScheduler, portalApi = api, localStorage = storage)
+
+        val result = repo.refreshPayments()
+
+        assertEquals(PaymentsActionResult.Failed.Network, result)
+        repo.paymentsFlow().test {
+            assertEquals(cached, awaitItem())
+        }
+    }
+
+    @Test
+    fun `refreshPayments returns expired and clears session when page has error`() = runTest {
+        val storage = FakeLocalStorage().apply {
+            saveSession("test-session")
+            saveProfile(profile())
+            savePayments(Payments(items = emptyList(), hasMore = false))
+        }
+        val api = FakePortalApi(
+            response = activeProfileResponse(),
+            feesResponse = Response.success(FeesPageResponse(error = "Wrong password")),
+        )
+        val repo = createPortalRepository(testScheduler, portalApi = api, localStorage = storage)
+
+        val result = repo.refreshPayments()
+
+        assertEquals(PaymentsActionResult.Expired, result)
+        assertEquals(null, storage.sessionFlow().first())
+        assertEquals(null, storage.profileFlow().first())
+        assertEquals(null, storage.paymentsFlow().first())
+    }
+
+    @Test
+    fun `refreshPayments returns expired when session is missing`() = runTest {
+        val api = FakePortalApi(response = activeProfileResponse())
+        val repo = createPortalRepository(testScheduler, portalApi = api)
+
+        val result = repo.refreshPayments()
+
+        assertEquals(PaymentsActionResult.Expired, result)
+        assertEquals(0, api.fetchFeesCalls)
+    }
+
+    private fun createPortalRepository(
+        testScheduler: TestCoroutineScheduler,
+        portalApi: PortalApi = FakePortalApi(activeProfileResponse()),
+        localStorage: LocalStorage = FakeLocalStorage(),
+    ): PortalRepositoryImpl = PortalRepositoryImpl(
+        dispatcher = StandardTestDispatcher(testScheduler),
+        api = portalApi,
+        localStorage = localStorage,
+    )
+
+    private fun activeProfileResponse() = ProfilePageResponse(
+        status = "Enable",
+        plan = "[35] 300GRN_100mb",
+        nextPayment = "Next periodic payments throught days (2026-11-01)",
+    )
+
+    private fun profile() = Profile(
+        isActive = true,
+        nextPaymentDate = LocalDate.of(2026, 11, 1),
+        tariffPlan = TariffPlan(
+            id = "300GRN_100mb",
+            name = "300GRN_100mb",
+            speed = 100,
+            price = 300,
+        ),
+    )
+
+    private fun feeItem(index: Int) = ParsedFeeItem(
+        date = LocalDateTime.of(2026, 10, 1, 10, 0).minusDays(index.toLong())
+            .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+        description = "abonplata_privatbank",
+        sum = "300",
+    )
+}
+
 private class FakePortalApi(
     private val response: ProfilePageResponse,
     private val exception: Exception? = null,
@@ -627,11 +925,16 @@ private class FakePortalApi(
     private val loginResponse: Response<ProfilePageResponse>? = null,
     private val plansException: Exception? = null,
     private val plansResponse: Response<PlansPageResponse>? = null,
+    private val feesException: Exception? = null,
+    private val feesResponse: Response<FeesPageResponse>? = null,
+    private val feesResponsesByPg: Map<Int?, Response<FeesPageResponse>> = emptyMap(),
 ) : PortalApi {
     var fetchCalls = 0
     var fetchPlansCalls = 0
+    var fetchFeesCalls = 0
     var lastIfNoneMatch: String? = null
     var lastIfModifiedSince: String? = null
+    val feesPgRequests = mutableListOf<Int?>()
 
     override suspend fun login(
         username: String,
@@ -662,13 +965,27 @@ private class FakePortalApi(
         plansException?.let { throw it }
         return plansResponse ?: Response.success(PlansPageResponse(emptyList()))
     }
+
+    override suspend fun fetchFees(
+        sid: String,
+        pg: Int?,
+    ): Response<FeesPageResponse> {
+        fetchFeesCalls++
+        feesPgRequests += pg
+        feesException?.let { throw it }
+        return feesResponsesByPg[pg]
+            ?: feesResponse
+            ?: Response.success(FeesPageResponse())
+    }
 }
 
 private class FakeLocalStorage : LocalStorage {
     private val savedProfile = MutableStateFlow<Profile?>(null)
     private val savedSession = MutableStateFlow<String?>(null)
     private val savedTariffPlans = MutableStateFlow<TariffPlans?>(null)
+    private val savedPayments = MutableStateFlow<Payments?>(null)
     var saveTariffPlansCalls = 0
+    var savePaymentsCalls = 0
 
     override suspend fun saveProfile(profile: Profile) {
         savedProfile.value = profile
@@ -695,5 +1012,16 @@ private class FakeLocalStorage : LocalStorage {
     override suspend fun saveTariffPlans(tariffPlans: TariffPlans) {
         saveTariffPlansCalls++
         savedTariffPlans.value = tariffPlans
+    }
+
+    override fun paymentsFlow(): Flow<Payments?> = savedPayments
+
+    override suspend fun savePayments(payments: Payments) {
+        savePaymentsCalls++
+        savedPayments.value = payments
+    }
+
+    override suspend fun clearPayments() {
+        savedPayments.value = null
     }
 }

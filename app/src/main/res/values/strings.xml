@@ -14,6 +14,8 @@
     <string name="next_charge">Next charge</string>
     <string name="due">Due</string>
     <string name="pay_now">Pay now</string>
+    <string name="payments">Payments</string>
+    <string name="no_payments_yet">No payments yet</string>
     <string name="payment_methods">Payment methods</string>
     <string name="payment_method_privat24">Privat24</string>
     <string name="payment_method_privat24_url">https://next.privat24.ua/payments/form/{\"companyID\":\"3204925\",\"form\":{\"query\":\"Компот\"}}</string>
@@ -31,6 +33,7 @@
     <string name="status_unknown_message">We couldn\'t check your status. Your account may still be fine.</string>
     <string name="tariff">Tariff</string>
     <string name="tariffs">Tariffs</string>
+    <string name="currency_symbol">₴</string>
     <string name="tariff_price">%1$d ₴</string>
     <string name="tariff_price_monthly">%1$d ₴/mo</string>
     <string name="tariff_speed">Up to %1$d Mbps</string>

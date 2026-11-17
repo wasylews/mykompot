@@ -20,9 +20,13 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.Serializer
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
+import com.wasylews.mykompot.data.model.PaymentsSerializer
 import com.wasylews.mykompot.data.model.ProfileEntitySerializer
 import com.wasylews.mykompot.data.model.SessionSerializer
 import com.wasylews.mykompot.data.model.TariffPlansSerializer
+import com.wasylews.mykompot.domain.model.Payment
+import com.wasylews.mykompot.domain.model.PaymentSource
+import com.wasylews.mykompot.domain.model.Payments
 import com.wasylews.mykompot.domain.model.TariffPlan
 import com.wasylews.mykompot.domain.model.TariffPlans
 import com.wasylews.mykompot.presentation.profile
@@ -41,6 +45,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
+import java.time.LocalDateTime
 
 class DataStoreLocalStorageTest {
     @get:Rule
@@ -218,10 +223,65 @@ class DataStoreLocalStorageTest {
         assertEquals(tariffPlans(), second.tariffPlansFlow().first())
     }
 
+    @Test
+    fun `payments flow emits null when nothing is stored`() = runTest {
+        val store = createLocalStorage()
+
+        val payments = store.paymentsFlow().first()
+
+        assertNull(payments)
+    }
+
+    @Test
+    fun `saving payments stores them`() = runTest {
+        val store = createLocalStorage()
+
+        store.savePayments(payments())
+
+        assertEquals(payments(), store.paymentsFlow().first())
+    }
+
+    @Test
+    fun `clearing payments removes them`() = runTest {
+        val store = createLocalStorage()
+        store.savePayments(payments())
+
+        store.clearPayments()
+
+        assertNull(store.paymentsFlow().first())
+    }
+
+    @Test
+    fun `payments survive a new store instance`() = runTest {
+        val paymentsFile = File(tmp.root, PAYMENTS_FILE)
+        val first = createLocalStorage(paymentsFile = paymentsFile)
+        first.savePayments(payments())
+        closeStores()
+
+        val second = createLocalStorage(paymentsFile = paymentsFile)
+
+        assertEquals(payments(), second.paymentsFlow().first())
+    }
+
+    @Test
+    fun `corrupt payments read as null`() = runTest {
+        val paymentsFile = File(tmp.root, PAYMENTS_FILE)
+        val first = createLocalStorage(paymentsFile = paymentsFile)
+        first.savePayments(payments())
+        closeStores()
+
+        paymentsFile.writeText("{not json")
+
+        val second = createLocalStorage(paymentsFile = paymentsFile)
+
+        assertNull(second.paymentsFlow().first())
+    }
+
     private fun createLocalStorage(
         profileFile: File = File(tmp.root, PROFILE_FILE),
         sessionFile: File = File(tmp.root, SESSION_FILE),
         plansFile: File = File(tmp.root, PLANS_FILE),
+        paymentsFile: File = File(tmp.root, PAYMENTS_FILE),
     ) = DataStoreLocalStorage(
         profileDataStore = createStore(
             file = profileFile,
@@ -236,6 +296,11 @@ class DataStoreLocalStorageTest {
         tariffPlansDataStore = createStore(
             file = plansFile,
             serializer = TariffPlansSerializer,
+            corruptionHandler = ReplaceFileCorruptionHandler { null },
+        ),
+        paymentsDataStore = createStore(
+            file = paymentsFile,
+            serializer = PaymentsSerializer,
             corruptionHandler = ReplaceFileCorruptionHandler { null },
         ),
     )
@@ -268,9 +333,28 @@ class DataStoreLocalStorageTest {
         ),
     )
 
+    private fun payments() = Payments(
+        items = listOf(
+            Payment(
+                dateTime = LocalDateTime.of(2026, 10, 1, 10, 5, 8),
+                amount = 300,
+                tariffName = "Standart 100",
+                source = PaymentSource.PRIVAT24,
+            ),
+            Payment(
+                dateTime = LocalDateTime.of(2024, 10, 15, 9, 39, 29),
+                amount = 250,
+                tariffName = "250",
+                source = PaymentSource.EASYPAY,
+            ),
+        ),
+        hasMore = true,
+    )
+
     private companion object {
         const val PROFILE_FILE = "profile.json"
         const val SESSION_FILE = "session.json"
         const val PLANS_FILE = "tariff_plans.json"
+        const val PAYMENTS_FILE = "payments.json"
     }
 }

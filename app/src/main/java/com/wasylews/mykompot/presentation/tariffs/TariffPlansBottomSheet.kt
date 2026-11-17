@@ -35,12 +35,15 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.model.TariffPlan
-import com.wasylews.mykompot.presentation.home.PreviewLightDark
 import com.wasylews.mykompot.ui.theme.MyKompotTheme
 import com.wasylews.mykompot.ui.theme.Spacing
 
@@ -220,23 +223,48 @@ private fun CurrentPlanBadge(modifier: Modifier = Modifier) {
     }
 }
 
-@PreviewLightDark
+private val sampleTariffPlans = listOf(
+    TariffPlan(id = "260GRN_50mb", name = "Econom 50", speed = 50, price = 260),
+    TariffPlan(id = "300GRN_100mb", name = "Standart 100", speed = 100, price = 300),
+    TariffPlan(id = "350GRN_300mb", name = "LUX 300", speed = 300, price = 350),
+)
+
+class TariffPlansUiStatePreviewParameterProvider : PreviewParameterProvider<TariffPlansUiState> {
+    private val states = listOf(
+        TariffPlansUiState(isLoading = true),
+        TariffPlansUiState(errorId = R.string.tariffs_load_error),
+        TariffPlansUiState(plans = sampleTariffPlans, selectedPlanIndex = 1),
+    )
+
+    override val values: Sequence<TariffPlansUiState> = states.asSequence()
+
+    override fun getDisplayName(index: Int): String = when (index) {
+        0 -> "Loading"
+        1 -> "Error"
+        2 -> "Loaded"
+        else -> index.toString()
+    }
+}
+
+@Preview(name = "States (Light | Dark)", showBackground = true, widthDp = 800)
 @Composable
-private fun TariffPlansContentPreview() {
-    MyKompotTheme {
-        Surface {
-            TariffPlansContent(
-                state = TariffPlansUiState(
-                    plans = listOf(
-                        TariffPlan(id = "260GRN_50mb", name = "Econom 50", speed = 50, price = 260),
-                        TariffPlan(id = "300GRN_100mb", name = "Standart 100", speed = 100, price = 300),
-                        TariffPlan(id = "350GRN_300mb", name = "LUX 300", speed = 300, price = 350),
-                    ),
-                    selectedPlanIndex = 1,
-                ),
-                onRetry = {},
-                modifier = Modifier.padding(Spacing.lg),
-            )
+private fun TariffPlansContentStatesPreview(
+    @PreviewParameter(TariffPlansUiStatePreviewParameterProvider::class) state: TariffPlansUiState,
+) {
+    Row(modifier = Modifier.fillMaxWidth()) {
+        listOf(false to Color(0xFFF4F3FB), true to Color(0xFF0E0D13)).forEach { (dark, bg) ->
+            MyKompotTheme(darkTheme = dark, dynamicColor = false) {
+                Surface(
+                    modifier = Modifier.weight(1f),
+                    color = bg,
+                ) {
+                    TariffPlansContent(
+                        state = state,
+                        onRetry = {},
+                        modifier = Modifier.padding(Spacing.lg),
+                    )
+                }
+            }
         }
     }
 }

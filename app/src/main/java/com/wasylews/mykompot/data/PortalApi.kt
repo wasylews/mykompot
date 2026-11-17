@@ -45,6 +45,12 @@ interface PortalApi {
         @Header("If-None-Match") ifNoneMatch: String? = null,
         @Header("If-Modified-Since") ifModifiedSince: String? = null,
     ): Response<PlansPageResponse>
+
+    @GET("/index.cgi?index=41")
+    suspend fun fetchFees(
+        @Query("sid") sid: String,
+        @Query("pg") pg: Int? = null,
+    ): Response<FeesPageResponse>
 }
 
 @Serializable
@@ -78,4 +84,22 @@ data class ParsedPlanItem(
     val price: String = "",
     @Selector(".ptp-bullet-item", regex = "(\\d+)")
     val speed: Int = 0,
+)
+
+@Serializable
+data class FeesPageResponse(
+    @Selector(".err_message")
+    val error: String? = null,
+    @Selector("#kabinet-filter_table tr.odd, #kabinet-filter_table tr.even")
+    val items: List<ParsedFeeItem> = emptyList(),
+)
+
+@Serializable
+data class ParsedFeeItem(
+    @Selector("td:nth-child(1)")
+    val date: String = "",
+    @Selector("td:nth-child(2)")
+    val description: String = "",
+    @Selector("td:nth-child(3)")
+    val sum: String = "",
 )
