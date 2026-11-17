@@ -24,13 +24,42 @@ import org.junit.Test
 
 class RefreshStatusUseCaseTest {
     @Test
-    fun `refreshes status from repository`() = runTest {
+    fun `refreshes status and schedules keep alive when updated`() = runTest {
         val repository = FakePortalRepository(refreshResult = RefreshResult.Updated)
-        val useCase = RefreshStatusUseCase(repository)
+        val scheduler = FakeSessionKeepAliveScheduler()
+        val useCase = RefreshStatusUseCase(repository, scheduler)
 
         val result = useCase()
 
         assertEquals(RefreshResult.Updated, result)
         assertEquals(1, repository.refreshCalls)
+        assertEquals(1, scheduler.scheduleCalls)
+        assertEquals(0, scheduler.cancelCalls)
+    }
+
+    @Test
+    fun `cancels keep alive when session expires`() = runTest {
+        val repository = FakePortalRepository(refreshResult = RefreshResult.Expired)
+        val scheduler = FakeSessionKeepAliveScheduler()
+        val useCase = RefreshStatusUseCase(repository, scheduler)
+
+        val result = useCase()
+
+        assertEquals(RefreshResult.Expired, result)
+        assertEquals(0, scheduler.scheduleCalls)
+        assertEquals(1, scheduler.cancelCalls)
+    }
+
+    @Test
+    fun `does not change keep alive when refresh fails`() = runTest {
+        val repository = FakePortalRepository(refreshResult = RefreshResult.Failed.Network)
+        val scheduler = FakeSessionKeepAliveScheduler()
+        val useCase = RefreshStatusUseCase(repository, scheduler)
+
+        val result = useCase()
+
+        assertEquals(RefreshResult.Failed.Network, result)
+        assertEquals(0, scheduler.scheduleCalls)
+        assertEquals(0, scheduler.cancelCalls)
     }
 }

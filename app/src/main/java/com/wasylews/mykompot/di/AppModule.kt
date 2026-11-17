@@ -18,6 +18,7 @@ package com.wasylews.mykompot.di
 
 import android.app.NotificationManager
 import android.content.Context
+import androidx.work.WorkManager
 import org.koin.core.annotation.ComponentScan
 import org.koin.core.annotation.Configuration
 import org.koin.core.annotation.Module
@@ -34,4 +35,7 @@ class AppModule {
     @Singleton
     fun provideNotificationManager(context: Context): NotificationManager =
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+    @Singleton
+    fun provideWorkManager(context: Context): WorkManager = WorkManager.getInstance(context)
 }

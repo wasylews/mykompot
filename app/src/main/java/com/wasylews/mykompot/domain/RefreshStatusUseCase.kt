@@ -27,6 +27,21 @@ fun interface RefreshStatus {
 @Factory
 class RefreshStatusUseCase(
     private val repository: PortalRepository,
+    private val scheduler: SessionKeepAliveScheduler,
 ) : RefreshStatus {
-    override suspend fun invoke(): RefreshResult = repository.refresh()
+    override suspend fun invoke(): RefreshResult = when (val result = repository.refresh()) {
+        RefreshResult.Updated -> {
+            scheduler.schedule()
+            result
+        }
+
+        RefreshResult.Expired -> {
+            scheduler.cancel()
+            result
+        }
+
+        is RefreshResult.Failed -> {
+            result
+        }
+    }
 }

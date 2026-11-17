@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wasylews.mykompot.R
+import com.wasylews.mykompot.domain.SessionKeepAliveScheduler
 import com.wasylews.mykompot.domain.model.LoginResult
 import com.wasylews.mykompot.domain.repository.PortalRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +35,7 @@ import org.koin.core.annotation.KoinViewModel
 @KoinViewModel
 class LoginViewModel(
     private val repository: PortalRepository,
+    private val scheduler: SessionKeepAliveScheduler,
 ) : ViewModel() {
     private val inputValidationRegex = """\w+""".toRegex()
 
@@ -56,11 +58,26 @@ class LoginViewModel(
 
         _uiState.update { it.copy(isLoading = true, errorId = null) }
         val errorId = when (repository.login(usernameState.text.toString(), passwordState.text.toString())) {
-            is LoginResult.Success -> null
-            LoginResult.InvalidCredentials -> R.string.error_invalid_credentials
-            LoginResult.NetworkError -> R.string.error_no_connection
-            LoginResult.ServerError -> R.string.error_server
-            LoginResult.ParsingError -> R.string.error_parsing
+            is LoginResult.Success -> {
+                scheduler.schedule()
+                null
+            }
+
+            LoginResult.InvalidCredentials -> {
+                R.string.error_invalid_credentials
+            }
+
+            LoginResult.NetworkError -> {
+                R.string.error_no_connection
+            }
+
+            LoginResult.ServerError -> {
+                R.string.error_server
+            }
+
+            LoginResult.ParsingError -> {
+                R.string.error_parsing
+            }
         }
         _uiState.update { it.copy(isLoading = false, errorId = errorId) }
     }

@@ -18,6 +18,7 @@ package com.wasylews.mykompot.presentation.login
 
 import app.cash.turbine.test
 import com.wasylews.mykompot.R
+import com.wasylews.mykompot.domain.FakeSessionKeepAliveScheduler
 import com.wasylews.mykompot.domain.model.LoginResult
 import com.wasylews.mykompot.presentation.BaseViewModelTest
 import com.wasylews.mykompot.presentation.FakePortalRepository
@@ -34,9 +35,10 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class LoginViewModelTest : BaseViewModelTest() {
     @Test
-    fun `successful login completes without error`() = runTest {
+    fun `successful login completes without error and schedules keep alive`() = runTest {
         // GIVEN
-        val vm = loginViewModel(successLogin())
+        val scheduler = FakeSessionKeepAliveScheduler()
+        val vm = loginViewModel(successLogin(), scheduler)
 
         // WHEN
         vm.login()
@@ -45,12 +47,14 @@ class LoginViewModelTest : BaseViewModelTest() {
         // THEN
         assertFalse(vm.uiState.value.isLoading)
         assertNull(vm.uiState.value.errorId)
+        assertEquals(1, scheduler.scheduleCalls)
     }
 
     @Test
     fun `empty credentials are rejected without starting login`() = runTest {
         // GIVEN
-        val vm = LoginViewModel(FakePortalRepository(successLogin()))
+        val scheduler = FakeSessionKeepAliveScheduler()
+        val vm = LoginViewModel(FakePortalRepository(successLogin()), scheduler)
 
         // WHEN
         vm.login()
@@ -61,6 +65,7 @@ class LoginViewModelTest : BaseViewModelTest() {
         assertFalse(vm.isPasswordValid)
         assertFalse(vm.uiState.value.isLoading)
         assertNull(vm.uiState.value.errorId)
+        assertEquals(0, scheduler.scheduleCalls)
     }
 
     @Test
@@ -82,7 +87,7 @@ class LoginViewModelTest : BaseViewModelTest() {
     }
 
     @Test
-    fun `login failure maps to error and can be cleared`() = runTest {
+    fun `login failure maps to error, can be cleared, and does not schedule keep alive`() = runTest {
         val cases = listOf(
             LoginResult.InvalidCredentials to R.string.error_invalid_credentials,
             LoginResult.NetworkError to R.string.error_no_connection,
@@ -92,7 +97,8 @@ class LoginViewModelTest : BaseViewModelTest() {
 
         cases.forEach { (result, expectedError) ->
             // GIVEN
-            val vm = loginViewModel(result)
+            val scheduler = FakeSessionKeepAliveScheduler()
+            val vm = loginViewModel(result, scheduler)
 
             // WHEN
             vm.login()
@@ -101,13 +107,17 @@ class LoginViewModelTest : BaseViewModelTest() {
             // THEN
             assertEquals(expectedError, vm.uiState.value.errorId)
             assertFalse(vm.uiState.value.isLoading)
+            assertEquals(0, scheduler.scheduleCalls)
 
             vm.clearError()
             assertNull(vm.uiState.value.errorId)
         }
     }
 
-    private fun loginViewModel(result: LoginResult): LoginViewModel = LoginViewModel(FakePortalRepository(result)).apply {
+    private fun loginViewModel(
+        result: LoginResult,
+        scheduler: FakeSessionKeepAliveScheduler = FakeSessionKeepAliveScheduler(),
+    ): LoginViewModel = LoginViewModel(FakePortalRepository(result), scheduler).apply {
         usernameState.edit { replace(0, length, "user") }
         passwordState.edit { replace(0, length, "pass") }
     }

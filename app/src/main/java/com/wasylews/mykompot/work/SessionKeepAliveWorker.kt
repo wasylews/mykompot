@@ -37,15 +37,19 @@ class SessionKeepAliveWorker(
     private val refreshStatus: RefreshStatus,
     private val notificationManager: NotificationManager,
 ) : CoroutineWorker(appContext, params) {
-    override suspend fun doWork(): Result {
-        when (refreshStatus()) {
-            RefreshResult.Expired -> notifySessionExpired()
-
-            RefreshResult.Updated,
-            is RefreshResult.Failed,
-            -> Unit
+    override suspend fun doWork(): Result = when (refreshStatus()) {
+        RefreshResult.Expired -> {
+            notifySessionExpired()
+            Result.success()
         }
-        return Result.success()
+
+        RefreshResult.Updated -> {
+            Result.success()
+        }
+
+        is RefreshResult.Failed -> {
+            Result.retry()
+        }
     }
 
     private fun notifySessionExpired() {
