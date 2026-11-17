@@ -28,6 +28,7 @@ private val editorConfigOverrides = mapOf(
     "ktlint_standard_chain-method-continuation" to "disabled",
     "ktlint_standard_multiline-expression-wrapping" to "disabled",
     "ktlint_function_signature_body_expression_wrapping" to "default",
+    "ktlint_standard_when-entry-bracing" to "disabled",
 )
 
 class SpotlessConventionPlugin : Plugin<Project> {
