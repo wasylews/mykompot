@@ -17,7 +17,9 @@
 package com.wasylews.mykompot.domain.model
 
 sealed interface RefreshResult {
-    data object Updated : RefreshResult
+    data class Updated(
+        val profile: Profile,
+    ) : RefreshResult
 
     data object Expired : RefreshResult
 

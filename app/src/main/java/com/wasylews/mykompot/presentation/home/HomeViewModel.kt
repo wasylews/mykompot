@@ -78,7 +78,7 @@ class HomeViewModel(
                         }
                     }
 
-                    RefreshResult.Updated,
+                    is RefreshResult.Updated,
                     RefreshResult.Expired,
                     -> {
                         Unit

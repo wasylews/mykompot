@@ -54,7 +54,7 @@ class PortalRepositoryImplTest {
 
         val result = repo.login("user", "pass")
 
-        assertEquals(LoginResult.Success, result)
+        assertEquals(LoginResult.Success(profile()), result)
     }
 
     @Test
@@ -183,7 +183,7 @@ class PortalRepositoryImplTest {
 
         val result = repo.refresh()
 
-        assertEquals(RefreshResult.Updated, result)
+        assertEquals(RefreshResult.Updated(profile()), result)
         assertEquals(1, api.fetchCalls)
         repo.expectProfile(profile())
         repo.expectSession("test-session")
@@ -198,7 +198,7 @@ class PortalRepositoryImplTest {
 
         val result = repo.refresh()
 
-        assertEquals(RefreshResult.Updated, result)
+        assertEquals(RefreshResult.Updated(inactiveProfile()), result)
         assertEquals(1, api.fetchCalls)
         repo.expectProfile(inactiveProfile())
         repo.expectSession("test-session")
@@ -222,7 +222,7 @@ class PortalRepositoryImplTest {
 
         val result = repo.refresh()
 
-        assertEquals(RefreshResult.Updated, result)
+        assertEquals(RefreshResult.Updated(profile()), result)
         assertEquals(1, api.fetchCalls)
         repo.expectProfile(profile())
         repo.expectSession("rotated-session")

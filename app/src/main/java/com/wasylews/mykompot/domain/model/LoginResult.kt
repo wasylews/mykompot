@@ -17,7 +17,9 @@
 package com.wasylews.mykompot.domain.model
 
 sealed interface LoginResult {
-    data object Success : LoginResult
+    data class Success(
+        val profile: Profile,
+    ) : LoginResult
 
     data object InvalidCredentials : LoginResult
 

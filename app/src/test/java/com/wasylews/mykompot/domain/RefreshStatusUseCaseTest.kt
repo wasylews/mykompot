@@ -16,50 +16,69 @@
 
 package com.wasylews.mykompot.domain
 
+import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.RefreshResult
+import com.wasylews.mykompot.domain.model.TariffPlan
 import com.wasylews.mykompot.presentation.FakePortalRepository
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.time.LocalDate
 
 class RefreshStatusUseCaseTest {
+    private val profile = Profile(
+        isActive = true,
+        nextPaymentDate = LocalDate.parse("2026-10-04"),
+        tariffPlan = TariffPlan(id = "300GRN_100mb", name = "Standart 100", speed = 100, price = 300),
+    )
+
     @Test
-    fun `refreshes status and schedules keep alive when updated`() = runTest {
-        val repository = FakePortalRepository(refreshResult = RefreshResult.Updated)
+    fun `refreshes status and schedules keep alive and reminders when updated`() = runTest {
+        val repository = FakePortalRepository(refreshResult = RefreshResult.Updated(profile), profile = profile)
         val scheduler = FakeSessionKeepAliveScheduler()
-        val useCase = RefreshStatusUseCase(repository, scheduler)
+        val paymentScheduler = FakePaymentDueReminderScheduler()
+        val useCase = RefreshStatusUseCase(repository, scheduler, paymentScheduler)
 
         val result = useCase()
 
-        assertEquals(RefreshResult.Updated, result)
+        assertEquals(RefreshResult.Updated(profile), result)
         assertEquals(1, repository.refreshCalls)
         assertEquals(1, scheduler.scheduleCalls)
         assertEquals(0, scheduler.cancelCalls)
+        assertEquals(1, paymentScheduler.scheduleCalls)
+        assertEquals(profile, paymentScheduler.lastScheduledProfile)
+        assertEquals(0, paymentScheduler.cancelCalls)
     }
 
     @Test
-    fun `cancels keep alive when session expires`() = runTest {
+    fun `cancels keep alive and reminders when session expires`() = runTest {
         val repository = FakePortalRepository(refreshResult = RefreshResult.Expired)
         val scheduler = FakeSessionKeepAliveScheduler()
-        val useCase = RefreshStatusUseCase(repository, scheduler)
+        val paymentScheduler = FakePaymentDueReminderScheduler()
+        val useCase = RefreshStatusUseCase(repository, scheduler, paymentScheduler)
 
         val result = useCase()
 
         assertEquals(RefreshResult.Expired, result)
         assertEquals(0, scheduler.scheduleCalls)
         assertEquals(1, scheduler.cancelCalls)
+        assertEquals(0, paymentScheduler.scheduleCalls)
+        assertEquals(1, paymentScheduler.cancelCalls)
     }
 
     @Test
-    fun `does not change keep alive when refresh fails`() = runTest {
+    fun `does not change keep alive or reminders when refresh fails`() = runTest {
         val repository = FakePortalRepository(refreshResult = RefreshResult.Failed.Network)
         val scheduler = FakeSessionKeepAliveScheduler()
-        val useCase = RefreshStatusUseCase(repository, scheduler)
+        val paymentScheduler = FakePaymentDueReminderScheduler()
+        val useCase = RefreshStatusUseCase(repository, scheduler, paymentScheduler)
 
         val result = useCase()
 
         assertEquals(RefreshResult.Failed.Network, result)
         assertEquals(0, scheduler.scheduleCalls)
         assertEquals(0, scheduler.cancelCalls)
+        assertEquals(0, paymentScheduler.scheduleCalls)
+        assertEquals(0, paymentScheduler.cancelCalls)
     }
 }

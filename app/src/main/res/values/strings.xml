@@ -49,6 +49,17 @@
     <string name="session_expired_notification_title">Session expired</string>
     <string name="session_expired_notification_text">Log in again to see your account status.</string>
 
+    <!-- Payment reminders -->
+    <string name="payment_reminder_channel_name">Payment reminders</string>
+    <string name="payment_due_in_three_days_title">Payment due in 3 days</string>
+    <string name="payment_due_in_three_days_text">Your next payment is coming up soon.</string>
+    <string name="payment_due_tomorrow_title">Payment due tomorrow</string>
+    <string name="payment_due_tomorrow_text">Your next payment is due tomorrow.</string>
+    <string name="payment_due_today_title">Payment due today</string>
+    <string name="payment_due_today_text">Your payment is due today.</string>
+    <string name="payment_overdue_title">Payment overdue</string>
+    <string name="payment_overdue_text">Your payment is overdue. Please pay to keep your service active.</string>
+
     <!-- Relative dates -->
     <string name="today">today</string>
     <string name="tomorrow">tomorrow</string>

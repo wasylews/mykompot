@@ -16,32 +16,12 @@
 
 package com.wasylews.mykompot.work
 
-import android.content.Context
-import androidx.test.core.app.ApplicationProvider
-import androidx.work.Configuration
 import androidx.work.WorkInfo
-import androidx.work.WorkManager
-import androidx.work.testing.SynchronousExecutor
-import androidx.work.testing.WorkManagerTestInitHelper
 import org.junit.Assert.assertEquals
-import org.junit.Before
+import org.junit.Assert.assertNotEquals
 import org.junit.Test
 
-class SessionKeepAliveSchedulerTest {
-    private lateinit var context: Context
-    private lateinit var workManager: WorkManager
-
-    @Before
-    fun setUp() {
-        context = ApplicationProvider.getApplicationContext()
-        val config = Configuration.Builder()
-            .setMinimumLoggingLevel(android.util.Log.DEBUG)
-            .setExecutor(SynchronousExecutor())
-            .build()
-        WorkManagerTestInitHelper.initializeTestWorkManager(context, config)
-        workManager = WorkManager.getInstance(context)
-    }
-
+class SessionKeepAliveSchedulerTest : BaseWorkManagerSchedulerTest() {
     @Test
     fun scheduleEnqueuesUniqueKeepAliveWork() {
         val scheduler = SessionKeepAliveSchedulerImpl(workManager)
@@ -67,6 +47,6 @@ class SessionKeepAliveSchedulerTest {
         val second = infos.single()
         assertEquals(WorkInfo.State.ENQUEUED, second.state)
         // REPLACE creates a new work request
-        org.junit.Assert.assertNotEquals(firstId, second.id)
+        assertNotEquals(firstId, second.id)
     }
 }

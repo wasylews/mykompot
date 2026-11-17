@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wasylews.mykompot.R
+import com.wasylews.mykompot.domain.PaymentDueReminderScheduler
 import com.wasylews.mykompot.domain.SessionKeepAliveScheduler
 import com.wasylews.mykompot.domain.model.LoginResult
 import com.wasylews.mykompot.domain.repository.PortalRepository
@@ -35,7 +36,8 @@ import org.koin.core.annotation.KoinViewModel
 @KoinViewModel
 class LoginViewModel(
     private val repository: PortalRepository,
-    private val scheduler: SessionKeepAliveScheduler,
+    private val sessionKeepAliveScheduler: SessionKeepAliveScheduler,
+    private val paymentDueReminderScheduler: PaymentDueReminderScheduler,
 ) : ViewModel() {
     private val inputValidationRegex = """\w+""".toRegex()
 
@@ -57,9 +59,10 @@ class LoginViewModel(
         if (!isUsernameValid || !isPasswordValid) return@launch
 
         _uiState.update { it.copy(isLoading = true, errorId = null) }
-        val errorId = when (repository.login(usernameState.text.toString(), passwordState.text.toString())) {
+        val errorId = when (val result = repository.login(usernameState.text.toString(), passwordState.text.toString())) {
             is LoginResult.Success -> {
-                scheduler.schedule()
+                sessionKeepAliveScheduler.schedule()
+                paymentDueReminderScheduler.schedule(result.profile)
                 null
             }
 

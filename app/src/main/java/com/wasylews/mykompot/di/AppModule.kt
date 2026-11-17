@@ -23,6 +23,7 @@ import org.koin.core.annotation.ComponentScan
 import org.koin.core.annotation.Configuration
 import org.koin.core.annotation.Module
 import org.koin.core.annotation.Singleton
+import java.time.ZoneId
 import kotlin.time.Clock
 
 @Module(includes = [DataModule::class])
@@ -38,4 +39,7 @@ class AppModule {
 
     @Singleton
     fun provideWorkManager(context: Context): WorkManager = WorkManager.getInstance(context)
+
+    @Singleton
+    fun provideZoneId(): ZoneId = ZoneId.systemDefault()
 }

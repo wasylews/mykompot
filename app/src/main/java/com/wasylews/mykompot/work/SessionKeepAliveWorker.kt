@@ -43,7 +43,7 @@ class SessionKeepAliveWorker(
             Result.success()
         }
 
-        RefreshResult.Updated -> {
+        is RefreshResult.Updated -> {
             Result.success()
         }
 

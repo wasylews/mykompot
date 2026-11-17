@@ -52,10 +52,8 @@ import mockwebserver3.MockWebServer
 import mockwebserver3.RecordedRequest
 import mockwebserver3.SocketEffect
 import org.junit.After
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.koin.core.context.loadKoinModules
@@ -315,15 +313,25 @@ abstract class BaseAcceptanceTest : KoinTest {
     ) {
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val notifications = notificationManager.activeNotifications
-        assertTrue("Expected a notification to be posted", notifications.isNotEmpty())
+        val expectedTitle = stringRes(titleRes)
+        val expectedText = stringRes(textRes)
 
-        val notification = notifications.first().notification
-        val title = notification.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString()
-        val text = notification.extras.getCharSequence(Notification.EXTRA_TEXT)?.toString()
-        assertEquals(stringRes(titleRes), title)
-        assertEquals(stringRes(textRes), text)
-        assertNotNull("Expected notification to open the app", notification.contentIntent)
+        val deadline = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(5)
+        var posted: Notification? = null
+        while (System.currentTimeMillis() < deadline) {
+            posted = notificationManager.activeNotifications
+                .map { it.notification }
+                .firstOrNull { notification ->
+                    val title = notification.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString()
+                    val text = notification.extras.getCharSequence(Notification.EXTRA_TEXT)?.toString()
+                    title == expectedTitle && text == expectedText
+                }
+            if (posted != null) break
+            Thread.sleep(100)
+        }
+
+        assertNotNull("Expected a notification to be posted", posted)
+        assertNotNull("Expected notification to open the app", posted?.contentIntent)
     }
 
     protected fun resetServerResponses() {

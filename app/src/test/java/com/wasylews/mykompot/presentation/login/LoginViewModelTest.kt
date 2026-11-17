@@ -18,8 +18,11 @@ package com.wasylews.mykompot.presentation.login
 
 import app.cash.turbine.test
 import com.wasylews.mykompot.R
+import com.wasylews.mykompot.domain.FakePaymentDueReminderScheduler
 import com.wasylews.mykompot.domain.FakeSessionKeepAliveScheduler
 import com.wasylews.mykompot.domain.model.LoginResult
+import com.wasylews.mykompot.domain.model.Profile
+import com.wasylews.mykompot.domain.model.TariffPlan
 import com.wasylews.mykompot.presentation.BaseViewModelTest
 import com.wasylews.mykompot.presentation.FakePortalRepository
 import com.wasylews.mykompot.presentation.successLogin
@@ -31,14 +34,22 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.LocalDate
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class LoginViewModelTest : BaseViewModelTest() {
+    private val profile = Profile(
+        isActive = true,
+        nextPaymentDate = LocalDate.parse("2026-10-04"),
+        tariffPlan = TariffPlan(id = "300GRN_100mb", name = "Standart 100", speed = 100, price = 300),
+    )
+
     @Test
-    fun `successful login completes without error and schedules keep alive`() = runTest {
+    fun `successful login completes without error and schedules keep alive and reminders`() = runTest {
         // GIVEN
         val scheduler = FakeSessionKeepAliveScheduler()
-        val vm = loginViewModel(successLogin(), scheduler)
+        val paymentScheduler = FakePaymentDueReminderScheduler()
+        val vm = loginViewModel(successLogin(profile), scheduler, paymentScheduler, profile = profile)
 
         // WHEN
         vm.login()
@@ -48,13 +59,20 @@ class LoginViewModelTest : BaseViewModelTest() {
         assertFalse(vm.uiState.value.isLoading)
         assertNull(vm.uiState.value.errorId)
         assertEquals(1, scheduler.scheduleCalls)
+        assertEquals(1, paymentScheduler.scheduleCalls)
+        assertEquals(profile, paymentScheduler.lastScheduledProfile)
     }
 
     @Test
     fun `empty credentials are rejected without starting login`() = runTest {
         // GIVEN
         val scheduler = FakeSessionKeepAliveScheduler()
-        val vm = LoginViewModel(FakePortalRepository(successLogin()), scheduler)
+        val paymentScheduler = FakePaymentDueReminderScheduler()
+        val vm = LoginViewModel(
+            FakePortalRepository(successLogin(profile), profile = profile),
+            scheduler,
+            paymentScheduler,
+        )
 
         // WHEN
         vm.login()
@@ -66,12 +84,13 @@ class LoginViewModelTest : BaseViewModelTest() {
         assertFalse(vm.uiState.value.isLoading)
         assertNull(vm.uiState.value.errorId)
         assertEquals(0, scheduler.scheduleCalls)
+        assertEquals(0, paymentScheduler.scheduleCalls)
     }
 
     @Test
     fun `login emits loading then idle`() = runTest {
         // GIVEN
-        val vm = loginViewModel(successLogin())
+        val vm = loginViewModel(successLogin(profile), profile = profile)
 
         vm.uiState.test {
             assertFalse(awaitItem().isLoading)
@@ -87,7 +106,7 @@ class LoginViewModelTest : BaseViewModelTest() {
     }
 
     @Test
-    fun `login failure maps to error, can be cleared, and does not schedule keep alive`() = runTest {
+    fun `login failure maps to error, can be cleared, and does not schedule keep alive or reminders`() = runTest {
         val cases = listOf(
             LoginResult.InvalidCredentials to R.string.error_invalid_credentials,
             LoginResult.NetworkError to R.string.error_no_connection,
@@ -98,7 +117,8 @@ class LoginViewModelTest : BaseViewModelTest() {
         cases.forEach { (result, expectedError) ->
             // GIVEN
             val scheduler = FakeSessionKeepAliveScheduler()
-            val vm = loginViewModel(result, scheduler)
+            val paymentScheduler = FakePaymentDueReminderScheduler()
+            val vm = loginViewModel(result, scheduler, paymentScheduler)
 
             // WHEN
             vm.login()
@@ -108,6 +128,7 @@ class LoginViewModelTest : BaseViewModelTest() {
             assertEquals(expectedError, vm.uiState.value.errorId)
             assertFalse(vm.uiState.value.isLoading)
             assertEquals(0, scheduler.scheduleCalls)
+            assertEquals(0, paymentScheduler.scheduleCalls)
 
             vm.clearError()
             assertNull(vm.uiState.value.errorId)
@@ -117,7 +138,13 @@ class LoginViewModelTest : BaseViewModelTest() {
     private fun loginViewModel(
         result: LoginResult,
         scheduler: FakeSessionKeepAliveScheduler = FakeSessionKeepAliveScheduler(),
-    ): LoginViewModel = LoginViewModel(FakePortalRepository(result), scheduler).apply {
+        paymentScheduler: FakePaymentDueReminderScheduler = FakePaymentDueReminderScheduler(),
+        profile: Profile? = this.profile,
+    ): LoginViewModel = LoginViewModel(
+        FakePortalRepository(result, profile = profile),
+        scheduler,
+        paymentScheduler,
+    ).apply {
         usernameState.edit { replace(0, length, "user") }
         passwordState.edit { replace(0, length, "pass") }
     }

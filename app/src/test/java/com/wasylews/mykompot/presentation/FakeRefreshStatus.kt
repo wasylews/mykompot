@@ -17,11 +17,20 @@
 package com.wasylews.mykompot.presentation
 
 import com.wasylews.mykompot.domain.RefreshStatus
+import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.RefreshResult
+import com.wasylews.mykompot.domain.model.TariffPlan
 import kotlinx.coroutines.CompletableDeferred
+import java.time.LocalDate
 
 class FakeRefreshStatus(
-    var result: RefreshResult = RefreshResult.Updated,
+    var result: RefreshResult = RefreshResult.Updated(
+        Profile(
+            isActive = true,
+            nextPaymentDate = LocalDate.of(2026, 10, 27),
+            tariffPlan = TariffPlan(id = "300GRN_100mb", name = "Standart", speed = 100, price = 300),
+        ),
+    ),
 ) : RefreshStatus {
     var calls = 0
     private var gate: CompletableDeferred<Unit>? = null

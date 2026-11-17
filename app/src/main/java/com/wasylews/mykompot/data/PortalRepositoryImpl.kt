@@ -54,7 +54,7 @@ class PortalRepositoryImpl(
             val sid = response.sid() ?: page.sid ?: return@withContext LoginResult.ParsingError
             localStorage.saveProfile(profile)
             localStorage.saveSession(sid)
-            LoginResult.Success
+            LoginResult.Success(profile)
         } catch (_: HttpException) {
             LoginResult.ServerError
         } catch (_: IOException) {
@@ -116,7 +116,7 @@ class PortalRepositoryImpl(
             if (sid != null) {
                 localStorage.saveSession(sid)
             }
-            RefreshResult.Updated
+            RefreshResult.Updated(profile)
         } catch (_: HttpException) {
             RefreshResult.Failed.Server
         } catch (_: IOException) {

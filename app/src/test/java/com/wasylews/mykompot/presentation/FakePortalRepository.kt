@@ -30,7 +30,7 @@ class FakePortalRepository(
     private val result: LoginResult = successLogin(),
     private val profile: Profile? = profile(),
     private val session: String? = null,
-    var refreshResult: RefreshResult = RefreshResult.Updated,
+    var refreshResult: RefreshResult = RefreshResult.Updated(profile ?: profile()),
     tariffPlans: List<TariffPlan>? = null,
 ) : PortalRepository {
     private val tariffPlans = tariffPlans?.let { TariffPlans(it) }
@@ -58,7 +58,7 @@ class FakePortalRepository(
     }
 }
 
-fun successLogin() = LoginResult.Success
+fun successLogin(profile: Profile = profile()) = LoginResult.Success(profile)
 
 fun profile() = Profile(
     isActive = true,
