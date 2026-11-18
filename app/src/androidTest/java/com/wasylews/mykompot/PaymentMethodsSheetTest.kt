@@ -23,6 +23,9 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.espresso.intent.Intents.intended
@@ -31,6 +34,7 @@ import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasData
 import androidx.test.espresso.intent.matcher.IntentMatchers.isInternal
 import androidx.test.espresso.intent.rule.IntentsRule
+import com.wasylews.mykompot.presentation.payments.PAYMENT_METHODS_SHEET_TEST_TAG
 import com.wasylews.mykompot.presentation.payments.PaymentMethod
 import com.wasylews.mykompot.presentation.payments.PaymentMethodIconRes
 import com.wasylews.mykompot.presentation.payments.paymentMethods
@@ -99,7 +103,10 @@ class PaymentMethodsSheetTest : BaseAcceptanceTest() {
 
             // WHEN I tap a payment method
             composeRule
-                .onNodeWithText(stringRes(titleRes))
+                .onNode(
+                    hasText(stringRes(titleRes)).and(hasAnyAncestor(hasTestTag(PAYMENT_METHODS_SHEET_TEST_TAG))),
+                    useUnmergedTree = true,
+                )
                 .performClick()
 
             // THEN it opens the payment URL
@@ -120,8 +127,18 @@ class PaymentMethodsSheetTest : BaseAcceptanceTest() {
 
     private fun assertShowsPaymentMethods(methods: List<PaymentMethod>) {
         methods.forEach { method ->
-            composeRule.onNodeWithText(stringRes(method.titleRes)).assertIsDisplayed()
-            composeRule.onNode(hasPaymentMethodIcon(method.iconRes)).assertIsDisplayed()
+            composeRule
+                .onNode(
+                    hasText(stringRes(method.titleRes)).and(hasAnyAncestor(hasTestTag(PAYMENT_METHODS_SHEET_TEST_TAG))),
+                    useUnmergedTree = true,
+                )
+                .assertIsDisplayed()
+            composeRule
+                .onNode(
+                    hasPaymentMethodIcon(method.iconRes).and(hasAnyAncestor(hasTestTag(PAYMENT_METHODS_SHEET_TEST_TAG))),
+                    useUnmergedTree = true,
+                )
+                .assertIsDisplayed()
         }
     }
 

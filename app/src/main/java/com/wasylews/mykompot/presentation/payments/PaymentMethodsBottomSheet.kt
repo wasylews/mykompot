@@ -33,6 +33,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
@@ -42,6 +43,8 @@ import com.wasylews.mykompot.R
 import com.wasylews.mykompot.presentation.home.PreviewLightDark
 import com.wasylews.mykompot.ui.theme.MyKompotTheme
 import com.wasylews.mykompot.ui.theme.Spacing
+
+internal const val PAYMENT_METHODS_SHEET_TEST_TAG = "payment_methods_sheet"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,7 +77,7 @@ fun PaymentMethodsContent(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier,
+        modifier = modifier.testTag(PAYMENT_METHODS_SHEET_TEST_TAG),
         verticalArrangement = Arrangement.spacedBy(Spacing.sm),
     ) {
         Text(

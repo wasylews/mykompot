@@ -59,6 +59,9 @@ import com.wasylews.mykompot.ui.theme.Spacing
 import com.wasylews.mykompot.ui.theme.StatusColors
 import com.wasylews.mykompot.ui.theme.StatusPalettes
 
+internal const val STATUS_TARIFF_NAME_TEST_TAG = "status_tariff_name"
+internal const val STATUS_TARIFF_PRICE_TEST_TAG = "status_tariff_price"
+
 @Composable
 fun StatusCard(
     state: HomeUiState,
@@ -307,11 +310,13 @@ private fun TariffBlock(
             style = MaterialTheme.typography.bodySmall,
             fontWeight = FontWeight.Bold,
             color = onColor,
+            modifier = Modifier.testTag(STATUS_TARIFF_NAME_TEST_TAG),
         )
         Text(
             text = stringResource(R.string.tariff_price, state.account.profile.tariffPlan.price),
             style = MaterialTheme.typography.bodySmall,
             color = onColor.copy(alpha = 0.68f),
+            modifier = Modifier.testTag(STATUS_TARIFF_PRICE_TEST_TAG),
         )
         Icon(
             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,

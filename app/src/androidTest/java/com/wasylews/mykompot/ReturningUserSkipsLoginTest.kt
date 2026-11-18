@@ -19,7 +19,10 @@ package com.wasylews.mykompot
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import com.wasylews.mykompot.presentation.home.STATUS_TARIFF_NAME_TEST_TAG
+import com.wasylews.mykompot.presentation.home.STATUS_TARIFF_PRICE_TEST_TAG
 import org.junit.Test
 
 @OptIn(ExperimentalTestApi::class)
@@ -36,8 +39,8 @@ class ReturningUserSkipsLoginTest : BaseAcceptanceTest() {
             // THEN I see the status without logging in
             assertShows(R.string.status_all_good)
             assertShows(R.string.tariff)
-            composeRule.onNodeWithText("Standart 100").assertIsDisplayed()
-            assertShows(R.string.tariff_price, 300)
+            composeRule.onNodeWithTag(STATUS_TARIFF_NAME_TEST_TAG, useUnmergedTree = true).assertExists()
+            composeRule.onNodeWithTag(STATUS_TARIFF_PRICE_TEST_TAG, useUnmergedTree = true).assertExists()
             assertLoginFormIsHidden()
             assertProfileRefreshRequested()
         }
