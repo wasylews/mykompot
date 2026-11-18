@@ -129,7 +129,7 @@ class HomeViewModelTest : BaseViewModelTest() {
     }
 
     @Test
-    fun `shows loading while refreshing then unknown without error when no cached profile`() = runTest {
+    fun `shows loading while refreshing then unknown with server error when no cached profile`() = runTest {
         // GIVEN no cached profile and a refresh that is still in progress
         val refreshStatus = FakeRefreshStatus(result = RefreshResult.Failed.Server).apply {
             pause()
@@ -154,12 +154,12 @@ class HomeViewModelTest : BaseViewModelTest() {
             refreshStatus.resume()
             advanceUntilIdle()
 
-            // THEN I see the unknown status without a snackbar error
+            // THEN I see the unknown status and the server error
             assertEquals(
                 HomeUiState(
                     content = HomeContent.Unknown,
                     isRefreshing = false,
-                    errorId = null,
+                    errorId = R.string.error_server,
                 ),
                 awaitItem(),
             )

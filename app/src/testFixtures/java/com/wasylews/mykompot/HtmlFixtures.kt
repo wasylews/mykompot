@@ -25,6 +25,8 @@ object HtmlFixtures {
 
     fun loginFailed() = load("login-failed.html")
 
+    fun portalError() = load("portal-error.html")
+
     fun plans() = load("plans.html")
 
     fun fees() = load("fees.html")

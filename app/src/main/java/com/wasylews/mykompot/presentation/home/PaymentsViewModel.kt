@@ -57,6 +57,7 @@ class PaymentsViewModel(
     private val paymentsLoadingMore = MutableStateFlow(false)
     private val paymentsErrorId = MutableStateFlow<Int?>(null)
     private val paymentsLoadMoreErrorId = MutableStateFlow<Int?>(null)
+    private val paymentsStreamErrorId = MutableStateFlow<Int?>(null)
 
     private val privat24Method = paymentMethods.first { it.titleRes == R.string.payment_method_privat24 }
     private val easyPayMethod = paymentMethods.first { it.titleRes == R.string.payment_method_easypay }
@@ -65,12 +66,19 @@ class PaymentsViewModel(
     private val latestPayments = observePayments()
         .catch { error ->
             if (error is CancellationException) throw error
+            paymentsStreamErrorId.value = R.string.error_server
+            emit(null)
         }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
             initialValue = null,
         )
+
+    private val paymentsError = combine(
+        paymentsErrorId,
+        paymentsStreamErrorId,
+    ) { errorId, streamErrorId -> errorId ?: streamErrorId }
 
     init {
         refresh()
@@ -130,7 +138,7 @@ class PaymentsViewModel(
         latestPayments,
         paymentsLoading,
         paymentsLoadingMore,
-        paymentsErrorId,
+        paymentsError,
         paymentsLoadMoreErrorId,
     ) { payments, isLoading, isLoadingMore, errorId, loadMoreErrorId ->
         payments.toUiState(

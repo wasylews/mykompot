@@ -67,14 +67,12 @@ class HomeViewModel(
             try {
                 when (val result = refreshStatus()) {
                     is RefreshResult.Failed -> {
-                        if (latestStatus.value != null) {
-                            errorId.value = when (result) {
-                                RefreshResult.Failed.Network -> R.string.error_no_connection
+                        errorId.value = when (result) {
+                            RefreshResult.Failed.Network -> R.string.error_no_connection
 
-                                RefreshResult.Failed.Server,
-                                RefreshResult.Failed.Parse,
-                                -> R.string.error_server
-                            }
+                            RefreshResult.Failed.Server,
+                            RefreshResult.Failed.Parse,
+                            -> R.string.error_server
                         }
                     }
 

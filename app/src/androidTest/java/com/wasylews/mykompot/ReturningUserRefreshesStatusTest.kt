@@ -19,6 +19,7 @@ package com.wasylews.mykompot
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performClick
 import com.wasylews.mykompot.presentation.home.HOME_REFRESH_INDICATOR_TEST_TAG
 import com.wasylews.mykompot.presentation.home.STATUS_TARIFF_NAME_TEST_TAG
 import com.wasylews.mykompot.presentation.home.STATUS_TARIFF_PRICE_TEST_TAG
@@ -211,6 +212,28 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
     }
 
     @Test
+    fun recoversFromUnknownStatusOnRetry() {
+        // GIVEN a stored session with no cached profile and no network
+        givenStoredSession()
+        givenServerIsUnreachable(delayMillis = 2_000)
+
+        launch().use {
+            // THEN I see progress while refreshing, then the unknown status
+            assertShowsHomeLoading()
+            assertDoesNotShow(R.string.status_unknown)
+            assertShows(R.string.status_unknown)
+            assertRefreshRequested()
+
+            // WHEN the server is back and I tap retry
+            givenServerReturnsProfile()
+            assertShows(R.string.retry).performClick()
+
+            // THEN I see the status
+            assertShows(R.string.status_all_good)
+        }
+    }
+
+    @Test
     fun showsLoginWhenSessionIsExpired() {
         // GIVEN a stored session
         givenStoredSession(profile = allGoodProfile())
@@ -220,6 +243,24 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
         launch().use {
             // THEN I am taken back to login
             assertShows(R.string.username)
+            assertRefreshRequested()
+        }
+    }
+
+    @Test
+    fun keepsCachedStatusWhenPortalReturnsGenericError() {
+        // GIVEN a stored session with a cached profile
+        givenStoredSession(profile = allGoodProfile())
+        // AND the server returns a generic portal error page, not a login page
+        givenHomeResponses(profileBody = HtmlFixtures.portalError())
+
+        launch().use {
+            // THEN I see the cached status without losing it
+            assertShows(R.string.status_all_good)
+            assertDoesNotShow(R.string.status_unknown)
+            assertDoesNotShow(R.string.username)
+            // AND a non-blocking refresh error
+            assertShowsRefreshError(R.string.error_server)
             assertRefreshRequested()
         }
     }

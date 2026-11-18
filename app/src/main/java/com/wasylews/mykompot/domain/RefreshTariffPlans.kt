@@ -16,6 +16,8 @@
 
 package com.wasylews.mykompot.domain
 
+import com.wasylews.mykompot.domain.model.TariffPlansActionResult
+
 fun interface RefreshTariffPlans {
-    suspend operator fun invoke()
+    suspend operator fun invoke(): TariffPlansActionResult
 }

@@ -22,6 +22,7 @@ import com.wasylews.mykompot.domain.model.PaymentsActionResult
 import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.RefreshResult
 import com.wasylews.mykompot.domain.model.TariffPlans
+import com.wasylews.mykompot.domain.model.TariffPlansActionResult
 import kotlinx.coroutines.flow.Flow
 
 interface PortalRepository {
@@ -38,7 +39,7 @@ interface PortalRepository {
 
     fun tariffPlansFlow(): Flow<TariffPlans?>
 
-    suspend fun refreshTariffPlans()
+    suspend fun refreshTariffPlans(): TariffPlansActionResult
 
     fun paymentsFlow(): Flow<Payments?>
 

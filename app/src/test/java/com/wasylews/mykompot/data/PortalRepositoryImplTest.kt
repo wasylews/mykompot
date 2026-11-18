@@ -26,6 +26,7 @@ import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.RefreshResult
 import com.wasylews.mykompot.domain.model.TariffPlan
 import com.wasylews.mykompot.domain.model.TariffPlans
+import com.wasylews.mykompot.domain.model.TariffPlansActionResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -47,7 +48,7 @@ import java.time.LocalDateTime
 class PortalRepositoryImplTest {
     @Test
     fun `login with wrong credentials`() = runTest {
-        val repo = createPortalRepository(testScheduler, FakePortalApi(failedLogin()))
+        val repo = createPortalRepository(testScheduler, FakePortalApi(genericError()))
 
         val result = repo.login("user", "pass")
 
@@ -239,7 +240,7 @@ class PortalRepositoryImplTest {
         val (repo, api) = refreshFixture(
             testScheduler = testScheduler,
             profile = profile(),
-            api = FakePortalApi(failedLogin()),
+            api = FakePortalApi(loginPage()),
         )
 
         val result = repo.refresh()
@@ -248,6 +249,29 @@ class PortalRepositoryImplTest {
         assertEquals(1, api.fetchCalls)
         repo.expectProfile(null)
         repo.expectSession(null)
+    }
+
+    @Test
+    fun `refresh keeps caches on generic portal error`() = runTest {
+        val cachedProfile = profile()
+        val cachedPayments = Payments(items = emptyList(), hasMore = false)
+        val storage = FakeLocalStorage().apply {
+            saveSession("test-session")
+            saveProfile(cachedProfile)
+            savePayments(cachedPayments)
+        }
+        val repo = createPortalRepository(
+            testScheduler = testScheduler,
+            portalApi = FakePortalApi(genericError()),
+            localStorage = storage,
+        )
+
+        val result = repo.refresh()
+
+        assertEquals(RefreshResult.Failed.Server, result)
+        repo.expectProfile(cachedProfile)
+        repo.expectSession("test-session")
+        assertEquals(cachedPayments, storage.paymentsFlow().first())
     }
 
     @Test
@@ -423,16 +447,27 @@ class PortalRepositoryImplTest {
             ),
         )
 
-        try {
-            repo.refreshTariffPlans()
-            throw AssertionError("Expected refreshTariffPlans to fail")
-        } catch (_: HttpException) {
-            // expected
-        }
+        val result = repo.refreshTariffPlans()
 
+        assertEquals(TariffPlansActionResult.Failed.Server, result)
         repo.tariffPlansFlow().test {
             assertEquals(null, awaitItem())
         }
+    }
+
+    @Test
+    fun `refreshTariffPlans fails when network is unavailable`() = runTest {
+        val repo = createPortalRepository(
+            testScheduler,
+            portalApi = FakePortalApi(
+                response = activeProfileResponse(),
+                plansException = IOException(),
+            ),
+        )
+
+        val result = repo.refreshTariffPlans()
+
+        assertEquals(TariffPlansActionResult.Failed.Network, result)
     }
 
     @Test
@@ -445,13 +480,9 @@ class PortalRepositoryImplTest {
             ),
         )
 
-        try {
-            repo.refreshTariffPlans()
-            throw AssertionError("Expected refreshTariffPlans to fail")
-        } catch (_: IOException) {
-            // expected
-        }
+        val result = repo.refreshTariffPlans()
 
+        assertEquals(TariffPlansActionResult.Failed.Parse, result)
         repo.tariffPlansFlow().test {
             assertEquals(null, awaitItem())
         }
@@ -592,8 +623,12 @@ class PortalRepositoryImplTest {
         nextPayment = null,
     )
 
-    private fun failedLogin() = ProfilePageResponse(
-        error = "Wrong password",
+    private fun loginPage() = ProfilePageResponse(
+        loginFormAction = "https://kompot.uz.ua:9443/index.cgi",
+    )
+
+    private fun genericError() = ProfilePageResponse(
+        error = "Service temporarily unavailable",
     )
 
     private fun profile() = Profile(
@@ -851,7 +886,31 @@ class PortalRepositoryPaymentsTest {
     }
 
     @Test
-    fun `refreshPayments returns expired and clears session when page has error`() = runTest {
+    fun `refreshPayments returns server error and keeps cache on portal error`() = runTest {
+        val cached = Payments(items = emptyList(), hasMore = false)
+        val storage = FakeLocalStorage().apply {
+            saveSession("test-session")
+            saveProfile(profile())
+            savePayments(cached)
+        }
+        val api = FakePortalApi(
+            response = activeProfileResponse(),
+            feesResponse = Response.success(
+                FeesPageResponse(error = "Service temporarily unavailable"),
+            ),
+        )
+        val repo = createPortalRepository(testScheduler, portalApi = api, localStorage = storage)
+
+        val result = repo.refreshPayments()
+
+        assertEquals(PaymentsActionResult.Failed.Server, result)
+        assertEquals("test-session", storage.sessionFlow().first())
+        assertEquals(profile(), storage.profileFlow().first())
+        assertEquals(cached, storage.paymentsFlow().first())
+    }
+
+    @Test
+    fun `refreshPayments returns expired and clears session when login page is served`() = runTest {
         val storage = FakeLocalStorage().apply {
             saveSession("test-session")
             saveProfile(profile())
@@ -859,7 +918,7 @@ class PortalRepositoryPaymentsTest {
         }
         val api = FakePortalApi(
             response = activeProfileResponse(),
-            feesResponse = Response.success(FeesPageResponse(error = "Wrong password")),
+            feesResponse = Response.success(FeesPageResponse(loginFormAction = "https://kompot.uz.ua:9443/index.cgi")),
         )
         val repo = createPortalRepository(testScheduler, portalApi = api, localStorage = storage)
 

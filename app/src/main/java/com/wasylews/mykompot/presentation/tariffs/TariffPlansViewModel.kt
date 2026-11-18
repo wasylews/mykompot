@@ -24,6 +24,7 @@ import com.wasylews.mykompot.domain.ObserveStatus
 import com.wasylews.mykompot.domain.ObserveTariffPlans
 import com.wasylews.mykompot.domain.RefreshTariffPlans
 import com.wasylews.mykompot.domain.model.TariffPlan
+import com.wasylews.mykompot.domain.model.TariffPlansActionResult
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -72,12 +73,16 @@ class TariffPlansViewModel(
             isLoading.value = true
             loadErrorId.value = null
             try {
-                refreshTariffPlans()
-            } catch (e: CancellationException) {
-                throw e
-            } catch (_: Throwable) {
-                if (latestPlans.value?.plans.isNullOrEmpty()) {
-                    loadErrorId.value = R.string.tariffs_load_error
+                when (refreshTariffPlans()) {
+                    TariffPlansActionResult.Success,
+                    TariffPlansActionResult.NotModified,
+                    -> Unit
+
+                    is TariffPlansActionResult.Failed -> {
+                        if (latestPlans.value?.plans.isNullOrEmpty()) {
+                            loadErrorId.value = R.string.tariffs_load_error
+                        }
+                    }
                 }
             } finally {
                 isLoading.value = false

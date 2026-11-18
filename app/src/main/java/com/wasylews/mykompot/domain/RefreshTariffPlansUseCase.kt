@@ -16,6 +16,7 @@
 
 package com.wasylews.mykompot.domain
 
+import com.wasylews.mykompot.domain.model.TariffPlansActionResult
 import com.wasylews.mykompot.domain.repository.PortalRepository
 import org.koin.core.annotation.Factory
 
@@ -23,7 +24,5 @@ import org.koin.core.annotation.Factory
 class RefreshTariffPlansUseCase(
     private val repository: PortalRepository,
 ) : RefreshTariffPlans {
-    override suspend fun invoke() {
-        repository.refreshTariffPlans()
-    }
+    override suspend fun invoke(): TariffPlansActionResult = repository.refreshTariffPlans()
 }

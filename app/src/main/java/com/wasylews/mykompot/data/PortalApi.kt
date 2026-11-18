@@ -57,6 +57,8 @@ interface PortalApi {
 data class ProfilePageResponse(
     @Selector(".err_message")
     val error: String? = null,
+    @Selector("form[name=form_login]", attr = "action")
+    val loginFormAction: String? = null,
     @Selector(".top_status li.tCenter")
     val status: String? = null,
     @Selector("table.form:nth-child(2) tr:nth-child(2) > td:nth-child(2)")
@@ -68,6 +70,12 @@ data class ProfilePageResponse(
 ) {
     val accountState: String?
         get() = status?.removePrefix("State: ")?.trim()
+
+    /**
+     * The portal serves its login page instead of account data when the session is no longer valid.
+     */
+    val isLoginPage: Boolean
+        get() = loginFormAction != null
 }
 
 @Serializable
@@ -90,9 +98,18 @@ data class ParsedPlanItem(
 data class FeesPageResponse(
     @Selector(".err_message")
     val error: String? = null,
+    @Selector("form[name=form_login]", attr = "action")
+    val loginFormAction: String? = null,
     @Selector("#kabinet-filter_table tr.odd, #kabinet-filter_table tr.even")
     val items: List<ParsedFeeItem> = emptyList(),
-)
+) {
+    /**
+     * The portal serves its login page instead of the payments table when the session is no longer
+     * valid.
+     */
+    val isLoginPage: Boolean
+        get() = loginFormAction != null
+}
 
 @Serializable
 data class ParsedFeeItem(

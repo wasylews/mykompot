@@ -27,8 +27,10 @@ import com.wasylews.mykompot.domain.model.PaymentsActionResult
 import com.wasylews.mykompot.presentation.BaseViewModelTest
 import com.wasylews.mykompot.presentation.payments.paymentMethods
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import okio.IOException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -145,6 +147,38 @@ class PaymentsViewModelTest : BaseViewModelTest() {
 
         // THEN payments are reloaded
         assertEquals(2, refreshPayments.calls)
+    }
+
+    @Test
+    fun `shows server error when payments stream fails`() = runTest {
+        // GIVEN a payments stream that fails
+        val observePayments = ObservePayments {
+            flow { throw IOException("Broken storage") }
+        }
+
+        // WHEN
+        val vm = createViewModel(observePayments = observePayments)
+        advanceUntilIdle()
+
+        // THEN the list is empty and the error is shown instead of staying silent
+        assertEquals(PaymentsUiState(errorId = R.string.error_server), vm.uiState.value)
+    }
+
+    @Test
+    fun `keeps payments stream error after a successful refresh`() = runTest {
+        // GIVEN a payments stream that fails
+        val observePayments = ObservePayments {
+            flow { throw IOException("Broken storage") }
+        }
+        val vm = createViewModel(observePayments = observePayments)
+        advanceUntilIdle()
+
+        // WHEN a refresh succeeds
+        vm.refresh()
+        advanceUntilIdle()
+
+        // THEN the stream error still explains why the list is empty
+        assertEquals(R.string.error_server, vm.uiState.value.errorId)
     }
 
     @Test

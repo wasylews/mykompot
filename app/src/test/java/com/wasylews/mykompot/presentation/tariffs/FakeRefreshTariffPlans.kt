@@ -17,11 +17,12 @@
 package com.wasylews.mykompot.presentation.tariffs
 
 import com.wasylews.mykompot.domain.RefreshTariffPlans
+import com.wasylews.mykompot.domain.model.TariffPlansActionResult
 import kotlinx.coroutines.CompletableDeferred
 
 class FakeRefreshTariffPlans : RefreshTariffPlans {
     var calls = 0
-    var error: Throwable? = null
+    var result: TariffPlansActionResult = TariffPlansActionResult.Success
     private var gate: CompletableDeferred<Unit>? = null
 
     fun pause() {
@@ -33,9 +34,9 @@ class FakeRefreshTariffPlans : RefreshTariffPlans {
         gate = null
     }
 
-    override suspend fun invoke() {
+    override suspend fun invoke(): TariffPlansActionResult {
         calls++
         gate?.await()
-        error?.let { throw it }
+        return result
     }
 }

@@ -163,6 +163,7 @@ private fun HomeContent(
                     state = state,
                     onPayClick = onPayClick,
                     onTariffClick = onTariffClick,
+                    onRetry = onRefresh,
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(MaterialTheme.colorScheme.surface)
@@ -184,6 +185,7 @@ private fun HomeHeader(
     state: HomeUiState,
     onPayClick: () -> Unit,
     onTariffClick: () -> Unit,
+    onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -199,6 +201,7 @@ private fun HomeHeader(
             state = state,
             onPayClick = onPayClick,
             onTariffClick = onTariffClick,
+            onRetry = onRetry,
         )
     }
 }

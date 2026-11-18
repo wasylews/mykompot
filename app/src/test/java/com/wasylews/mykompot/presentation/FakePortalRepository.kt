@@ -23,6 +23,7 @@ import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.RefreshResult
 import com.wasylews.mykompot.domain.model.TariffPlan
 import com.wasylews.mykompot.domain.model.TariffPlans
+import com.wasylews.mykompot.domain.model.TariffPlansActionResult
 import com.wasylews.mykompot.domain.repository.PortalRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -37,6 +38,7 @@ class FakePortalRepository(
     private val payments: Payments? = null,
     var paymentsRefreshResult: PaymentsActionResult = PaymentsActionResult.Success,
     var paymentsLoadMoreResult: PaymentsActionResult = PaymentsActionResult.Success,
+    var tariffPlansResult: TariffPlansActionResult = TariffPlansActionResult.Success,
 ) : PortalRepository {
     private val tariffPlans = tariffPlans?.let { TariffPlans(it) }
     var refreshCalls = 0
@@ -60,8 +62,9 @@ class FakePortalRepository(
 
     override fun tariffPlansFlow(): Flow<TariffPlans?> = flowOf(tariffPlans)
 
-    override suspend fun refreshTariffPlans() {
+    override suspend fun refreshTariffPlans(): TariffPlansActionResult {
         refreshTariffPlansCalls++
+        return tariffPlansResult
     }
 
     override fun paymentsFlow(): Flow<Payments?> = flowOf(payments)

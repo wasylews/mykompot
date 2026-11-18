@@ -68,6 +68,7 @@ fun StatusCard(
     modifier: Modifier = Modifier,
     onPayClick: () -> Unit = {},
     onTariffClick: () -> Unit = {},
+    onRetry: () -> Unit = {},
 ) {
     when (val content = state.content) {
         is HomeContent.Content -> ContentCard(
@@ -79,6 +80,7 @@ fun StatusCard(
 
         HomeContent.Unknown -> UnknownCard(
             modifier = modifier,
+            onRetry = onRetry,
         )
 
         HomeContent.Loading -> Box(
@@ -148,7 +150,10 @@ private fun ContentCard(
 }
 
 @Composable
-private fun UnknownCard(modifier: Modifier) {
+private fun UnknownCard(
+    modifier: Modifier,
+    onRetry: () -> Unit,
+) {
     val palettes = LocalStatusPalettes.current
     val onColor = palettes.unknown.on
 
@@ -168,6 +173,21 @@ private fun UnknownCard(modifier: Modifier) {
                 message = R.string.status_unknown_message,
                 onColor = onColor,
             )
+            Button(
+                onClick = onRetry,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(999.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = onColor,
+                    contentColor = palettes.unknown.container,
+                ),
+            ) {
+                Text(
+                    text = stringResource(R.string.retry),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
         }
     }
 }

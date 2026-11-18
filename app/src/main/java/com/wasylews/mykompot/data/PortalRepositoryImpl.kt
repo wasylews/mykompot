@@ -25,6 +25,7 @@ import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.RefreshResult
 import com.wasylews.mykompot.domain.model.TariffPlan
 import com.wasylews.mykompot.domain.model.TariffPlans
+import com.wasylews.mykompot.domain.model.TariffPlansActionResult
 import com.wasylews.mykompot.domain.repository.PortalRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
@@ -105,16 +106,20 @@ class PortalRepositoryImpl(
 
     override suspend fun refresh(): RefreshResult = withContext(dispatcher) {
         try {
-            val session = sessionFlow().first() ?: return@withContext RefreshResult.Expired
+            val session = sessionFlow().first()
+            if (session == null) {
+                clearSessionCaches()
+                return@withContext RefreshResult.Expired
+            }
             val response = api.fetchProfile(session)
             if (!response.isSuccessful) return@withContext RefreshResult.Failed.Server
 
             val page = response.body() ?: return@withContext RefreshResult.Failed.Parse
-            if (page.error != null) {
-                localStorage.clearProfile()
-                localStorage.clearSession()
+            if (page.isLoginPage) {
+                clearSessionCaches()
                 return@withContext RefreshResult.Expired
             }
+            if (page.error != null) return@withContext RefreshResult.Failed.Server
 
             val profile = page.toProfile() ?: return@withContext RefreshResult.Failed.Parse
             val sid = response.sid() ?: page.sid
@@ -136,34 +141,41 @@ class PortalRepositoryImpl(
 
     override fun tariffPlansFlow(): Flow<TariffPlans?> = localStorage.tariffPlansFlow()
 
-    override suspend fun refreshTariffPlans() = withContext(dispatcher) {
-        val cached = localStorage.tariffPlansFlow().first()
-        val response = api.fetchPlans(
-            ifNoneMatch = cached?.etag,
-            ifModifiedSince = cached?.lastModified,
-        )
-        if (response.code() == 304) return@withContext
-        if (!response.isSuccessful) throw HttpException(response)
+    override suspend fun refreshTariffPlans(): TariffPlansActionResult = withContext(dispatcher) {
+        try {
+            val cached = localStorage.tariffPlansFlow().first()
+            val response = api.fetchPlans(
+                ifNoneMatch = cached?.etag,
+                ifModifiedSince = cached?.lastModified,
+            )
+            if (response.code() == 304) return@withContext TariffPlansActionResult.NotModified
+            if (!response.isSuccessful) return@withContext TariffPlansActionResult.Failed.Server
 
-        val items = response.body()?.items ?: throw IOException("Missing tariff plans")
-        val plans = items
-            .filter { "міс" in it.price }
-            .map { item ->
-                val price = Regex("""(\d+)""").find(item.price)?.value?.toInt() ?: 0
-                TariffPlan(
-                    id = "${price}GRN_${item.speed}mb",
-                    name = item.name,
-                    speed = item.speed,
-                    price = price,
-                )
-            }
-        localStorage.saveTariffPlans(
-            TariffPlans(
-                plans = plans,
-                etag = response.headers()["ETag"],
-                lastModified = response.headers()["Last-Modified"],
-            ),
-        )
+            val items = response.body()?.items ?: return@withContext TariffPlansActionResult.Failed.Parse
+            val plans = items
+                .filter { "міс" in it.price }
+                .map { item ->
+                    val price = Regex("""(\d+)""").find(item.price)?.value?.toInt() ?: 0
+                    TariffPlan(
+                        id = "${price}GRN_${item.speed}mb",
+                        name = item.name,
+                        speed = item.speed,
+                        price = price,
+                    )
+                }
+            localStorage.saveTariffPlans(
+                TariffPlans(
+                    plans = plans,
+                    etag = response.headers()["ETag"],
+                    lastModified = response.headers()["Last-Modified"],
+                ),
+            )
+            TariffPlansActionResult.Success
+        } catch (_: HttpException) {
+            TariffPlansActionResult.Failed.Server
+        } catch (_: IOException) {
+            TariffPlansActionResult.Failed.Network
+        }
     }
 
     override fun paymentsFlow(): Flow<Payments?> = localStorage.paymentsFlow()
@@ -184,7 +196,10 @@ class PortalRepositoryImpl(
     ): PaymentsActionResult = try {
         val session = sessionFlow().first()
         when {
-            session == null -> PaymentsActionResult.Expired
+            session == null -> {
+                clearSessionCaches()
+                PaymentsActionResult.Expired
+            }
 
             else -> {
                 val response = api.fetchFees(session, pg)
@@ -206,12 +221,12 @@ class PortalRepositoryImpl(
     ): PaymentsActionResult = when {
         page == null -> PaymentsActionResult.Failed.Parse
 
-        page.error != null -> {
-            localStorage.clearProfile()
-            localStorage.clearSession()
-            localStorage.clearPayments()
+        page.isLoginPage -> {
+            clearSessionCaches()
             PaymentsActionResult.Expired
         }
+
+        page.error != null -> PaymentsActionResult.Failed.Server
 
         else -> {
             val catalog = localStorage.tariffPlansFlow().first()?.plans.orEmpty()
@@ -247,6 +262,12 @@ class PortalRepositoryImpl(
             tariffName = tariffName,
             source = description.toPaymentSource(),
         )
+    }
+
+    private suspend fun clearSessionCaches() {
+        localStorage.clearProfile()
+        localStorage.clearSession()
+        localStorage.clearPayments()
     }
 
     private fun String.toPaymentSource(): PaymentSource = when {

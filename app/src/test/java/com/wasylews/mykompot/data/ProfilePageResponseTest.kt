@@ -19,6 +19,8 @@ package com.wasylews.mykompot.data
 import com.wasylews.mykompot.HtmlFixtures
 import dev.burnoo.kspoon.Kspoon
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ProfilePageResponseTest {
@@ -58,5 +60,15 @@ class ProfilePageResponseTest {
         val result = Kspoon.parse<ProfilePageResponse>(page)
 
         assertEquals("Error", result.error)
+        assertTrue(result.isLoginPage)
+    }
+
+    @Test
+    fun `generic portal error is not a login page`() {
+        val page = HtmlFixtures.portalError()
+        val result = Kspoon.parse<ProfilePageResponse>(page)
+
+        assertEquals("Error", result.error)
+        assertFalse(result.isLoginPage)
     }
 }

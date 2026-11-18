@@ -23,13 +23,13 @@ import com.wasylews.mykompot.domain.ObserveTariffPlans
 import com.wasylews.mykompot.domain.RefreshTariffPlans
 import com.wasylews.mykompot.domain.model.AccountStatus
 import com.wasylews.mykompot.domain.model.TariffPlan
+import com.wasylews.mykompot.domain.model.TariffPlansActionResult
 import com.wasylews.mykompot.presentation.BaseViewModelTest
 import com.wasylews.mykompot.presentation.FakeObserveStatusUseCase
 import com.wasylews.mykompot.presentation.profile
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import okio.IOException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -123,7 +123,9 @@ class TariffPlansViewModelTest : BaseViewModelTest() {
     @Test
     fun `shows error when refresh fails without cached plans`() = runTest {
         // GIVEN no cached plans and refresh fails
-        val refreshTariffPlans = FakeRefreshTariffPlans().apply { error = IOException() }
+        val refreshTariffPlans = FakeRefreshTariffPlans().apply {
+            result = TariffPlansActionResult.Failed.Network
+        }
         val vm = createViewModel(
             observeTariffPlans = FakeObserveTariffPlans(plans = null),
             refreshTariffPlans = refreshTariffPlans,
@@ -148,7 +150,9 @@ class TariffPlansViewModelTest : BaseViewModelTest() {
     @Test
     fun `keeps cached plans and hides error when refresh fails`() = runTest {
         // GIVEN cached plans and refresh fails
-        val refreshTariffPlans = FakeRefreshTariffPlans().apply { error = IOException() }
+        val refreshTariffPlans = FakeRefreshTariffPlans().apply {
+            result = TariffPlansActionResult.Failed.Network
+        }
         val vm = createViewModel(
             observeTariffPlans = FakeObserveTariffPlans(plans),
             refreshTariffPlans = refreshTariffPlans,
@@ -171,10 +175,31 @@ class TariffPlansViewModelTest : BaseViewModelTest() {
     }
 
     @Test
+    fun `treats not modified refresh as success`() = runTest {
+        // GIVEN no cached plans and the server reports they are unchanged
+        val refreshTariffPlans = FakeRefreshTariffPlans().apply {
+            result = TariffPlansActionResult.NotModified
+        }
+        val vm = createViewModel(
+            observeTariffPlans = FakeObserveTariffPlans(plans = null),
+            refreshTariffPlans = refreshTariffPlans,
+        )
+
+        // WHEN
+        advanceUntilIdle()
+
+        // THEN no error is shown
+        assertNull(vm.uiState.value.errorId)
+        assertFalse(vm.uiState.value.isLoading)
+    }
+
+    @Test
     fun `retry loads plans after failure`() = runTest {
         // GIVEN refresh fails initially with no cached plans
         val observeTariffPlans = FakeObserveTariffPlans(plans = null)
-        val refreshTariffPlans = FakeRefreshTariffPlans().apply { error = IOException() }
+        val refreshTariffPlans = FakeRefreshTariffPlans().apply {
+            result = TariffPlansActionResult.Failed.Network
+        }
         val vm = createViewModel(
             observeTariffPlans = observeTariffPlans,
             refreshTariffPlans = refreshTariffPlans,
@@ -183,7 +208,7 @@ class TariffPlansViewModelTest : BaseViewModelTest() {
         assertEquals(R.string.tariffs_load_error, vm.uiState.value.errorId)
 
         // WHEN refresh succeeds on retry and plans become available
-        refreshTariffPlans.error = null
+        refreshTariffPlans.result = TariffPlansActionResult.Success
         refreshTariffPlans.pause()
         vm.retry()
         advanceUntilIdle()
@@ -211,7 +236,9 @@ class TariffPlansViewModelTest : BaseViewModelTest() {
     @Test
     fun `retry shows loading then error when refresh fails again`() = runTest {
         // GIVEN refresh fails with no cached plans
-        val refreshTariffPlans = FakeRefreshTariffPlans().apply { error = IOException() }
+        val refreshTariffPlans = FakeRefreshTariffPlans().apply {
+            result = TariffPlansActionResult.Failed.Network
+        }
         val vm = createViewModel(
             observeTariffPlans = FakeObserveTariffPlans(plans = null),
             refreshTariffPlans = refreshTariffPlans,
