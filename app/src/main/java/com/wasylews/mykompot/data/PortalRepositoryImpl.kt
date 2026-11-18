@@ -50,7 +50,7 @@ class PortalRepositoryImpl(
         password: String,
     ): LoginResult = withContext(dispatcher) {
         return@withContext try {
-            val response = api.login(username, password)
+            val response = api.login(username, password, PORTAL_LANGUAGE)
             if (!response.isSuccessful) return@withContext LoginResult.ServerError
             val page = response.body() ?: return@withContext LoginResult.ParsingError
             if (page.error != null) {
@@ -281,6 +281,7 @@ class PortalRepositoryImpl(
         const val STATUS_ACTIVE = "Enable"
         const val SID_COOKIE = "sid"
         const val PAGE_SIZE = 25
+        const val PORTAL_LANGUAGE = "english"
         val FEES_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
     }
 }

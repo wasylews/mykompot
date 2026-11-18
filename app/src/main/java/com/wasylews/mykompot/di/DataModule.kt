@@ -34,6 +34,7 @@ import dev.burnoo.kspoon.Kspoon
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
 import org.koin.core.annotation.ComponentScan
 import org.koin.core.annotation.Configuration
 import org.koin.core.annotation.Module
@@ -51,8 +52,21 @@ class DataModule {
     fun providePortalApi(retrofit: Retrofit) = retrofit.create<PortalApi>()
 
     @Singleton
-    fun provideRetrofit() = Retrofit
+    fun provideOkHttpClient(): OkHttpClient = OkHttpClient.Builder()
+        .addInterceptor { chain ->
+            chain.proceed(
+                chain.request()
+                    .newBuilder()
+                    .header("Cookie", "language=english")
+                    .build(),
+            )
+        }
+        .build()
+
+    @Singleton
+    fun provideRetrofit(client: OkHttpClient) = Retrofit
         .Builder()
+        .client(client)
         .addConverterFactory(
             Kspoon.toFormat().asConverterFactory("text/html; charset=UTF8".toMediaType()),
         ).baseUrl(BuildConfig.BASE_URL)

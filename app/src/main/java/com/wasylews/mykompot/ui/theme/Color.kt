@@ -83,8 +83,8 @@ val OnErrorDark = Color(0xFF3D1711)
 val ErrorContainerDark = Color(0xFF3D1711)
 val OnErrorContainerDark = Color(0xFFFFB8AC)
 
-val InverseSurfaceDark = Color(0xFF35313F)
-val InverseOnSurfaceDark = Color(0xFF3A2C63)
+val InverseSurfaceDark = Color(0xFFE8E3F1)
+val InverseOnSurfaceDark = Color(0xFF1B1923)
 val InversePrimaryDark = Color(0xFF6650E5)
 
 // State colors

@@ -33,6 +33,7 @@ interface PortalApi {
     suspend fun login(
         @Field("user") username: String,
         @Field("passwd") password: String,
+        @Field("language") language: String,
     ): Response<ProfilePageResponse>
 
     @GET("/index.cgi?index=43")

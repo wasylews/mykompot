@@ -57,11 +57,13 @@ class PortalRepositoryImplTest {
 
     @Test
     fun `login with valid credentials`() = runTest {
-        val repo = createPortalRepository(testScheduler, FakePortalApi(activeProfileResponse()))
+        val api = FakePortalApi(activeProfileResponse())
+        val repo = createPortalRepository(testScheduler, api)
 
         val result = repo.login("user", "pass")
 
         assertEquals(LoginResult.Success(profile()), result)
+        assertEquals("english", api.lastLoginLanguage)
     }
 
     @Test
@@ -993,12 +995,15 @@ private class FakePortalApi(
     var fetchFeesCalls = 0
     var lastIfNoneMatch: String? = null
     var lastIfModifiedSince: String? = null
+    var lastLoginLanguage: String? = null
     val feesPgRequests = mutableListOf<Int?>()
 
     override suspend fun login(
         username: String,
         password: String,
+        language: String,
     ): Response<ProfilePageResponse> {
+        lastLoginLanguage = language
         exception?.let { throw it }
         return loginResponse ?: Response.success(
             response,

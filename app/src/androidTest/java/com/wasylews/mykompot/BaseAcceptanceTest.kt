@@ -431,8 +431,24 @@ abstract class BaseAcceptanceTest : KoinTest {
             val index = request.url.queryParameter(FEES_PAGE_QUERY_PARAM)
             return when {
                 path.contains("/plans") -> plansResponseFactory()
+
                 path.contains("index.cgi") && index == FEES_PAGE_INDEX -> feesResponseFactory(request)
+
+                path.contains("index.cgi") && request.method == "POST" -> {
+                    val body = request.body?.utf8().orEmpty()
+                    val cookie = request.headers["Cookie"].orEmpty()
+                    if ("language=english" !in body || "language=english" !in cookie) {
+                        MockResponse.Builder()
+                            .code(400)
+                            .body("Missing language")
+                            .build()
+                    } else {
+                        profileResponseFactory()
+                    }
+                }
+
                 path.contains("index.cgi") -> profileResponseFactory()
+
                 else -> MockResponse.Builder().code(404).build()
             }
         }
