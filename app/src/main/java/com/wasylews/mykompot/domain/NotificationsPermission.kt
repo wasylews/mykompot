@@ -16,6 +16,7 @@
 
 package com.wasylews.mykompot.domain
 
+/** Reports whether the app may post notifications. */
 fun interface NotificationsPermission {
     fun isGranted(): Boolean
 }

@@ -28,10 +28,17 @@ import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import kotlin.time.Clock
 
+/** Observes the derived [AccountStatus] for the cached profile. */
 fun interface ObserveStatus {
     fun statusFlow(): Flow<AccountStatus?>
 }
 
+/**
+ * Derives [AccountStatus] from the cached [com.wasylews.mykompot.domain.model.Profile]:
+ * inactive accounts are [AccountStatus.State.SUSPENDED]; active accounts with a next payment due
+ * within [PAYMENT_DUE_WINDOW_DAYS] days (including today/overdue) are
+ * [AccountStatus.State.PAYMENT_DUE]; others are [AccountStatus.State.ALL_GOOD].
+ */
 @Factory
 class ObserveStatusUseCase(
     private val repository: PortalRepository,

@@ -39,6 +39,16 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
+/**
+ * Portal-backed [PortalRepository] implementation.
+ *
+ * Handles login/profile/fees/plans requests, maps portal HTML responses to domain models, and
+ * persists cached data in [LocalStorage]. Requests are performed on [dispatcher].
+ *
+ * Session expiry is detected when the portal serves its login page; in that case session-scoped
+ * caches (profile, session, payments) are cleared while tariff plans are kept. Generic portal
+ * errors and parsing/network failures do not clear existing caches.
+ */
 @Singleton
 class PortalRepositoryImpl(
     private val dispatcher: CoroutineDispatcher,

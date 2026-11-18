@@ -18,6 +18,7 @@ package com.wasylews.mykompot.domain
 
 import com.wasylews.mykompot.domain.model.PaymentsActionResult
 
+/** Refreshes the first page of payments history. */
 fun interface RefreshPayments {
     suspend operator fun invoke(): PaymentsActionResult
 }

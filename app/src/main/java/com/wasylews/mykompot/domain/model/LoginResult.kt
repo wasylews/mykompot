@@ -16,16 +16,22 @@
 
 package com.wasylews.mykompot.domain.model
 
+/** Result of an authentication attempt against the portal. */
 sealed interface LoginResult {
+    /** Login succeeded and the account [profile] was retrieved and stored. */
     data class Success(
         val profile: Profile,
     ) : LoginResult
 
+    /** Credentials were rejected by the portal. */
     data object InvalidCredentials : LoginResult
 
+    /** The request failed due to a connectivity or I/O problem. */
     data object NetworkError : LoginResult
 
+    /** The portal returned an unexpected or unsuccessful response. */
     data object ServerError : LoginResult
 
+    /** The response could not be parsed into a usable profile/session. */
     data object ParsingError : LoginResult
 }

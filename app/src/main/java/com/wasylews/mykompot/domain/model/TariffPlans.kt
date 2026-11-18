@@ -16,6 +16,15 @@
 
 package com.wasylews.mykompot.domain.model
 
+/**
+ * Cached catalog of available tariff plans.
+ *
+ * @property plans available plans.
+ * @property etag HTTP ETag validator from the last successful plans fetch, used for conditional
+ * refresh.
+ * @property lastModified HTTP Last-Modified validator from the last successful plans fetch, used for
+ * conditional refresh.
+ */
 data class TariffPlans(
     val plans: List<TariffPlan>,
     val etag: String? = null,

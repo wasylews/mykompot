@@ -18,6 +18,13 @@ package com.wasylews.mykompot.domain.model
 
 import java.time.LocalDate
 
+/**
+ * Account profile information retrieved from the portal.
+ *
+ * @property isActive whether the account/service is currently enabled (portal status `Enable`).
+ * @property nextPaymentDate date of the next periodic payment, or `null` if unavailable.
+ * @property tariffPlan the account's current tariff plan (resolved from catalog when possible).
+ */
 data class Profile(
     val isActive: Boolean,
     val nextPaymentDate: LocalDate?,

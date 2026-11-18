@@ -16,16 +16,23 @@
 
 package com.wasylews.mykompot.domain.model
 
+/** Result of fetching or loading more payments from the portal. */
 sealed interface PaymentsActionResult {
+    /** Payments were fetched and stored successfully. */
     data object Success : PaymentsActionResult
 
+    /** The session is no longer valid (portal served a login page or no session was available). */
     data object Expired : PaymentsActionResult
 
+    /** The operation failed without indicating session expiry. Cached payments are left intact. */
     sealed interface Failed : PaymentsActionResult {
+        /** The request failed due to a connectivity or I/O problem. */
         data object Network : Failed
 
+        /** The portal returned an unexpected, error, or unsuccessful response. */
         data object Server : Failed
 
+        /** The response could not be parsed into usable payment entries. */
         data object Parse : Failed
     }
 }

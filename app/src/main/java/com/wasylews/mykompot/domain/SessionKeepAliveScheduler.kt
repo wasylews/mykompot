@@ -16,8 +16,11 @@
 
 package com.wasylews.mykompot.domain
 
+/** Schedules or cancels background work that keeps the portal session alive. */
 interface SessionKeepAliveScheduler {
+    /** Schedules periodic session keep-alive work. */
     fun schedule()
 
+    /** Cancels any scheduled session keep-alive work. */
     fun cancel()
 }

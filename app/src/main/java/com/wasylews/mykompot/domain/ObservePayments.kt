@@ -19,6 +19,7 @@ package com.wasylews.mykompot.domain
 import com.wasylews.mykompot.domain.model.Payments
 import kotlinx.coroutines.flow.Flow
 
+/** Observes cached payments history. */
 fun interface ObservePayments {
     operator fun invoke(): Flow<Payments?>
 }

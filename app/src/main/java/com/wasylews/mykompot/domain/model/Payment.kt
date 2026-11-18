@@ -18,6 +18,15 @@ package com.wasylews.mykompot.domain.model
 
 import java.time.LocalDateTime
 
+/**
+ * A single payment/fee entry from the portal history.
+ *
+ * @property dateTime when the payment was recorded.
+ * @property amount payment amount in UAH.
+ * @property tariffName plan name associated with the payment amount when known, otherwise a
+ * fallback label derived from the amount.
+ * @property source payment channel inferred from the portal description.
+ */
 data class Payment(
     val dateTime: LocalDateTime,
     val amount: Int,
@@ -25,6 +34,7 @@ data class Payment(
     val source: PaymentSource,
 )
 
+/** Known payment sources/channels recognized from portal payment descriptions. */
 enum class PaymentSource {
     PRIVAT24,
     EASYPAY,

@@ -18,6 +18,7 @@ package com.wasylews.mykompot.domain
 
 import com.wasylews.mykompot.domain.model.PaymentsActionResult
 
+/** Loads and appends the next page of payments history when available. */
 fun interface LoadMorePayments {
     suspend operator fun invoke(): PaymentsActionResult
 }

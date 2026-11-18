@@ -25,25 +25,54 @@ import com.wasylews.mykompot.domain.model.TariffPlans
 import com.wasylews.mykompot.domain.model.TariffPlansActionResult
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * Access point for portal-backed account data and cached local state.
+ *
+ * The repository coordinates remote portal requests with local persistence. When the portal
+ * indicates an expired session, session-scoped caches (profile, session, payments) are cleared;
+ * tariff plans are preserved.
+ */
 interface PortalRepository {
+    /**
+     * Authenticates with the portal and, on success, stores the session and profile.
+     */
     suspend fun login(
         username: String,
         password: String,
     ): LoginResult
 
+    /**
+     * Refreshes the current account profile from the portal using the stored session.
+     *
+     * @return [RefreshResult.Updated] on success, [RefreshResult.Expired] when the session is no
+     * longer valid, or [RefreshResult.Failed] when refresh fails without expiry.
+     */
     suspend fun refresh(): RefreshResult
 
+    /** Observes the cached account profile, or `null` when unavailable. */
     fun profileFlow(): Flow<Profile?>
 
+    /** Observes the stored session token, or `null` when logged out/expired. */
     fun sessionFlow(): Flow<String?>
 
+    /** Observes the cached tariff plans catalog, or `null` when unavailable. */
     fun tariffPlansFlow(): Flow<TariffPlans?>
 
+    /**
+     * Refreshes the tariff plans catalog, using conditional request validators when available.
+     */
     suspend fun refreshTariffPlans(): TariffPlansActionResult
 
+    /** Observes the cached payments history, or `null` when unavailable. */
     fun paymentsFlow(): Flow<Payments?>
 
+    /**
+     * Refreshes the first page of payments history, replacing cached payments on success.
+     */
     suspend fun refreshPayments(): PaymentsActionResult
 
+    /**
+     * Loads and appends the next page of payments history when more data is available.
+     */
     suspend fun loadMorePayments(): PaymentsActionResult
 }

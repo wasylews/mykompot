@@ -16,6 +16,7 @@
 
 package com.wasylews.mykompot.domain
 
+/** Reports whether the app is currently in the foreground. */
 interface AppForegroundState {
     fun isInForeground(): Boolean
 }

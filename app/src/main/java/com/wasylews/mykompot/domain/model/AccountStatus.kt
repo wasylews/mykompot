@@ -16,14 +16,27 @@
 
 package com.wasylews.mykompot.domain.model
 
+/**
+ * Derived account status used by the UI and reminders.
+ *
+ * @property state high-level status derived from [profile] and time until the next payment.
+ * @property profile the underlying account profile.
+ * @property daysLeft days between today and [Profile.nextPaymentDate], or `null` when unknown.
+ */
 data class AccountStatus(
     val state: State,
     val profile: Profile,
     val daysLeft: Long?,
 ) {
+    /** High-level account state categories. */
     enum class State {
+        /** Account is active and no payment is due within the configured window. */
         ALL_GOOD,
+
+        /** Account is active but a payment is due soon, today, or overdue by date. */
         PAYMENT_DUE,
+
+        /** Account/service is not active. */
         SUSPENDED,
     }
 }

@@ -19,6 +19,7 @@ package com.wasylews.mykompot.domain
 import com.wasylews.mykompot.domain.model.TariffPlans
 import kotlinx.coroutines.flow.Flow
 
+/** Observes the cached tariff plans catalog. */
 fun interface ObserveTariffPlans {
     operator fun invoke(): Flow<TariffPlans?>
 }

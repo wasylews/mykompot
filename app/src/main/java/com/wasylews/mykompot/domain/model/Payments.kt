@@ -16,6 +16,12 @@
 
 package com.wasylews.mykompot.domain.model
 
+/**
+ * Cached payments history page set.
+ *
+ * @property items loaded payment entries in portal order.
+ * @property hasMore whether more pages may be available to load.
+ */
 data class Payments(
     val items: List<Payment> = emptyList(),
     val hasMore: Boolean = false,

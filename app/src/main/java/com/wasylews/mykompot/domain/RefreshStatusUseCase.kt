@@ -20,10 +20,15 @@ import com.wasylews.mykompot.domain.model.RefreshResult
 import com.wasylews.mykompot.domain.repository.PortalRepository
 import org.koin.core.annotation.Factory
 
+/** Refreshes account status/profile and updates related background schedules. */
 fun interface RefreshStatus {
     suspend operator fun invoke(): RefreshResult
 }
 
+/**
+ * Refreshes profile data from [PortalRepository] and keeps background work in sync:
+ * schedules session keep-alive and payment reminders on success, cancels them on session expiry.
+ */
 @Factory
 class RefreshStatusUseCase(
     private val repository: PortalRepository,

@@ -18,16 +18,20 @@ package com.wasylews.mykompot.data.model
 
 import kotlinx.serialization.Serializable
 
+/** Persisted form of [com.wasylews.mykompot.domain.model.Payments] stored in DataStore. */
 @Serializable
 data class PaymentsEntity(
     val items: List<PaymentEntity>,
     val hasMore: Boolean,
 )
 
+/** Persisted form of [com.wasylews.mykompot.domain.model.Payment] stored in DataStore. */
 @Serializable
 data class PaymentEntity(
+    /** ISO-8601 local date-time string (`yyyy-MM-ddTHH:mm:ss`). */
     val dateTime: String,
     val amount: Int,
     val tariffName: String,
+    /** Serialized [com.wasylews.mykompot.domain.model.PaymentSource] name. */
     val source: String,
 )

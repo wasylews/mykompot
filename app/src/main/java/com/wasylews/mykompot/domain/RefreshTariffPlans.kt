@@ -18,6 +18,7 @@ package com.wasylews.mykompot.domain
 
 import com.wasylews.mykompot.domain.model.TariffPlansActionResult
 
+/** Refreshes the tariff plans catalog. */
 fun interface RefreshTariffPlans {
     suspend operator fun invoke(): TariffPlansActionResult
 }

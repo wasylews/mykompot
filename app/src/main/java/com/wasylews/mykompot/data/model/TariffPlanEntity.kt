@@ -18,6 +18,7 @@ package com.wasylews.mykompot.data.model
 
 import kotlinx.serialization.Serializable
 
+/** Persisted form of [com.wasylews.mykompot.domain.model.TariffPlan] stored in DataStore. */
 @Serializable
 data class TariffPlanEntity(
     val id: String,

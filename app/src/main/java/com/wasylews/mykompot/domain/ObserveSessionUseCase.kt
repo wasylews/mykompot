@@ -22,10 +22,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Factory
 
+/** Observes the current authentication/session state. */
 fun interface ObserveSession {
     fun sessionStateFlow(): Flow<SessionState>
 }
 
+/** Maps the stored session token presence to [SessionState]. */
 @Factory
 class ObserveSessionUseCase(
     private val repository: PortalRepository,

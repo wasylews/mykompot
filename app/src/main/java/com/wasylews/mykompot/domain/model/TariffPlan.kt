@@ -16,6 +16,14 @@
 
 package com.wasylews.mykompot.domain.model
 
+/**
+ * Tariff plan details.
+ *
+ * @property id stable plan identifier (for portal-derived plans typically like `300GRN_100mb`).
+ * @property name human-readable plan name.
+ * @property speed plan speed in Mbps.
+ * @property price monthly plan price in UAH.
+ */
 data class TariffPlan(
     val id: String,
     val name: String,

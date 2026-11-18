@@ -18,9 +18,11 @@ package com.wasylews.mykompot.data.model
 
 import kotlinx.serialization.Serializable
 
+/** Persisted form of [com.wasylews.mykompot.domain.model.Profile] stored in DataStore. */
 @Serializable
 data class ProfileEntity(
     val isActive: Boolean,
+    /** ISO-8601 local date string (`yyyy-MM-dd`), or `null` when unavailable. */
     val nextPaymentDate: String?,
     val tariffPlan: TariffPlanEntity,
 )
