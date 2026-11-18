@@ -194,6 +194,24 @@ class DataStoreLocalStorageTest {
     }
 
     @Test
+    fun `corrupt session reads as null and keeps the profile`() = runTest {
+        val profileFile = File(tmp.root, PROFILE_FILE)
+        val sessionFile = File(tmp.root, SESSION_FILE)
+        val profile = profile()
+        val first = createLocalStorage(profileFile, sessionFile)
+        first.saveProfile(profile)
+        first.saveSession("test-session")
+        closeStores()
+
+        sessionFile.writeBytes(byteArrayOf(0xC3.toByte(), 0x28))
+
+        val second = createLocalStorage(profileFile, sessionFile)
+
+        assertNull(second.sessionFlow().first())
+        assertEquals(profile, second.profileFlow().first())
+    }
+
+    @Test
     fun `tariff plans flow emits null when nothing is stored`() = runTest {
         val store = createLocalStorage()
 

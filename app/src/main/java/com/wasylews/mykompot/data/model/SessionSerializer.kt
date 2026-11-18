@@ -16,14 +16,20 @@
 
 package com.wasylews.mykompot.data.model
 
+import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.Serializer
 import java.io.InputStream
 import java.io.OutputStream
+import java.nio.charset.CharacterCodingException
 
 object SessionSerializer : Serializer<String?> {
     override val defaultValue: String? = null
 
-    override suspend fun readFrom(input: InputStream): String? = input.readBytes().decodeToString().ifBlank { null }
+    override suspend fun readFrom(input: InputStream): String? = try {
+        input.readBytes().decodeToString(throwOnInvalidSequence = true).ifBlank { null }
+    } catch (e: CharacterCodingException) {
+        throw CorruptionException("Cannot read session", e)
+    }
 
     override suspend fun writeTo(
         t: String?,

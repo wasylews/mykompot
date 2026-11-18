@@ -1,14 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?><!--
-   Sample data extraction rules file; uncomment and customize as necessary.
+   Data extraction rules for cloud backup and device transfer (API 31+).
    See https://developer.android.com/about/versions/12/backup-restore#xml-changes
-   for details.
 -->
 <data-extraction-rules>
     <cloud-backup>
-        <!-- Cached account profile must never leave the device. -->
+        <!-- Cached account and session data must never leave the device. -->
         <exclude domain="file" path="datastore/profile.json" />
+        <exclude domain="file" path="datastore/session.json" />
+        <exclude domain="file" path="datastore/payments.json" />
+        <exclude domain="file" path="datastore/tariff_plans.json" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="file" path="datastore/profile.json" />
+        <exclude domain="file" path="datastore/session.json" />
+        <exclude domain="file" path="datastore/payments.json" />
+        <exclude domain="file" path="datastore/tariff_plans.json" />
     </device-transfer>
 </data-extraction-rules>

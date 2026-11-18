@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?><!--
-   Sample backup rules file; uncomment and customize as necessary.
+   Backup rules for devices older than API 31.
    See https://developer.android.com/guide/topics/data/autobackup
-   for details.
-   Note: This file is ignored for devices older than API 31
-   See https://developer.android.com/about/versions/12/backup-restore
 -->
 <full-backup-content>
-    <!-- Cached account profile must never leave the device. -->
+    <!-- Cached account and session data must never leave the device. -->
     <exclude domain="file" path="datastore/profile.json" />
+    <exclude domain="file" path="datastore/session.json" />
+    <exclude domain="file" path="datastore/payments.json" />
+    <exclude domain="file" path="datastore/tariff_plans.json" />
 </full-backup-content>

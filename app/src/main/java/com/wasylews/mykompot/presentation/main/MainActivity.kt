@@ -142,10 +142,11 @@ class MainActivity : ComponentActivity() {
     private fun openPaymentMethod(method: PaymentMethod) {
         val launchIntent = method.packageName?.let(packageManager::getLaunchIntentForPackage)
         if (launchIntent != null) {
-            startActivity(launchIntent)
-        } else {
-            val fallbackUrl = getString(method.fallbackUrlRes)
-            startActivity(Intent(Intent.ACTION_VIEW, fallbackUrl.toUri()))
+            runCatching { startActivity(launchIntent) }
+            return
         }
+
+        val fallbackUrl = getString(method.fallbackUrlRes)
+        runCatching { startActivity(Intent(Intent.ACTION_VIEW, fallbackUrl.toUri())) }
     }
 }
