@@ -31,6 +31,8 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -54,6 +56,7 @@ import com.wasylews.mykompot.ui.theme.Spacing
 internal const val HOME_SCREEN_TEST_TAG = "home_screen"
 internal const val HOME_LOADING_TEST_TAG = "home_loading"
 internal const val HOME_LIST_TEST_TAG = "home_list"
+internal const val HOME_REFRESH_INDICATOR_TEST_TAG = "home_refresh_indicator"
 
 private const val HOME_HEADER_KEY = "home_header"
 private const val HEADER_CONTENT_TYPE = "header"
@@ -129,10 +132,25 @@ private fun HomeContent(
     onRetryPayments: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val pullToRefreshState = rememberPullToRefreshState()
     PullToRefreshBox(
         isRefreshing = state.isRefreshing,
         onRefresh = onRefresh,
+        state = pullToRefreshState,
         modifier = modifier.testTag(HOME_SCREEN_TEST_TAG),
+        indicator = {
+            // The status card shows its own progress while there is no content yet.
+            // A second spinner on top of it would only duplicate that signal.
+            if (state.content !is HomeContent.Loading) {
+                PullToRefreshDefaults.Indicator(
+                    state = pullToRefreshState,
+                    isRefreshing = state.isRefreshing,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .testTag(HOME_REFRESH_INDICATOR_TEST_TAG),
+                )
+            }
+        },
     ) {
         LazyColumn(
             modifier = Modifier

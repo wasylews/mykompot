@@ -16,11 +16,15 @@
 
 package com.wasylews.mykompot
 
+import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.onNodeWithTag
+import com.wasylews.mykompot.presentation.home.HOME_REFRESH_INDICATOR_TEST_TAG
 import com.wasylews.mykompot.presentation.home.STATUS_TARIFF_NAME_TEST_TAG
 import com.wasylews.mykompot.presentation.home.STATUS_TARIFF_PRICE_TEST_TAG
 import org.junit.Test
 
+@OptIn(ExperimentalTestApi::class)
 class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
     @Test
     fun showsCachedStatusWhenOffline() {
@@ -100,6 +104,37 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
             // AND the status once the server responds
             assertShows(R.string.status_all_good)
             assertRefreshRequested()
+        }
+    }
+
+    @Test
+    fun showsSingleProgressIndicatorWhileRefreshingWithoutCache() {
+        // GIVEN a stored session with no cached profile and a slow server
+        givenStoredSession()
+        givenServerReturnsProfile(delayMillis = 2_000)
+
+        launch().use {
+            // THEN only the content shows progress, without a second pull-to-refresh spinner
+            assertShowsHomeLoading()
+            composeRule.onNodeWithTag(HOME_REFRESH_INDICATOR_TEST_TAG).assertDoesNotExist()
+
+            // AND the status once the server responds
+            assertShows(R.string.status_all_good)
+            assertRefreshRequested()
+        }
+    }
+
+    @Test
+    fun showsRefreshIndicatorWhileRefreshingCachedStatus() {
+        // GIVEN a stored session with a cached profile and a slow server
+        givenStoredSession(profile = allGoodProfile())
+        givenServerReturnsProfile(delayMillis = 2_000)
+
+        launch().use {
+            // THEN the refresh is indicated by the pull-to-refresh spinner
+            composeRule.waitUntilExactlyOneExists(hasTestTag(HOME_REFRESH_INDICATOR_TEST_TAG), 5_000)
+            composeRule.onNodeWithTag(HOME_REFRESH_INDICATOR_TEST_TAG).assertExists()
+            assertShows(R.string.status_all_good)
         }
     }
 
