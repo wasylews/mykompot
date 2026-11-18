@@ -17,6 +17,10 @@ local.properties
 *.aab
 .cxx/
 
+# Release signing — contains secrets and private keys. Never commit.
+keystore.properties
+keystore/
+
 # IDE
 .idea/*
 !.idea/copyright/

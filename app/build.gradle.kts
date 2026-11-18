@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -23,6 +25,16 @@ plugins {
     alias(libs.plugins.koin.compiler.plugin)
     alias(libs.plugins.kotlin.serialization)
 }
+
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.exists()) {
+        keystorePropertiesFile.inputStream().use(::load)
+    }
+}
+
+fun signingValue(name: String): String? =
+    keystoreProperties.getProperty(name) ?: System.getenv(name)
 
 koinCompiler {
     compileSafety = true
@@ -47,6 +59,26 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            val storeFilePath = signingValue("storeFile")
+            val releaseStorePassword = signingValue("storePassword")
+            val releaseKeyAlias = signingValue("keyAlias")
+            val releaseKeyPassword = signingValue("keyPassword")
+            if (
+                storeFilePath != null &&
+                releaseStorePassword != null &&
+                releaseKeyAlias != null &&
+                releaseKeyPassword != null
+            ) {
+                storeFile = rootProject.file(storeFilePath)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         debug {
             buildConfigField("String", "BASE_URL", "\"http://127.0.0.1:8080\"")
@@ -54,6 +86,10 @@ android {
         }
 
         release {
+            val releaseSigning = signingConfigs.getByName("release")
+            if (releaseSigning.storeFile != null) {
+                signingConfig = releaseSigning
+            }
             optimization {
                 enable = true
                 packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
