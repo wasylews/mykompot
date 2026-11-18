@@ -63,6 +63,22 @@ class ReturningUserSkipsLoginTest : BaseAcceptanceTest() {
         }
     }
 
+    @Test
+    fun asksForNotificationPermissionWhenOpeningWithStoredSession() {
+        // GIVEN a stored session and notifications are not allowed yet
+        notificationsGranted = false
+        givenStoredSession(profile = allGoodProfile())
+        givenStoredTariffPlans()
+        givenServerReturnsProfile()
+
+        launch().use {
+            // THEN I see the status and the notification prompt without logging in
+            assertShows(R.string.status_all_good)
+            assertShows(R.string.notifications_rationale_title)
+            assertLoginFormIsHidden()
+        }
+    }
+
     private fun assertLoginFormIsHidden() {
         composeRule
             .onNodeWithText(stringRes(R.string.username))

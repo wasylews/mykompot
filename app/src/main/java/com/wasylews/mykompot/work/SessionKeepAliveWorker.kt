@@ -25,6 +25,7 @@ import androidx.core.app.NotificationCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.wasylews.mykompot.R
+import com.wasylews.mykompot.domain.NotificationsPermission
 import com.wasylews.mykompot.domain.RefreshStatus
 import com.wasylews.mykompot.domain.model.RefreshResult
 import com.wasylews.mykompot.presentation.main.MainActivity
@@ -36,6 +37,7 @@ class SessionKeepAliveWorker(
     params: WorkerParameters,
     private val refreshStatus: RefreshStatus,
     private val notificationManager: NotificationManager,
+    private val notificationsPermission: NotificationsPermission,
 ) : CoroutineWorker(appContext, params) {
     override suspend fun doWork(): Result = when (refreshStatus()) {
         RefreshResult.Expired -> {
@@ -53,12 +55,15 @@ class SessionKeepAliveWorker(
     }
 
     private fun notifySessionExpired() {
+        if (!notificationsPermission.isGranted()) return
+
         val channel = NotificationChannel(
             SESSION_CHANNEL_ID,
             applicationContext.getString(R.string.app_name),
             NotificationManager.IMPORTANCE_DEFAULT,
         )
         notificationManager.createNotificationChannel(channel)
+        if (!notificationManager.canPostTo(SESSION_CHANNEL_ID)) return
 
         val intent = Intent(applicationContext, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK

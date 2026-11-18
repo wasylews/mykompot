@@ -34,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.wasylews.mykompot.domain.NotificationsPermission
 import com.wasylews.mykompot.domain.model.SessionState
 import com.wasylews.mykompot.presentation.home.HomeScreen
 import com.wasylews.mykompot.presentation.home.HomeViewModel
@@ -44,6 +45,7 @@ import com.wasylews.mykompot.presentation.payments.PaymentMethod
 import com.wasylews.mykompot.presentation.payments.PaymentMethodsViewModel
 import com.wasylews.mykompot.presentation.tariffs.TariffPlansViewModel
 import com.wasylews.mykompot.ui.theme.MyKompotTheme
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 class MainActivity : ComponentActivity() {
@@ -63,6 +65,12 @@ class MainActivity : ComponentActivity() {
         val sessionState by mainViewModel.sessionState.collectAsStateWithLifecycle()
         val loginViewModel = koinViewModel<LoginViewModel>()
         val uiState by loginViewModel.uiState.collectAsState()
+        val notificationsPermission = koinInject<NotificationsPermission>()
+
+        NotificationPermissionPrompt(
+            isLoggedIn = sessionState == SessionState.LoggedIn,
+            notificationsPermission = notificationsPermission,
+        )
 
         Scaffold(
             modifier = Modifier.fillMaxSize(),

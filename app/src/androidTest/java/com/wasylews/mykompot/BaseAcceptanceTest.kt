@@ -16,9 +16,11 @@
 
 package com.wasylews.mykompot
 
+import android.Manifest
 import android.app.Notification
 import android.app.NotificationManager
 import android.content.Context
+import android.os.Build
 import androidx.annotation.StringRes
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsNodeInteraction
@@ -38,6 +40,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.wasylews.mykompot.data.LocalStorage
 import com.wasylews.mykompot.data.model.ProfileEntity
 import com.wasylews.mykompot.data.model.TariffPlansEntity
+import com.wasylews.mykompot.domain.NotificationsPermission
 import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.TariffPlan
 import com.wasylews.mykompot.domain.model.TariffPlans
@@ -52,6 +55,7 @@ import mockwebserver3.MockWebServer
 import mockwebserver3.RecordedRequest
 import mockwebserver3.SocketEffect
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -77,14 +81,23 @@ abstract class BaseAcceptanceTest : KoinTest {
     protected val server = MockWebServer()
 
     protected val clock = MutableClock(Instant.parse("2026-10-01T10:00:00Z"))
+
+    /**
+     * Controls what the app sees when it checks whether it may post notifications.
+     */
+    protected var notificationsGranted = true
+
     private val testModule = module {
         single<Clock> { clock }
+        single<NotificationsPermission> { NotificationsPermission { notificationsGranted } }
     }
 
     private val dispatcher = TestDispatcher()
 
     @Before
     fun setup() {
+        grantNotificationPermission()
+        cancelAllNotifications()
         runBlocking {
             getKoin().get<DataStore<ProfileEntity?>>(named("profile")).updateData { null }
             getKoin().get<DataStore<String?>>(named("session")).updateData { null }
@@ -321,6 +334,27 @@ abstract class BaseAcceptanceTest : KoinTest {
         val storage = get<LocalStorage>()
         assertNull(storage.sessionFlow().first())
         assertNull(storage.profileFlow().first())
+    }
+
+    protected fun assertNoNotificationPosted() {
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        assertEquals(0, notificationManager.activeNotifications.size)
+    }
+
+    protected fun grantNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            InstrumentationRegistry.getInstrumentation().uiAutomation.grantRuntimePermission(
+                InstrumentationRegistry.getInstrumentation().targetContext.packageName,
+                Manifest.permission.POST_NOTIFICATIONS,
+            )
+        }
+    }
+
+    private fun cancelAllNotifications() {
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.cancelAll()
     }
 
     protected fun assertNotificationPosted(

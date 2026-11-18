@@ -17,6 +17,7 @@
 package com.wasylews.mykompot
 
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performClick
 import com.wasylews.mykompot.presentation.home.STATUS_TARIFF_NAME_TEST_TAG
 import com.wasylews.mykompot.presentation.home.STATUS_TARIFF_PRICE_TEST_TAG
 import org.junit.Test
@@ -106,6 +107,59 @@ class SignInFlowTest : BaseAcceptanceTest() {
 
             // THEN I see a parsing error
             assertShows(R.string.error_parsing)
+        }
+    }
+
+    @Test
+    fun asksForNotificationPermissionAfterSignIn() {
+        // GIVEN notifications are not allowed yet
+        notificationsGranted = false
+        givenStoredTariffPlans()
+        givenServerReturnsProfile()
+
+        launch().use {
+            // WHEN I log in
+            performLogin()
+
+            // THEN I am told why the app wants to notify me
+            assertShows(R.string.status_all_good)
+            assertShows(R.string.notifications_rationale_title)
+            assertShows(R.string.notifications_allow)
+            assertShows(R.string.notifications_not_now)
+        }
+    }
+
+    @Test
+    fun doesNotAskForNotificationPermissionWhenAlreadyAllowed() {
+        // GIVEN notifications are already allowed
+        givenStoredTariffPlans()
+        givenServerReturnsProfile()
+
+        launch().use {
+            // WHEN I log in
+            performLogin()
+
+            // THEN I land on the status without an extra prompt
+            assertShows(R.string.status_all_good)
+            assertDoesNotShow(R.string.notifications_rationale_title)
+        }
+    }
+
+    @Test
+    fun dismissesNotificationRationaleWithoutBlockingTheApp() {
+        // GIVEN notifications are not allowed yet
+        notificationsGranted = false
+        givenStoredTariffPlans()
+        givenServerReturnsProfile()
+
+        launch().use {
+            // WHEN I decline the prompt
+            performLogin()
+            assertShows(R.string.notifications_not_now).performClick()
+
+            // THEN the prompt closes and the app keeps working
+            assertDoesNotShow(R.string.notifications_rationale_title)
+            assertShows(R.string.status_all_good)
         }
     }
 }

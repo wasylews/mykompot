@@ -16,11 +16,8 @@
 
 package com.wasylews.mykompot
 
-import android.Manifest
 import android.content.Context
-import android.os.Build
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.platform.app.InstrumentationRegistry
 import androidx.work.ListenableWorker
 import androidx.work.testing.TestListenableWorkerBuilder
 import com.wasylews.mykompot.work.SessionKeepAliveWorker
@@ -35,16 +32,9 @@ class SessionExpiredNotificationTest : BaseAcceptanceTest() {
         // GIVEN I am logged in and the server treats the session as expired
         givenStoredSession(profile = allGoodProfile())
         givenHomeResponses(profileBody = HtmlFixtures.loginFailed())
-        grantNotificationPermission()
 
         // WHEN the keep-alive background refresh runs
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val result = runBlocking {
-            TestListenableWorkerBuilder<SessionKeepAliveWorker>(context)
-                .setWorkerFactory(KoinWorkerFactory())
-                .build()
-                .doWork()
-        }
+        val result = runKeepAliveWorker()
 
         // THEN my session is cleared and I am notified to log in again
         assertEquals(ListenableWorker.Result.success(), result)
@@ -55,12 +45,29 @@ class SessionExpiredNotificationTest : BaseAcceptanceTest() {
         )
     }
 
-    private fun grantNotificationPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            InstrumentationRegistry.getInstrumentation().uiAutomation.grantRuntimePermission(
-                InstrumentationRegistry.getInstrumentation().targetContext.packageName,
-                Manifest.permission.POST_NOTIFICATIONS,
-            )
+    @Test
+    fun clearsSessionWithoutNotificationWhenNotificationsAreNotAllowed() {
+        // GIVEN I am logged in, the session has expired, and notifications are not allowed
+        notificationsGranted = false
+        givenStoredSession(profile = allGoodProfile())
+        givenHomeResponses(profileBody = HtmlFixtures.loginFailed())
+
+        // WHEN the keep-alive background refresh runs
+        val result = runKeepAliveWorker()
+
+        // THEN my session is still cleared, only the notification is skipped
+        assertEquals(ListenableWorker.Result.success(), result)
+        assertSessionCleared()
+        assertNoNotificationPosted()
+    }
+
+    private fun runKeepAliveWorker(): ListenableWorker.Result {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        return runBlocking {
+            TestListenableWorkerBuilder<SessionKeepAliveWorker>(context)
+                .setWorkerFactory(KoinWorkerFactory())
+                .build()
+                .doWork()
         }
     }
 }

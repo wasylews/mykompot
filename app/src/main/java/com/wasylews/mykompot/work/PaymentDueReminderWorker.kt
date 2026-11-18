@@ -28,6 +28,7 @@ import androidx.work.WorkerParameters
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.data.LocalStorage
 import com.wasylews.mykompot.domain.AppForegroundState
+import com.wasylews.mykompot.domain.NotificationsPermission
 import com.wasylews.mykompot.domain.model.PaymentDueThreshold
 import com.wasylews.mykompot.presentation.main.MainActivity
 import kotlinx.coroutines.flow.first
@@ -41,6 +42,7 @@ class PaymentDueReminderWorker(
     private val localStorage: LocalStorage,
     private val appForegroundState: AppForegroundState,
     private val notificationManager: NotificationManager,
+    private val notificationsPermission: NotificationsPermission,
 ) : CoroutineWorker(appContext, params) {
     override suspend fun doWork(): Result {
         val reminder = reminderInput()
@@ -72,12 +74,15 @@ class PaymentDueReminderWorker(
     )
 
     private fun notifyPaymentDue(threshold: PaymentDueThreshold) {
+        if (!notificationsPermission.isGranted()) return
+
         val channel = NotificationChannel(
             PAYMENT_CHANNEL_ID,
             applicationContext.getString(R.string.payment_reminder_channel_name),
             NotificationManager.IMPORTANCE_DEFAULT,
         )
         notificationManager.createNotificationChannel(channel)
+        if (!notificationManager.canPostTo(PAYMENT_CHANNEL_ID)) return
 
         val intent = Intent(applicationContext, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
