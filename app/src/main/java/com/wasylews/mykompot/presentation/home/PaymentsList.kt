@@ -16,13 +16,11 @@
 
 package com.wasylews.mykompot.presentation.home
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,11 +29,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -43,15 +40,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -59,100 +54,122 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.wasylews.mykompot.R
+import com.wasylews.mykompot.presentation.home.ktx.groupedCardBorder
 import com.wasylews.mykompot.presentation.payments.paymentMethods
 import com.wasylews.mykompot.ui.theme.MyKompotTheme
 import com.wasylews.mykompot.ui.theme.Spacing
 
-internal const val PAYMENTS_LIST_TEST_TAG = "payments_list"
+internal const val PAYMENTS_CONTENT_TYPE = "payment"
 
-@Composable
-fun PaymentsList(
+private const val PAYMENTS_TITLE_KEY = "payments_title"
+private const val PAYMENTS_STATE_KEY = "payments_state"
+private const val LOADING_MORE_KEY = "payments_loading_more"
+private const val LOAD_MORE_ERROR_KEY = "payments_load_more_error"
+private const val LOAD_MORE_KEY = "payments_load_more"
+private const val EMPTY_STATE_HEIGHT_FRACTION = 0.5f
+private val PAYMENT_CARD_CORNER = 20.dp
+private val PAYMENT_CARD_BORDER = 1.dp
+
+internal fun LazyListScope.paymentsSection(
     paymentsState: PaymentsUiState,
     onLoadMorePayments: () -> Unit,
     onRetryLoadMorePayments: () -> Unit,
-    modifier: Modifier = Modifier,
-    onRetry: () -> Unit = {},
+    onRetry: () -> Unit,
 ) {
-    val listState = rememberLazyListState()
-    ObservePaymentsLoadMore(listState = listState, paymentsState = paymentsState, onLoadMorePayments = onLoadMorePayments)
+    item(key = PAYMENTS_TITLE_KEY) {
+        PaymentsTitle()
+    }
 
-    val showItemsList = paymentsState.items.isNotEmpty() ||
-        !(paymentsState.isLoading || paymentsState.errorId != null)
-
-    Column(
-        modifier = if (showItemsList) modifier else modifier.testTag(PAYMENTS_LIST_TEST_TAG),
-        verticalArrangement = Arrangement.spacedBy(Spacing.md),
-    ) {
-        Text(
-            text = stringResource(R.string.payments),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-        )
-
-        PaymentsListBody(
+    if (paymentsState.items.isEmpty()) {
+        paymentsPlaceholder(paymentsState = paymentsState, onRetry = onRetry)
+    } else {
+        paymentItems(
             paymentsState = paymentsState,
-            listState = listState,
-            onRetry = onRetry,
+            onLoadMorePayments = onLoadMorePayments,
             onRetryLoadMorePayments = onRetryLoadMorePayments,
         )
     }
 }
 
 @Composable
-private fun ObservePaymentsLoadMore(
-    listState: androidx.compose.foundation.lazy.LazyListState,
+private fun PaymentsTitle() {
+    Text(
+        text = stringResource(R.string.payments),
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier.padding(bottom = Spacing.md),
+    )
+}
+
+private fun LazyListScope.paymentsPlaceholder(
     paymentsState: PaymentsUiState,
-    onLoadMorePayments: () -> Unit,
+    onRetry: () -> Unit,
 ) {
-    val shouldLoadMore by remember {
-        derivedStateOf {
-            val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-            val total = listState.layoutInfo.totalItemsCount
-            paymentsState.hasMore &&
-                !paymentsState.isLoadingMore &&
-                paymentsState.loadMoreErrorId == null &&
-                total > 0 &&
-                lastVisible >= total - 3
+    val errorId = paymentsState.errorId
+    item(key = PAYMENTS_STATE_KEY) {
+        PaymentsCenteredState(Modifier.fillParentMaxHeight(EMPTY_STATE_HEIGHT_FRACTION)) {
+            when {
+                paymentsState.isLoading -> CircularProgressIndicator()
+
+                errorId != null -> PaymentsErrorContent(errorId = errorId, onRetry = onRetry)
+
+                else -> Text(
+                    text = stringResource(R.string.no_payments_yet),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+            }
         }
-    }
-    LaunchedEffect(shouldLoadMore) {
-        if (shouldLoadMore) onLoadMorePayments()
     }
 }
 
-@Composable
-private fun androidx.compose.foundation.layout.ColumnScope.PaymentsListBody(
+private fun LazyListScope.paymentItems(
     paymentsState: PaymentsUiState,
-    listState: androidx.compose.foundation.lazy.LazyListState,
-    onRetry: () -> Unit,
+    onLoadMorePayments: () -> Unit,
     onRetryLoadMorePayments: () -> Unit,
 ) {
-    when {
-        paymentsState.isLoading && paymentsState.items.isEmpty() -> PaymentsCenteredState(Modifier.weight(1f)) {
-            CircularProgressIndicator()
-        }
+    val items = paymentsState.items
+    itemsIndexed(
+        items = items,
+        key = { index, _ -> "payment_$index" },
+        contentType = { _, _ -> PAYMENTS_CONTENT_TYPE },
+    ) { index, item ->
+        PaymentRowItem(
+            item = item,
+            isFirst = index == 0,
+            isLast = index == items.lastIndex,
+        )
+    }
 
-        paymentsState.errorId != null && paymentsState.items.isEmpty() -> PaymentsCenteredState(Modifier.weight(1f)) {
-            PaymentsErrorContent(errorId = paymentsState.errorId, onRetry = onRetry)
+    if (paymentsState.isLoadingMore) {
+        item(key = LOADING_MORE_KEY) {
+            PaymentsCenteredState(modifier = Modifier.padding(vertical = Spacing.md)) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+            }
         }
+    }
 
-        paymentsState.items.isEmpty() -> PaymentsCenteredState(Modifier.weight(1f)) {
-            Text(
-                text = stringResource(R.string.no_payments_yet),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
+    val loadMoreErrorId = paymentsState.loadMoreErrorId
+    if (loadMoreErrorId != null) {
+        item(key = LOAD_MORE_ERROR_KEY) {
+            LoadMoreError(
+                errorId = loadMoreErrorId,
+                onRetry = onRetryLoadMorePayments,
+                modifier = Modifier.padding(top = Spacing.md),
             )
         }
+    }
 
-        else -> PaymentsItemsColumn(
-            paymentsState = paymentsState,
-            listState = listState,
-            onRetryLoadMorePayments = onRetryLoadMorePayments,
-            modifier = Modifier.weight(1f),
-        )
+    if (paymentsState.hasMore && !paymentsState.isLoadingMore && loadMoreErrorId == null) {
+        item(key = LOAD_MORE_KEY) {
+            LaunchedEffect(items.size) {
+                onLoadMorePayments()
+            }
+        }
     }
 }
 
@@ -191,57 +208,54 @@ private fun PaymentsErrorContent(
 }
 
 @Composable
-private fun PaymentsItemsColumn(
-    paymentsState: PaymentsUiState,
-    listState: androidx.compose.foundation.lazy.LazyListState,
-    onRetryLoadMorePayments: () -> Unit,
+private fun PaymentRowItem(
+    item: PaymentItemUi,
+    isFirst: Boolean,
+    isLast: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    LazyColumn(
-        state = listState,
+    Column(
         modifier = modifier
             .fillMaxWidth()
-            .testTag(PAYMENTS_LIST_TEST_TAG),
-        contentPadding = PaddingValues(bottom = Spacing.lg),
-        verticalArrangement = Arrangement.spacedBy(Spacing.md),
+            .clip(groupedRowShape(isFirst = isFirst, isLast = isLast, corner = PAYMENT_CARD_CORNER))
+            .background(MaterialTheme.colorScheme.surface)
+            .groupedCardBorder(
+                isFirst = isFirst,
+                isLast = isLast,
+                corner = PAYMENT_CARD_CORNER,
+                stroke = PAYMENT_CARD_BORDER,
+                color = MaterialTheme.colorScheme.outlineVariant,
+            ),
     ) {
-        item { PaymentsCard(items = paymentsState.items) }
-
-        if (paymentsState.isLoadingMore) {
-            item {
-                PaymentsCenteredState(modifier = Modifier.padding(vertical = Spacing.md)) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                }
-            }
-        }
-
-        paymentsState.loadMoreErrorId?.let { errorId ->
-            item { LoadMoreError(errorId = errorId, onRetry = onRetryLoadMorePayments) }
+        PaymentRow(item = item)
+        if (!isLast) {
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         }
     }
 }
 
-@Composable
-private fun PaymentsCard(
-    items: List<PaymentItemUi>,
-    modifier: Modifier = Modifier,
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-    ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            items.forEachIndexed { index, payment ->
-                PaymentRow(item = payment)
-                if (index < items.lastIndex) {
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                }
-            }
-        }
-    }
+/**
+ * Shape of a single row inside a card shared by adjacent lazy items: rounded outer corners on the
+ * first and the last row, square edges in between.
+ */
+private fun groupedRowShape(
+    isFirst: Boolean,
+    isLast: Boolean,
+    corner: Dp,
+): Shape = when {
+    isFirst && isLast -> RoundedCornerShape(corner)
+
+    isFirst -> RoundedCornerShape(
+        topStart = corner,
+        topEnd = corner,
+    )
+
+    isLast -> RoundedCornerShape(
+        bottomStart = corner,
+        bottomEnd = corner,
+    )
+
+    else -> RectangleShape
 }
 
 @Composable
@@ -386,27 +400,23 @@ internal fun samplePaymentsState(): PaymentsUiState = PaymentsUiState(
 class PaymentsUiStatePreviewParameterProvider : PreviewParameterProvider<PaymentsUiState> {
     private val loaded = samplePaymentsState()
     private val states = listOf(
-        PaymentsUiState(),
-        PaymentsUiState(isLoading = true),
-        PaymentsUiState(errorId = R.string.error_no_connection),
-        loaded,
-        loaded.copy(hasMore = true),
-        loaded.copy(items = loaded.items.take(2), hasMore = true, isLoadingMore = true),
-        loaded.copy(items = loaded.items.take(1), hasMore = true, loadMoreErrorId = R.string.error_no_connection),
+        "Empty" to PaymentsUiState(),
+        "Loading" to PaymentsUiState(isLoading = true),
+        "Error" to PaymentsUiState(errorId = R.string.error_no_connection),
+        "Loaded" to loaded,
+        "Single payment" to loaded.copy(items = loaded.items.take(1)),
+        "Has more" to loaded.copy(hasMore = true),
+        "Loading more" to loaded.copy(items = loaded.items.take(2), hasMore = true, isLoadingMore = true),
+        "Load more error" to loaded.copy(
+            items = loaded.items.take(1),
+            hasMore = true,
+            loadMoreErrorId = R.string.error_no_connection,
+        ),
     )
 
-    override val values: Sequence<PaymentsUiState> = states.asSequence()
+    override val values: Sequence<PaymentsUiState> = states.map { (_, state) -> state }.asSequence()
 
-    override fun getDisplayName(index: Int): String = when (index) {
-        0 -> "Empty"
-        1 -> "Loading"
-        2 -> "Error"
-        3 -> "Loaded"
-        4 -> "Has more"
-        5 -> "Loading more"
-        6 -> "Load more error"
-        else -> index.toString()
-    }
+    override fun getDisplayName(index: Int): String = states[index].first
 }
 
 @Preview(name = "States (Light | Dark)", showBackground = true, widthDp = 800)
@@ -421,15 +431,18 @@ fun PaymentsListStatesPreview(
                     modifier = Modifier.weight(1f),
                     color = bg,
                 ) {
-                    PaymentsList(
-                        paymentsState = state,
-                        onLoadMorePayments = {},
-                        onRetryLoadMorePayments = {},
-                        onRetry = {},
+                    LazyColumn(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(Spacing.md),
-                    )
+                    ) {
+                        paymentsSection(
+                            paymentsState = state,
+                            onLoadMorePayments = {},
+                            onRetryLoadMorePayments = {},
+                            onRetry = {},
+                        )
+                    }
                 }
             }
         }

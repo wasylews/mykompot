@@ -16,12 +16,15 @@
 
 package com.wasylews.mykompot.presentation.home
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -50,6 +53,10 @@ import com.wasylews.mykompot.ui.theme.Spacing
 
 internal const val HOME_SCREEN_TEST_TAG = "home_screen"
 internal const val HOME_LOADING_TEST_TAG = "home_loading"
+internal const val HOME_LIST_TEST_TAG = "home_list"
+
+private const val HOME_HEADER_KEY = "home_header"
+private const val HEADER_CONTENT_TYPE = "header"
 
 @Composable
 fun HomeScreen(
@@ -127,25 +134,28 @@ private fun HomeContent(
         onRefresh = onRefresh,
         modifier = modifier.testTag(HOME_SCREEN_TEST_TAG),
     ) {
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = Spacing.lg, vertical = Spacing.lg),
-            verticalArrangement = Arrangement.spacedBy(Spacing.md),
+                .testTag(HOME_LIST_TEST_TAG),
+            contentPadding = PaddingValues(horizontal = Spacing.lg, vertical = Spacing.lg),
         ) {
-            HomeHeader(
-                state = state,
-                onPayClick = onPayClick,
-                onTariffClick = onTariffClick,
-            )
-            PaymentsList(
+            stickyHeader(key = HOME_HEADER_KEY, contentType = HEADER_CONTENT_TYPE) {
+                HomeHeader(
+                    state = state,
+                    onPayClick = onPayClick,
+                    onTariffClick = onTariffClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surface)
+                        .padding(bottom = Spacing.md),
+                )
+            }
+            paymentsSection(
                 paymentsState = paymentsState,
                 onLoadMorePayments = onLoadMorePayments,
                 onRetryLoadMorePayments = onRetryLoadMorePayments,
                 onRetry = onRetryPayments,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
             )
         }
     }
@@ -156,8 +166,10 @@ private fun HomeHeader(
     state: HomeUiState,
     onPayClick: () -> Unit,
     onTariffClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Column(
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(Spacing.lg),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {

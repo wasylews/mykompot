@@ -21,11 +21,12 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
-import com.wasylews.mykompot.presentation.home.PAYMENTS_LIST_TEST_TAG
+import com.wasylews.mykompot.presentation.home.HOME_LIST_TEST_TAG
 import org.junit.Test
 
 @OptIn(ExperimentalTestApi::class)
@@ -43,8 +44,8 @@ class PaymentsListTest : BaseAcceptanceTest() {
 
             // THEN I see payment entries under the status card with date, amount and tariff name from price
             assertShows(R.string.payments)
-            composeRule.waitUntilExactlyOneExists(hasTestTag(PAYMENTS_LIST_TEST_TAG), 5_000)
-            composeRule.onNodeWithTag(PAYMENTS_LIST_TEST_TAG).assertIsDisplayed()
+            composeRule.waitUntilExactlyOneExists(hasTestTag(HOME_LIST_TEST_TAG), 5_000)
+            composeRule.onNodeWithTag(HOME_LIST_TEST_TAG).assertIsDisplayed()
             composeRule.waitUntil {
                 composeRule.onAllNodesWithText("300", substring = true)
                     .fetchSemanticsNodes().size > 1
@@ -53,6 +54,26 @@ class PaymentsListTest : BaseAcceptanceTest() {
                 composeRule.onAllNodesWithText("Standart 100", substring = true)
                     .fetchSemanticsNodes().size > 1
             }
+        }
+    }
+
+    @Test
+    fun keepsStatusCardPinnedWhileScrollingPayments() {
+        // GIVEN a stored session, tariff catalog, profile and payments from server
+        givenStoredSession(profile = allGoodProfile())
+        givenStoredTariffPlans()
+        givenHomeResponses()
+
+        launch().use {
+            assertShows(R.string.status_all_good)
+            assertShows(R.string.payments)
+
+            // WHEN I scroll the payments
+            composeRule.onNodeWithTag(HOME_LIST_TEST_TAG).performTouchInput { swipeUp() }
+
+            // THEN the status card stays pinned while the payments scroll away
+            assertShows(R.string.status_all_good)
+            assertDoesNotShow(R.string.payments)
         }
     }
 
@@ -67,16 +88,25 @@ class PaymentsListTest : BaseAcceptanceTest() {
         launch().use {
             assertShows(R.string.status_all_good)
             assertShows(R.string.payments)
-            composeRule.waitUntilExactlyOneExists(hasTestTag(PAYMENTS_LIST_TEST_TAG), 5_000)
+            composeRule.waitUntilExactlyOneExists(hasTestTag(HOME_LIST_TEST_TAG), 5_000)
 
             // WHEN I scroll to load more payments
             repeat(8) {
-                composeRule.onNodeWithTag(PAYMENTS_LIST_TEST_TAG).performTouchInput { swipeUp() }
+                composeRule.onNodeWithTag(HOME_LIST_TEST_TAG).performTouchInput { swipeUp() }
             }
 
             // THEN I see entries from the next page (pg=25)
-            composeRule.waitUntilExactlyOneExists(hasText("15 Oct 2024, 09:39", substring = true), 10_000)
-            composeRule.onNodeWithText("15 Oct 2024, 09:39", substring = true).assertIsDisplayed()
+            composeRule.waitUntil(10_000) {
+                composeRule.onAllNodesWithText("15 Oct 2024, 09:39", substring = true)
+                    .fetchSemanticsNodes().isNotEmpty()
+            }
+            composeRule
+                .onNodeWithTag(HOME_LIST_TEST_TAG)
+                .performScrollToNode(hasText("15 Oct 2024, 09:39", substring = true))
+            composeRule
+                .onAllNodesWithText("15 Oct 2024, 09:39", substring = true)
+                .onFirst()
+                .assertIsDisplayed()
         }
     }
 }

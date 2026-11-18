@@ -275,17 +275,23 @@ abstract class BaseAcceptanceTest : KoinTest {
     }
 
     protected fun assertProfileRefreshRequested() {
-        assertNotNull(takeRequestMatching { path -> path?.contains("index.cgi") == true })
+        assertNotNull(
+            takeRequestMatching { request ->
+                val path = request.url.encodedPath
+                path.contains("index.cgi") &&
+                    request.url.queryParameter(FEES_PAGE_QUERY_PARAM) != FEES_PAGE_INDEX
+            },
+        )
     }
 
     protected fun assertPlansRefreshRequested() {
-        assertNotNull(takeRequestMatching { path -> path?.contains("/plans") == true })
+        assertNotNull(takeRequestMatching { request -> request.url.encodedPath.contains("/plans") })
     }
 
-    protected fun takeRequestMatching(predicate: (String?) -> Boolean): RecordedRequest? {
+    protected fun takeRequestMatching(predicate: (RecordedRequest) -> Boolean): RecordedRequest? {
         repeat(10) {
             val request = server.takeRequest(2, TimeUnit.SECONDS) ?: return null
-            if (predicate(request.url.encodedPath)) return request
+            if (predicate(request)) return request
         }
         return null
     }
@@ -388,10 +394,10 @@ abstract class BaseAcceptanceTest : KoinTest {
                 if (queuedResponses.isNotEmpty()) return queuedResponses.removeFirst()
             }
             val path = request.url.encodedPath
-            val index = request.url.queryParameter("index")
+            val index = request.url.queryParameter(FEES_PAGE_QUERY_PARAM)
             return when {
                 path.contains("/plans") -> plansResponseFactory()
-                path.contains("index.cgi") && index == "41" -> feesResponseFactory(request)
+                path.contains("index.cgi") && index == FEES_PAGE_INDEX -> feesResponseFactory(request)
                 path.contains("index.cgi") -> profileResponseFactory()
                 else -> MockResponse.Builder().code(404).build()
             }
@@ -400,5 +406,10 @@ abstract class BaseAcceptanceTest : KoinTest {
         override fun close() {
             clear()
         }
+    }
+
+    private companion object {
+        const val FEES_PAGE_QUERY_PARAM = "index"
+        const val FEES_PAGE_INDEX = "41"
     }
 }
