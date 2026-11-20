@@ -17,6 +17,7 @@
 package com.wasylews.mykompot.domain
 
 import com.wasylews.mykompot.domain.model.PaymentsActionResult
+import com.wasylews.mykompot.domain.model.PortalFailure
 import com.wasylews.mykompot.presentation.FakePortalRepository
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -25,12 +26,12 @@ import org.junit.Test
 class RefreshPaymentsUseCaseTest {
     @Test
     fun `refreshes payments from repository`() = runTest {
-        val repository = FakePortalRepository(paymentsRefreshResult = PaymentsActionResult.Failed.Network)
+        val repository = FakePortalRepository(paymentsRefreshResult = PaymentsActionResult.Failed(PortalFailure.Network))
         val useCase = RefreshPaymentsUseCase(repository)
 
         val result = useCase()
 
-        assertEquals(PaymentsActionResult.Failed.Network, result)
+        assertEquals(PaymentsActionResult.Failed(PortalFailure.Network), result)
         assertEquals(1, repository.refreshPaymentsCalls)
     }
 }

@@ -25,14 +25,7 @@ sealed interface TariffPlansActionResult {
     data object NotModified : TariffPlansActionResult
 
     /** Refresh failed. Cached plans are left intact. */
-    sealed interface Failed : TariffPlansActionResult {
-        /** The request failed due to a connectivity or I/O problem. */
-        data object Network : Failed
-
-        /** The portal/server returned an unsuccessful response. */
-        data object Server : Failed
-
-        /** The response could not be parsed into a usable plans catalog. */
-        data object Parse : Failed
-    }
+    data class Failed(
+        val reason: PortalFailure,
+    ) : TariffPlansActionResult
 }

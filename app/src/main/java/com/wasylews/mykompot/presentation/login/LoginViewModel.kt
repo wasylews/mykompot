@@ -26,6 +26,7 @@ import com.wasylews.mykompot.domain.PaymentDueReminderScheduler
 import com.wasylews.mykompot.domain.SessionKeepAliveScheduler
 import com.wasylews.mykompot.domain.model.LoginResult
 import com.wasylews.mykompot.domain.repository.PortalRepository
+import com.wasylews.mykompot.presentation.toErrorId
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -70,16 +71,8 @@ class LoginViewModel(
                 R.string.error_invalid_credentials
             }
 
-            LoginResult.NetworkError -> {
-                R.string.error_no_connection
-            }
-
-            LoginResult.ServerError -> {
-                R.string.error_server
-            }
-
-            LoginResult.ParsingError -> {
-                R.string.error_parsing
+            is LoginResult.Failed -> {
+                result.reason.toErrorId(parseErrorId = R.string.error_parsing)
             }
         }
         _uiState.update { it.copy(isLoading = false, errorId = errorId) }

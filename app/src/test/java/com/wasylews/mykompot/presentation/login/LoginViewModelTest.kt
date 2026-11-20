@@ -21,6 +21,7 @@ import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.FakePaymentDueReminderScheduler
 import com.wasylews.mykompot.domain.FakeSessionKeepAliveScheduler
 import com.wasylews.mykompot.domain.model.LoginResult
+import com.wasylews.mykompot.domain.model.PortalFailure
 import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.TariffPlan
 import com.wasylews.mykompot.presentation.BaseViewModelTest
@@ -109,9 +110,9 @@ class LoginViewModelTest : BaseViewModelTest() {
     fun `login failure maps to error, can be cleared, and does not schedule keep alive or reminders`() = runTest {
         val cases = listOf(
             LoginResult.InvalidCredentials to R.string.error_invalid_credentials,
-            LoginResult.NetworkError to R.string.error_no_connection,
-            LoginResult.ServerError to R.string.error_server,
-            LoginResult.ParsingError to R.string.error_parsing,
+            LoginResult.Failed(PortalFailure.Network) to R.string.error_no_connection,
+            LoginResult.Failed(PortalFailure.Server) to R.string.error_server,
+            LoginResult.Failed(PortalFailure.Parse) to R.string.error_parsing,
         )
 
         cases.forEach { (result, expectedError) ->

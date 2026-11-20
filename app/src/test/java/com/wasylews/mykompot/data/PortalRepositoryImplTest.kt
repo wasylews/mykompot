@@ -22,6 +22,7 @@ import com.wasylews.mykompot.domain.model.Payment
 import com.wasylews.mykompot.domain.model.PaymentSource
 import com.wasylews.mykompot.domain.model.Payments
 import com.wasylews.mykompot.domain.model.PaymentsActionResult
+import com.wasylews.mykompot.domain.model.PortalFailure
 import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.RefreshResult
 import com.wasylews.mykompot.domain.model.TariffPlan
@@ -72,7 +73,7 @@ class PortalRepositoryImplTest {
         val repo = createPortalRepository(testScheduler, portalApi)
         val result = repo.login("user", "pass")
 
-        assertEquals(LoginResult.NetworkError, result)
+        assertEquals(LoginResult.Failed(PortalFailure.Network), result)
     }
 
     @Test
@@ -87,7 +88,7 @@ class PortalRepositoryImplTest {
         val repo = createPortalRepository(testScheduler, portalApi)
         val result = repo.login("user", "pass")
 
-        assertEquals(LoginResult.ServerError, result)
+        assertEquals(LoginResult.Failed(PortalFailure.Server), result)
     }
 
     @Test
@@ -177,7 +178,7 @@ class PortalRepositoryImplTest {
 
         val result = repo.refresh()
 
-        assertEquals(RefreshResult.Failed.Network, result)
+        assertEquals(RefreshResult.Failed(PortalFailure.Network), result)
         assertEquals(1, api.fetchCalls)
         repo.expectProfile(cachedProfile)
         repo.expectSession("test-session")
@@ -270,7 +271,7 @@ class PortalRepositoryImplTest {
 
         val result = repo.refresh()
 
-        assertEquals(RefreshResult.Failed.Server, result)
+        assertEquals(RefreshResult.Failed(PortalFailure.Server), result)
         repo.expectProfile(cachedProfile)
         repo.expectSession("test-session")
         assertEquals(cachedPayments, storage.paymentsFlow().first())
@@ -293,7 +294,7 @@ class PortalRepositoryImplTest {
 
         val result = repo.refresh()
 
-        assertEquals(RefreshResult.Failed.Server, result)
+        assertEquals(RefreshResult.Failed(PortalFailure.Server), result)
         assertEquals(1, api.fetchCalls)
         repo.expectProfile(cachedProfile)
         repo.expectSession("test-session")
@@ -317,7 +318,7 @@ class PortalRepositoryImplTest {
 
         val result = repo.refresh()
 
-        assertEquals(RefreshResult.Failed.Server, result)
+        assertEquals(RefreshResult.Failed(PortalFailure.Server), result)
         assertEquals(1, api.fetchCalls)
         repo.expectProfile(cachedProfile)
         repo.expectSession("test-session")
@@ -337,7 +338,7 @@ class PortalRepositoryImplTest {
 
         val result = repo.refresh()
 
-        assertEquals(RefreshResult.Failed.Parse, result)
+        assertEquals(RefreshResult.Failed(PortalFailure.Parse), result)
         assertEquals(1, api.fetchCalls)
         repo.expectProfile(cachedProfile)
         repo.expectSession("test-session")
@@ -354,7 +355,7 @@ class PortalRepositoryImplTest {
 
         val result = repo.refresh()
 
-        assertEquals(RefreshResult.Failed.Parse, result)
+        assertEquals(RefreshResult.Failed(PortalFailure.Parse), result)
         assertEquals(1, api.fetchCalls)
         repo.expectProfile(cachedProfile)
         repo.expectSession("test-session")
@@ -383,7 +384,7 @@ class PortalRepositoryImplTest {
 
         val result = repo.login("user", "pass")
 
-        assertEquals(LoginResult.ParsingError, result)
+        assertEquals(LoginResult.Failed(PortalFailure.Parse), result)
     }
 
     @Test
@@ -398,7 +399,7 @@ class PortalRepositoryImplTest {
 
         val result = repo.login("user", "pass")
 
-        assertEquals(LoginResult.ParsingError, result)
+        assertEquals(LoginResult.Failed(PortalFailure.Parse), result)
     }
 
     @Test
@@ -451,7 +452,7 @@ class PortalRepositoryImplTest {
 
         val result = repo.refreshTariffPlans()
 
-        assertEquals(TariffPlansActionResult.Failed.Server, result)
+        assertEquals(TariffPlansActionResult.Failed(PortalFailure.Server), result)
         repo.tariffPlansFlow().test {
             assertEquals(null, awaitItem())
         }
@@ -469,7 +470,7 @@ class PortalRepositoryImplTest {
 
         val result = repo.refreshTariffPlans()
 
-        assertEquals(TariffPlansActionResult.Failed.Network, result)
+        assertEquals(TariffPlansActionResult.Failed(PortalFailure.Network), result)
     }
 
     @Test
@@ -484,7 +485,7 @@ class PortalRepositoryImplTest {
 
         val result = repo.refreshTariffPlans()
 
-        assertEquals(TariffPlansActionResult.Failed.Parse, result)
+        assertEquals(TariffPlansActionResult.Failed(PortalFailure.Parse), result)
         repo.tariffPlansFlow().test {
             assertEquals(null, awaitItem())
         }
@@ -881,7 +882,7 @@ class PortalRepositoryPaymentsTest {
 
         val result = repo.refreshPayments()
 
-        assertEquals(PaymentsActionResult.Failed.Network, result)
+        assertEquals(PaymentsActionResult.Failed(PortalFailure.Network), result)
         repo.paymentsFlow().test {
             assertEquals(cached, awaitItem())
         }
@@ -905,7 +906,7 @@ class PortalRepositoryPaymentsTest {
 
         val result = repo.refreshPayments()
 
-        assertEquals(PaymentsActionResult.Failed.Server, result)
+        assertEquals(PaymentsActionResult.Failed(PortalFailure.Server), result)
         assertEquals("test-session", storage.sessionFlow().first())
         assertEquals(profile(), storage.profileFlow().first())
         assertEquals(cached, storage.paymentsFlow().first())

@@ -25,14 +25,7 @@ sealed interface PaymentsActionResult {
     data object Expired : PaymentsActionResult
 
     /** The operation failed without indicating session expiry. Cached payments are left intact. */
-    sealed interface Failed : PaymentsActionResult {
-        /** The request failed due to a connectivity or I/O problem. */
-        data object Network : Failed
-
-        /** The portal returned an unexpected, error, or unsuccessful response. */
-        data object Server : Failed
-
-        /** The response could not be parsed into usable payment entries. */
-        data object Parse : Failed
-    }
+    data class Failed(
+        val reason: PortalFailure,
+    ) : PaymentsActionResult
 }

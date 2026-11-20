@@ -31,6 +31,7 @@ import com.wasylews.mykompot.domain.model.PaymentsActionResult
 import com.wasylews.mykompot.domain.model.SessionState
 import com.wasylews.mykompot.presentation.payments.PaymentMethod
 import com.wasylews.mykompot.presentation.payments.paymentMethods
+import com.wasylews.mykompot.presentation.toErrorId
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -111,7 +112,7 @@ class PaymentsViewModel(
 
                     is PaymentsActionResult.Failed -> {
                         if (latestPayments.value?.items.isNullOrEmpty()) {
-                            paymentsErrorId.value = result.toErrorId()
+                            paymentsErrorId.value = result.reason.toErrorId()
                         }
                     }
                 }
@@ -137,7 +138,7 @@ class PaymentsViewModel(
                     -> Unit
 
                     is PaymentsActionResult.Failed -> {
-                        paymentsLoadMoreErrorId.value = result.toErrorId()
+                        paymentsLoadMoreErrorId.value = result.reason.toErrorId()
                     }
                 }
             } finally {
@@ -202,13 +203,5 @@ class PaymentsViewModel(
         val today = clock.now().toJavaInstant().atZone(zoneId).toLocalDate()
         val pattern = if (dateTime.year == today.year) "d MMM, HH:mm" else "d MMM yyyy, HH:mm"
         return dateTime.format(DateTimeFormatter.ofPattern(pattern, Locale.ENGLISH))
-    }
-
-    private fun PaymentsActionResult.Failed.toErrorId(): Int = when (this) {
-        PaymentsActionResult.Failed.Network -> R.string.error_no_connection
-
-        PaymentsActionResult.Failed.Server,
-        PaymentsActionResult.Failed.Parse,
-        -> R.string.error_server
     }
 }

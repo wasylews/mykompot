@@ -25,6 +25,7 @@ import com.wasylews.mykompot.domain.RefreshStatus
 import com.wasylews.mykompot.domain.model.AccountStatus
 import com.wasylews.mykompot.domain.model.RefreshResult
 import com.wasylews.mykompot.domain.model.SessionState
+import com.wasylews.mykompot.presentation.toErrorId
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -80,7 +81,7 @@ class HomeViewModel(
         refreshJob = viewModelScope.launch {
             try {
                 when (val result = refreshStatus()) {
-                    is RefreshResult.Failed -> errorId.value = result.toErrorId()
+                    is RefreshResult.Failed -> errorId.value = result.reason.toErrorId()
                     is RefreshResult.Updated, RefreshResult.Expired -> Unit
                 }
             } finally {
@@ -133,12 +134,4 @@ class HomeViewModel(
             nextChargeLabel = null,
         )
     }
-}
-
-private fun RefreshResult.Failed.toErrorId(): Int = when (this) {
-    RefreshResult.Failed.Network -> R.string.error_no_connection
-
-    RefreshResult.Failed.Server,
-    RefreshResult.Failed.Parse,
-    -> R.string.error_server
 }

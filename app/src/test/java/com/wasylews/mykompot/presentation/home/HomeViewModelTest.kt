@@ -22,6 +22,7 @@ import com.wasylews.mykompot.domain.ObserveSession
 import com.wasylews.mykompot.domain.ObserveStatus
 import com.wasylews.mykompot.domain.RefreshStatus
 import com.wasylews.mykompot.domain.model.AccountStatus
+import com.wasylews.mykompot.domain.model.PortalFailure
 import com.wasylews.mykompot.domain.model.RefreshResult
 import com.wasylews.mykompot.domain.model.SessionState
 import com.wasylews.mykompot.presentation.BaseViewModelTest
@@ -160,7 +161,7 @@ class HomeViewModelTest : BaseViewModelTest() {
     @Test
     fun `shows loading while refreshing then unknown with server error when no cached profile`() = runTest {
         // GIVEN no cached profile and a refresh that is still in progress
-        val refreshStatus = FakeRefreshStatus(result = RefreshResult.Failed.Server).apply {
+        val refreshStatus = FakeRefreshStatus(result = RefreshResult.Failed(PortalFailure.Server)).apply {
             pause()
         }
         val vm = createViewModel(
@@ -200,7 +201,7 @@ class HomeViewModelTest : BaseViewModelTest() {
     @Test
     fun `keeps content and shows server error when cached profile refresh fails`() = runTest {
         // GIVEN a cached profile and a refresh that fails with a server error
-        val refreshStatus = FakeRefreshStatus(result = RefreshResult.Failed.Server)
+        val refreshStatus = FakeRefreshStatus(result = RefreshResult.Failed(PortalFailure.Server))
 
         // WHEN
         val vm = createViewModel(refreshStatus = refreshStatus)
@@ -220,7 +221,7 @@ class HomeViewModelTest : BaseViewModelTest() {
     @Test
     fun `keeps content and shows connection error when cached profile refresh fails`() = runTest {
         // GIVEN a cached profile and a refresh that fails with a network error
-        val refreshStatus = FakeRefreshStatus(result = RefreshResult.Failed.Network)
+        val refreshStatus = FakeRefreshStatus(result = RefreshResult.Failed(PortalFailure.Network))
 
         // WHEN
         val vm = createViewModel(refreshStatus = refreshStatus)
@@ -292,7 +293,7 @@ class HomeViewModelTest : BaseViewModelTest() {
         advanceUntilIdle()
 
         // WHEN a background refresh fails
-        refreshStatus.result = RefreshResult.Failed.Network
+        refreshStatus.result = RefreshResult.Failed(PortalFailure.Network)
         vm.refresh()
         advanceUntilIdle()
 
@@ -312,7 +313,7 @@ class HomeViewModelTest : BaseViewModelTest() {
     fun `retry with no cached profile shows loading then content instead of stale error`() = runTest {
         // GIVEN a failed refresh with no cached profile
         val statusFlow = MutableStateFlow<AccountStatus?>(null)
-        val refreshStatus = FakeRefreshStatus(result = RefreshResult.Failed.Server)
+        val refreshStatus = FakeRefreshStatus(result = RefreshResult.Failed(PortalFailure.Server))
         val vm = createViewModel(
             observeStatus = ObserveStatus { statusFlow },
             refreshStatus = refreshStatus,
@@ -369,7 +370,7 @@ class HomeViewModelTest : BaseViewModelTest() {
     @Test
     fun `user refresh during failing refresh keeps running refresh error`() = runTest {
         // GIVEN a background refresh that is still in progress and will fail
-        val refreshStatus = FakeRefreshStatus(result = RefreshResult.Failed.Server).apply { pause() }
+        val refreshStatus = FakeRefreshStatus(result = RefreshResult.Failed(PortalFailure.Server)).apply { pause() }
         val vm = createViewModel(refreshStatus = refreshStatus)
         advanceUntilIdle()
         assertEquals(1, refreshStatus.calls)

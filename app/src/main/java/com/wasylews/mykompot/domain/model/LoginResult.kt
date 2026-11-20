@@ -26,12 +26,8 @@ sealed interface LoginResult {
     /** Credentials were rejected by the portal. */
     data object InvalidCredentials : LoginResult
 
-    /** The request failed due to a connectivity or I/O problem. */
-    data object NetworkError : LoginResult
-
-    /** The portal returned an unexpected or unsuccessful response. */
-    data object ServerError : LoginResult
-
-    /** The response could not be parsed into a usable profile/session. */
-    data object ParsingError : LoginResult
+    /** The request failed without indicating invalid credentials. */
+    data class Failed(
+        val reason: PortalFailure,
+    ) : LoginResult
 }

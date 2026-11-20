@@ -25,6 +25,7 @@ import com.wasylews.mykompot.domain.RefreshPayments
 import com.wasylews.mykompot.domain.model.PaymentSource
 import com.wasylews.mykompot.domain.model.Payments
 import com.wasylews.mykompot.domain.model.PaymentsActionResult
+import com.wasylews.mykompot.domain.model.PortalFailure
 import com.wasylews.mykompot.domain.model.SessionState
 import com.wasylews.mykompot.presentation.BaseViewModelTest
 import com.wasylews.mykompot.presentation.main.FakeObserveSession
@@ -306,7 +307,7 @@ class PaymentsViewModelTest : BaseViewModelTest() {
     fun `shows load more error and retries while keeping cached rows`() = runTest {
         // GIVEN payments with more pages and a failing load-more
         val observePayments = FakeObservePayments(paymentsWithPayment(hasMore = true))
-        val loadMorePayments = FakeLoadMorePayments().apply { result = PaymentsActionResult.Failed.Server }
+        val loadMorePayments = FakeLoadMorePayments().apply { result = PaymentsActionResult.Failed(PortalFailure.Server) }
         val vm = createViewModel(
             observePayments = observePayments,
             loadMorePayments = loadMorePayments,
@@ -342,7 +343,7 @@ class PaymentsViewModelTest : BaseViewModelTest() {
         // GIVEN a failed first-page refresh with no cached payments
         val observePayments = FakeObservePayments(null)
         val refreshPayments = FakeRefreshPayments().apply {
-            result = PaymentsActionResult.Failed.Server
+            result = PaymentsActionResult.Failed(PortalFailure.Server)
             pause()
         }
         val vm = createViewModel(
@@ -382,7 +383,7 @@ class PaymentsViewModelTest : BaseViewModelTest() {
         val vm = createViewModel(
             observePayments = FakeObservePayments(paymentsWithPayment()),
             refreshPayments = FakeRefreshPayments().apply {
-                result = PaymentsActionResult.Failed.Network
+                result = PaymentsActionResult.Failed(PortalFailure.Network)
             },
         )
         advanceUntilIdle()

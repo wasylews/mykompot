@@ -21,6 +21,7 @@ import com.wasylews.mykompot.domain.model.Payment
 import com.wasylews.mykompot.domain.model.PaymentSource
 import com.wasylews.mykompot.domain.model.Payments
 import com.wasylews.mykompot.domain.model.PaymentsActionResult
+import com.wasylews.mykompot.domain.model.PortalFailure
 import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.RefreshResult
 import com.wasylews.mykompot.domain.model.TariffPlan
@@ -61,21 +62,21 @@ class PortalRepositoryImpl(
     ): LoginResult = withContext(dispatcher) {
         return@withContext try {
             val response = api.login(username, password, PORTAL_LANGUAGE)
-            if (!response.isSuccessful) return@withContext LoginResult.ServerError
-            val page = response.body() ?: return@withContext LoginResult.ParsingError
+            if (!response.isSuccessful) return@withContext LoginResult.Failed(PortalFailure.Server)
+            val page = response.body() ?: return@withContext LoginResult.Failed(PortalFailure.Parse)
             if (page.error != null) {
                 return@withContext LoginResult.InvalidCredentials
             }
 
-            val profile = page.toProfile() ?: return@withContext LoginResult.ParsingError
-            val sid = response.sid() ?: page.sid ?: return@withContext LoginResult.ParsingError
+            val profile = page.toProfile() ?: return@withContext LoginResult.Failed(PortalFailure.Parse)
+            val sid = response.sid() ?: page.sid ?: return@withContext LoginResult.Failed(PortalFailure.Parse)
             localStorage.saveProfile(profile)
             localStorage.saveSession(sid)
             LoginResult.Success(profile)
         } catch (_: HttpException) {
-            LoginResult.ServerError
+            LoginResult.Failed(PortalFailure.Server)
         } catch (_: IOException) {
-            LoginResult.NetworkError
+            LoginResult.Failed(PortalFailure.Network)
         }
     }
 
@@ -122,16 +123,16 @@ class PortalRepositoryImpl(
                 return@withContext RefreshResult.Expired
             }
             val response = api.fetchProfile(session)
-            if (!response.isSuccessful) return@withContext RefreshResult.Failed.Server
+            if (!response.isSuccessful) return@withContext RefreshResult.Failed(PortalFailure.Server)
 
-            val page = response.body() ?: return@withContext RefreshResult.Failed.Parse
+            val page = response.body() ?: return@withContext RefreshResult.Failed(PortalFailure.Parse)
             if (page.isLoginPage) {
                 clearSessionCaches()
                 return@withContext RefreshResult.Expired
             }
-            if (page.error != null) return@withContext RefreshResult.Failed.Server
+            if (page.error != null) return@withContext RefreshResult.Failed(PortalFailure.Server)
 
-            val profile = page.toProfile() ?: return@withContext RefreshResult.Failed.Parse
+            val profile = page.toProfile() ?: return@withContext RefreshResult.Failed(PortalFailure.Parse)
             val sid = response.sid() ?: page.sid
             localStorage.saveProfile(profile)
             if (sid != null) {
@@ -139,9 +140,9 @@ class PortalRepositoryImpl(
             }
             RefreshResult.Updated(profile)
         } catch (_: HttpException) {
-            RefreshResult.Failed.Server
+            RefreshResult.Failed(PortalFailure.Server)
         } catch (_: IOException) {
-            RefreshResult.Failed.Network
+            RefreshResult.Failed(PortalFailure.Network)
         }
     }
 
@@ -159,9 +160,9 @@ class PortalRepositoryImpl(
                 ifModifiedSince = cached?.lastModified,
             )
             if (response.code() == 304) return@withContext TariffPlansActionResult.NotModified
-            if (!response.isSuccessful) return@withContext TariffPlansActionResult.Failed.Server
+            if (!response.isSuccessful) return@withContext TariffPlansActionResult.Failed(PortalFailure.Server)
 
-            val items = response.body()?.items ?: return@withContext TariffPlansActionResult.Failed.Parse
+            val items = response.body()?.items ?: return@withContext TariffPlansActionResult.Failed(PortalFailure.Parse)
             val plans = items
                 .filter { "міс" in it.price }
                 .map { item ->
@@ -182,9 +183,9 @@ class PortalRepositoryImpl(
             )
             TariffPlansActionResult.Success
         } catch (_: HttpException) {
-            TariffPlansActionResult.Failed.Server
+            TariffPlansActionResult.Failed(PortalFailure.Server)
         } catch (_: IOException) {
-            TariffPlansActionResult.Failed.Network
+            TariffPlansActionResult.Failed(PortalFailure.Network)
         }
     }
 
@@ -214,35 +215,35 @@ class PortalRepositoryImpl(
             else -> {
                 val response = api.fetchFees(session, pg)
                 when {
-                    !response.isSuccessful -> PaymentsActionResult.Failed.Server
+                    !response.isSuccessful -> PaymentsActionResult.Failed(PortalFailure.Server)
                     else -> handleFeesResponse(response.body(), append)
                 }
             }
         }
     } catch (_: HttpException) {
-        PaymentsActionResult.Failed.Server
+        PaymentsActionResult.Failed(PortalFailure.Server)
     } catch (_: IOException) {
-        PaymentsActionResult.Failed.Network
+        PaymentsActionResult.Failed(PortalFailure.Network)
     }
 
     private suspend fun handleFeesResponse(
         page: FeesPageResponse?,
         append: Boolean,
     ): PaymentsActionResult = when {
-        page == null -> PaymentsActionResult.Failed.Parse
+        page == null -> PaymentsActionResult.Failed(PortalFailure.Parse)
 
         page.isLoginPage -> {
             clearSessionCaches()
             PaymentsActionResult.Expired
         }
 
-        page.error != null -> PaymentsActionResult.Failed.Server
+        page.error != null -> PaymentsActionResult.Failed(PortalFailure.Server)
 
         else -> {
             val catalog = localStorage.tariffPlansFlow().first()?.plans.orEmpty()
             val payments = page.items.mapNotNull { it.toDomain(catalog) }
             if (page.items.isNotEmpty() && payments.isEmpty()) {
-                PaymentsActionResult.Failed.Parse
+                PaymentsActionResult.Failed(PortalFailure.Parse)
             } else {
                 val merged = if (append) {
                     localStorage.paymentsFlow().first()?.items.orEmpty() + payments

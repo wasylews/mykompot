@@ -16,6 +16,7 @@
 
 package com.wasylews.mykompot.domain
 
+import com.wasylews.mykompot.domain.model.PortalFailure
 import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.RefreshResult
 import com.wasylews.mykompot.domain.model.TariffPlan
@@ -68,14 +69,14 @@ class RefreshStatusUseCaseTest {
 
     @Test
     fun `does not change keep alive or reminders when refresh fails`() = runTest {
-        val repository = FakePortalRepository(refreshResult = RefreshResult.Failed.Network)
+        val repository = FakePortalRepository(refreshResult = RefreshResult.Failed(PortalFailure.Network))
         val scheduler = FakeSessionKeepAliveScheduler()
         val paymentScheduler = FakePaymentDueReminderScheduler()
         val useCase = RefreshStatusUseCase(repository, scheduler, paymentScheduler)
 
         val result = useCase()
 
-        assertEquals(RefreshResult.Failed.Network, result)
+        assertEquals(RefreshResult.Failed(PortalFailure.Network), result)
         assertEquals(0, scheduler.scheduleCalls)
         assertEquals(0, scheduler.cancelCalls)
         assertEquals(0, paymentScheduler.scheduleCalls)
