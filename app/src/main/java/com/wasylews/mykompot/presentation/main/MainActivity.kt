@@ -144,7 +144,6 @@ class MainActivity : ComponentActivity() {
             onLoadMorePayments = paymentsViewModel::loadMorePayments,
             onRetryLoadMorePayments = paymentsViewModel::retryLoadMorePayments,
             onRetryPayments = paymentsViewModel::refresh,
-            onErrorConsumed = homeViewModel::clearError,
         )
     }
 

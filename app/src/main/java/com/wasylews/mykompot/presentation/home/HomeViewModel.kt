@@ -69,10 +69,6 @@ class HomeViewModel(
             .launchIn(viewModelScope)
     }
 
-    fun clearError() {
-        errorId.value = null
-    }
-
     fun refresh(userInitiated: Boolean = false) {
         if (userInitiated) {
             isRefreshing.value = true

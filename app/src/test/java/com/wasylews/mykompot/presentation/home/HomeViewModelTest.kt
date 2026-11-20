@@ -238,29 +238,6 @@ class HomeViewModelTest : BaseViewModelTest() {
     }
 
     @Test
-    fun `clearError clears refresh error`() = runTest {
-        // GIVEN a cached profile and a failed refresh
-        val vm = createViewModel(
-            refreshStatus = FakeRefreshStatus(result = RefreshResult.Failed.Server),
-        )
-        advanceUntilIdle()
-
-        // WHEN
-        vm.clearError()
-        advanceUntilIdle()
-
-        // THEN
-        assertEquals(
-            HomeUiState(
-                content = allGoodContent,
-                isRefreshing = false,
-                errorId = null,
-            ),
-            vm.uiState.value,
-        )
-    }
-
-    @Test
     fun `pull to refresh shows indicator while refreshing`() = runTest {
         // GIVEN a cached profile and an initial background refresh completed
         val refreshStatus = FakeRefreshStatus().apply { pause() }

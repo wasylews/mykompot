@@ -39,6 +39,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -74,13 +75,16 @@ fun StatusCard(
     when (val content = state.content) {
         is HomeContent.Content -> ContentCard(
             state = content,
+            errorId = state.errorId,
             modifier = modifier,
             onPayClick = onPayClick,
             onTariffClick = onTariffClick,
+            onRetry = onRetry,
         )
 
         HomeContent.Unknown -> UnknownCard(
             modifier = modifier,
+            errorId = state.errorId,
             onRetry = onRetry,
         )
 
@@ -93,9 +97,11 @@ fun StatusCard(
 @Composable
 private fun ContentCard(
     state: HomeContent.Content,
+    @StringRes errorId: Int?,
     modifier: Modifier,
     onPayClick: () -> Unit,
     onTariffClick: () -> Unit,
+    onRetry: () -> Unit,
 ) {
     val palettes = LocalStatusPalettes.current
     val statusColors = statusColorsFor(state.account.state, palettes)
@@ -116,6 +122,13 @@ private fun ContentCard(
                 message = state.message,
                 onColor = statusColors.on,
             )
+            if (errorId != null) {
+                RefreshError(
+                    errorId = errorId,
+                    onColor = statusColors.on,
+                    onRetry = onRetry,
+                )
+            }
             NextChargeBlock(
                 state = state,
                 onColor = statusColors.on,
@@ -140,6 +153,31 @@ private fun ContentCard(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun RefreshError(
+    @StringRes errorId: Int,
+    onColor: Color,
+    onRetry: () -> Unit,
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource(errorId),
+            style = MaterialTheme.typography.bodySmall,
+            color = onColor,
+            modifier = Modifier.weight(1f),
+        )
+        TextButton(
+            onClick = onRetry,
+            colors = ButtonDefaults.textButtonColors(contentColor = onColor),
+        ) {
+            Text(text = stringResource(R.string.retry))
         }
     }
 }
@@ -208,6 +246,7 @@ private fun StatusCardSkeleton(modifier: Modifier = Modifier) {
 @Composable
 private fun UnknownCard(
     modifier: Modifier,
+    @StringRes errorId: Int?,
     onRetry: () -> Unit,
 ) {
     val palettes = LocalStatusPalettes.current
@@ -229,6 +268,13 @@ private fun UnknownCard(
                 message = R.string.status_unknown_message,
                 onColor = onColor,
             )
+            if (errorId != null) {
+                Text(
+                    text = stringResource(errorId),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = onColor.copy(alpha = 0.88f),
+                )
+            }
             Button(
                 onClick = onRetry,
                 modifier = Modifier.fillMaxWidth(),

@@ -23,6 +23,7 @@ data class HomeUiState(
     val content: HomeContent = HomeContent.Loading,
     /** Whether a user-initiated pull-to-refresh gesture is in progress. */
     val isRefreshing: Boolean = false,
+    /** Failure reason for the latest refresh, shown inline on the status card. */
     @StringRes val errorId: Int? = null,
 )
 

@@ -35,8 +35,9 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
             // THEN I see the cached status without losing it
             assertShows(R.string.status_all_good)
             assertDoesNotShow(R.string.status_unknown)
-            // AND a non-blocking refresh error
+            // AND a non-blocking refresh error with a way to retry without losing the status
             assertShowsRefreshError(R.string.error_server)
+            assertShows(R.string.retry)
             assertRefreshRequested()
         }
     }
@@ -130,8 +131,9 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
             assertShowsHomeLoading()
             assertDoesNotShow(R.string.status_unknown)
 
-            // AND the unknown status once refresh fails with no cache
+            // AND the unknown status with the failure reason once refresh fails with no cache
             assertShows(R.string.status_unknown)
+            assertShowsRefreshError(R.string.error_server)
             assertRefreshRequested()
         }
     }
@@ -259,10 +261,11 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
             givenServerIsUnreachable()
             pullToRefresh()
 
-            // THEN the cached status stays and I see a non-blocking error
+            // THEN the cached status stays with an inline error and a retry
             assertShows(R.string.status_all_good)
             assertDoesNotShow(R.string.status_unknown)
             assertShowsRefreshError(R.string.error_no_connection)
+            assertShows(R.string.retry)
         }
     }
 }

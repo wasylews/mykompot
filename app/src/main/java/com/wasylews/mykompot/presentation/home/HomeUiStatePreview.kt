@@ -78,27 +78,23 @@ internal val previewSuspendedState = HomeUiState(
 /** Renders one preview per [HomeUiState] variant. */
 class HomeUiStatePreviewParameterProvider : PreviewParameterProvider<HomeUiState> {
     private val states = listOf(
-        previewAllGoodState,
-        previewPaymentDueState(),
-        previewSuspendedState,
-        HomeUiState(content = HomeContent.Loading),
-        HomeUiState(content = HomeContent.Unknown),
+        "All good" to previewAllGoodState,
+        "Payment due" to previewPaymentDueState(),
+        "Suspended" to previewSuspendedState,
+        "Cached status refresh failed" to previewAllGoodState.copy(
+            errorId = R.string.error_no_connection,
+        ),
+        "Loading" to HomeUiState(content = HomeContent.Loading),
+        "Unknown" to HomeUiState(
+            content = HomeContent.Unknown,
+            errorId = R.string.error_server,
+        ),
     )
 
     override val values: Sequence<HomeUiState>
-        get() = states.asSequence()
+        get() = states.asSequence().map { it.second }
 
-    override fun getDisplayName(index: Int): String = when (val content = states[index].content) {
-        is HomeContent.Content -> when (content.account.state) {
-            AccountStatus.State.ALL_GOOD -> "All good"
-            AccountStatus.State.PAYMENT_DUE -> "Payment due"
-            AccountStatus.State.SUSPENDED -> "Suspended"
-        }
-
-        HomeContent.Loading -> "Loading"
-
-        HomeContent.Unknown -> "Unknown"
-    }
+    override fun getDisplayName(index: Int): String = states[index].first
 }
 
 /** Renders every preview in light and dark mode. */
