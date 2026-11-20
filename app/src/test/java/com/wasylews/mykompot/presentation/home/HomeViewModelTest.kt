@@ -18,13 +18,16 @@ package com.wasylews.mykompot.presentation.home
 
 import app.cash.turbine.test
 import com.wasylews.mykompot.R
+import com.wasylews.mykompot.domain.ObserveSession
 import com.wasylews.mykompot.domain.ObserveStatus
 import com.wasylews.mykompot.domain.RefreshStatus
 import com.wasylews.mykompot.domain.model.AccountStatus
 import com.wasylews.mykompot.domain.model.RefreshResult
+import com.wasylews.mykompot.domain.model.SessionState
 import com.wasylews.mykompot.presentation.BaseViewModelTest
 import com.wasylews.mykompot.presentation.FakeObserveStatusUseCase
 import com.wasylews.mykompot.presentation.FakeRefreshStatus
+import com.wasylews.mykompot.presentation.main.FakeObserveSession
 import com.wasylews.mykompot.presentation.profile
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -56,7 +59,8 @@ class HomeViewModelTest : BaseViewModelTest() {
     private fun createViewModel(
         observeStatus: ObserveStatus = FakeObserveStatusUseCase(allGoodStatus),
         refreshStatus: RefreshStatus = FakeRefreshStatus(),
-    ) = HomeViewModel(observeStatus, refreshStatus)
+        observeSession: ObserveSession = FakeObserveSession(SessionState.LoggedIn),
+    ) = HomeViewModel(observeStatus, refreshStatus, observeSession)
 
     @Test
     fun `shows cached content after refresh on init`() = runTest {

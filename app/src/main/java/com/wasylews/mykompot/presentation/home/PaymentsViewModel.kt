@@ -22,11 +22,13 @@ import androidx.lifecycle.viewModelScope
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.LoadMorePayments
 import com.wasylews.mykompot.domain.ObservePayments
+import com.wasylews.mykompot.domain.ObserveSession
 import com.wasylews.mykompot.domain.RefreshPayments
 import com.wasylews.mykompot.domain.model.Payment
 import com.wasylews.mykompot.domain.model.PaymentSource
 import com.wasylews.mykompot.domain.model.Payments
 import com.wasylews.mykompot.domain.model.PaymentsActionResult
+import com.wasylews.mykompot.domain.model.SessionState
 import com.wasylews.mykompot.presentation.payments.PaymentMethod
 import com.wasylews.mykompot.presentation.payments.paymentMethods
 import kotlinx.coroutines.CancellationException
@@ -35,6 +37,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
@@ -50,6 +54,7 @@ class PaymentsViewModel(
     observePayments: ObservePayments,
     private val refreshPayments: RefreshPayments,
     private val loadMorePaymentsUseCase: LoadMorePayments,
+    observeSession: ObserveSession,
     private val clock: Clock = Clock.System,
     private val zoneId: ZoneId = ZoneId.systemDefault(),
 ) : ViewModel() {
@@ -81,7 +86,13 @@ class PaymentsViewModel(
     ) { errorId, streamErrorId -> errorId ?: streamErrorId }
 
     init {
-        refresh()
+        observeSession.sessionStateFlow()
+            .onEach { state ->
+                if (state == SessionState.LoggedIn) {
+                    refresh()
+                }
+            }
+            .launchIn(viewModelScope)
     }
 
     fun refresh() {

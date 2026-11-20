@@ -19,12 +19,15 @@ package com.wasylews.mykompot.presentation.home
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.LoadMorePayments
 import com.wasylews.mykompot.domain.ObservePayments
+import com.wasylews.mykompot.domain.ObserveSession
 import com.wasylews.mykompot.domain.RefreshPayments
 import com.wasylews.mykompot.domain.model.Payment
 import com.wasylews.mykompot.domain.model.PaymentSource
 import com.wasylews.mykompot.domain.model.Payments
 import com.wasylews.mykompot.domain.model.PaymentsActionResult
+import com.wasylews.mykompot.domain.model.SessionState
 import com.wasylews.mykompot.presentation.BaseViewModelTest
+import com.wasylews.mykompot.presentation.main.FakeObserveSession
 import com.wasylews.mykompot.presentation.payments.paymentMethods
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flow
@@ -52,10 +55,12 @@ class PaymentsViewModelTest : BaseViewModelTest() {
         observePayments: ObservePayments = FakeObservePayments(),
         refreshPayments: RefreshPayments = FakeRefreshPayments(),
         loadMorePayments: LoadMorePayments = FakeLoadMorePayments(),
+        observeSession: ObserveSession = FakeObserveSession(SessionState.LoggedIn),
     ) = PaymentsViewModel(
         observePayments = observePayments,
         refreshPayments = refreshPayments,
         loadMorePaymentsUseCase = loadMorePayments,
+        observeSession = observeSession,
         clock = fixedClock,
         zoneId = zoneId,
     )

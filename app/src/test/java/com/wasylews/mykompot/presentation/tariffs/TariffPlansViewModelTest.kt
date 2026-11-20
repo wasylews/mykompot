@@ -18,14 +18,17 @@ package com.wasylews.mykompot.presentation.tariffs
 
 import app.cash.turbine.test
 import com.wasylews.mykompot.R
+import com.wasylews.mykompot.domain.ObserveSession
 import com.wasylews.mykompot.domain.ObserveStatus
 import com.wasylews.mykompot.domain.ObserveTariffPlans
 import com.wasylews.mykompot.domain.RefreshTariffPlans
 import com.wasylews.mykompot.domain.model.AccountStatus
+import com.wasylews.mykompot.domain.model.SessionState
 import com.wasylews.mykompot.domain.model.TariffPlan
 import com.wasylews.mykompot.domain.model.TariffPlansActionResult
 import com.wasylews.mykompot.presentation.BaseViewModelTest
 import com.wasylews.mykompot.presentation.FakeObserveStatusUseCase
+import com.wasylews.mykompot.presentation.main.FakeObserveSession
 import com.wasylews.mykompot.presentation.profile
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -54,7 +57,8 @@ class TariffPlansViewModelTest : BaseViewModelTest() {
         observeStatus: ObserveStatus = FakeObserveStatusUseCase(status),
         observeTariffPlans: ObserveTariffPlans = FakeObserveTariffPlans(plans),
         refreshTariffPlans: RefreshTariffPlans = FakeRefreshTariffPlans(),
-    ) = TariffPlansViewModel(observeStatus, observeTariffPlans, refreshTariffPlans)
+        observeSession: ObserveSession = FakeObserveSession(SessionState.LoggedIn),
+    ) = TariffPlansViewModel(observeStatus, observeTariffPlans, refreshTariffPlans, observeSession)
 
     @Test
     fun `refreshes tariff plans on init and exposes plans with selection`() = runTest {
