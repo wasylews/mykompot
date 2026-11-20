@@ -16,12 +16,12 @@
 
 package com.wasylews.mykompot.presentation.home
 
+import com.wasylews.mykompot.PaymentFixtures
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.LoadMorePayments
 import com.wasylews.mykompot.domain.ObservePayments
 import com.wasylews.mykompot.domain.ObserveSession
 import com.wasylews.mykompot.domain.RefreshPayments
-import com.wasylews.mykompot.domain.model.Payment
 import com.wasylews.mykompot.domain.model.PaymentSource
 import com.wasylews.mykompot.domain.model.Payments
 import com.wasylews.mykompot.domain.model.PaymentsActionResult
@@ -52,15 +52,8 @@ class PaymentsViewModelTest : BaseViewModelTest() {
     }
     private val zoneId = ZoneId.of("UTC")
 
-    private fun payment() = Payment(
-        dateTime = LocalDateTime.of(2026, 10, 1, 10, 5),
-        amount = 300,
-        tariffName = "Standart 100",
-        source = PaymentSource.PRIVAT24,
-    )
-
     private fun paymentsWithPayment(hasMore: Boolean = false) = Payments(
-        items = listOf(payment()),
+        items = listOf(PaymentFixtures.payment()),
         hasMore = hasMore,
     )
 
@@ -111,14 +104,7 @@ class PaymentsViewModelTest : BaseViewModelTest() {
         // WHEN the cached payments arrive during the refresh
         paymentsFlow.emit(
             Payments(
-                items = listOf(
-                    Payment(
-                        dateTime = LocalDateTime.of(2026, 10, 1, 10, 5),
-                        amount = 300,
-                        tariffName = "Standart 100",
-                        source = PaymentSource.PRIVAT24,
-                    ),
-                ),
+                items = listOf(PaymentFixtures.payment()),
                 hasMore = false,
             ),
         )
@@ -137,22 +123,15 @@ class PaymentsViewModelTest : BaseViewModelTest() {
         // GIVEN payments from different sources and years
         val payments = Payments(
             items = listOf(
-                Payment(
-                    dateTime = LocalDateTime.of(2026, 10, 1, 10, 5),
-                    amount = 300,
-                    tariffName = "Standart 100",
-                    source = PaymentSource.PRIVAT24,
-                ),
-                Payment(
+                PaymentFixtures.payment(),
+                PaymentFixtures.payment(
                     dateTime = LocalDateTime.of(2024, 10, 15, 9, 39),
                     amount = 250,
                     tariffName = "Econom 50",
                     source = PaymentSource.EASYPAY,
                 ),
-                Payment(
+                PaymentFixtures.payment(
                     dateTime = LocalDateTime.of(2026, 8, 6, 0, 0),
-                    amount = 300,
-                    tariffName = "Standart 100",
                     source = PaymentSource.UNKNOWN,
                 ),
             ),

@@ -16,41 +16,19 @@
 
 package com.wasylews.mykompot.ui.components
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.unit.dp
+import com.wasylews.mykompot.ui.ktx.shimmer
 
 @Composable
-fun Modifier.shimmer(): Modifier {
-    val transition = rememberInfiniteTransition(label = "shimmer")
-    val progress by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1200, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "shimmerProgress",
-    )
-    val base = MaterialTheme.colorScheme.surfaceContainerHighest
-    val highlight = MaterialTheme.colorScheme.surfaceContainerLow
-    return this.drawWithContent {
-        val width = size.width
-        val brush = Brush.linearGradient(
-            colors = listOf(base, highlight, base),
-            start = Offset(x = -width + 2 * width * progress, y = 0f),
-            end = Offset(x = 2 * width * progress, y = 0f),
-        )
-        drawRect(brush = brush)
-    }
+fun Shimmer(
+    modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(6.dp),
+) {
+    Box(modifier.clip(shape).shimmer())
 }

@@ -18,7 +18,6 @@ package com.wasylews.mykompot.presentation.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -34,10 +33,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.wasylews.mykompot.presentation.home.ktx.groupedCardBorder
-import com.wasylews.mykompot.ui.components.shimmer
+import com.wasylews.mykompot.ui.components.Shimmer
 import com.wasylews.mykompot.ui.theme.Spacing
 
 @Composable
@@ -89,7 +87,10 @@ private fun PaymentRowSkeletonContent() {
             .padding(horizontal = Spacing.md, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        SkeletonBlock(modifier = Modifier.size(40.dp), corner = 12.dp)
+        Shimmer(
+            modifier = Modifier.size(40.dp),
+            shape = RoundedCornerShape(12.dp),
+        )
         Spacer(modifier = Modifier.width(Spacing.md))
         PaymentRowSkeletonDetails(modifier = Modifier.weight(1f))
         PaymentRowSkeletonAmount()
@@ -99,27 +100,15 @@ private fun PaymentRowSkeletonContent() {
 @Composable
 private fun PaymentRowSkeletonDetails(modifier: Modifier = Modifier) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        SkeletonBlock(modifier = Modifier.fillMaxWidth(0.5f).height(14.dp))
-        SkeletonBlock(modifier = Modifier.fillMaxWidth(0.35f).height(12.dp))
+        Shimmer(modifier = Modifier.fillMaxWidth(0.5f).height(14.dp))
+        Shimmer(modifier = Modifier.fillMaxWidth(0.35f).height(12.dp))
     }
 }
 
 @Composable
 private fun PaymentRowSkeletonAmount() {
     Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        SkeletonBlock(modifier = Modifier.width(56.dp).height(14.dp))
-        SkeletonBlock(modifier = Modifier.width(64.dp).height(12.dp))
+        Shimmer(modifier = Modifier.width(56.dp).height(14.dp))
+        Shimmer(modifier = Modifier.width(64.dp).height(12.dp))
     }
-}
-
-@Composable
-private fun SkeletonBlock(
-    modifier: Modifier = Modifier,
-    corner: Dp = 6.dp,
-) {
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(corner))
-            .shimmer(),
-    )
 }

@@ -74,7 +74,7 @@ class PaymentsListTest : BaseAcceptanceTest() {
         // GIVEN cached payments and a slow background refresh
         givenStoredSession(profile = allGoodProfile())
         givenStoredTariffPlans()
-        givenStoredPayments(Payments(items = listOf(payment()), hasMore = false))
+        givenStoredPayments(Payments(items = listOf(PaymentFixtures.payment()), hasMore = false))
         givenHomeResponses(feesDelayMillis = 3_000)
 
         launch().use {

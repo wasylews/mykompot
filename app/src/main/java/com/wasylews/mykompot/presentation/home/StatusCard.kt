@@ -54,7 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.model.AccountStatus
-import com.wasylews.mykompot.ui.components.shimmer
+import com.wasylews.mykompot.ui.components.Shimmer
 import com.wasylews.mykompot.ui.theme.LocalStatusPalettes
 import com.wasylews.mykompot.ui.theme.MyKompotTheme
 import com.wasylews.mykompot.ui.theme.Spacing
@@ -194,50 +194,21 @@ private fun StatusCardSkeleton(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(22.dp),
             verticalArrangement = Arrangement.spacedBy(Spacing.md),
         ) {
-            Box(
-                modifier = Modifier
-                    .size(width = 96.dp, height = 28.dp)
-                    .clip(RoundedCornerShape(999.dp))
-                    .shimmer(),
+            Shimmer(
+                modifier = Modifier.size(width = 96.dp, height = 28.dp),
+                shape = RoundedCornerShape(999.dp),
             )
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(0.7f)
-                    .height(36.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .shimmer(),
+            Shimmer(
+                modifier = Modifier.fillMaxWidth(0.7f).height(36.dp),
+                shape = RoundedCornerShape(12.dp),
             )
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(0.95f)
-                        .height(14.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .shimmer(),
-                )
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(0.75f)
-                        .height(14.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .shimmer(),
-                )
+                Shimmer(modifier = Modifier.fillMaxWidth(0.95f).height(14.dp))
+                Shimmer(modifier = Modifier.fillMaxWidth(0.75f).height(14.dp))
             }
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(16.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .shimmer(),
-                )
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(0.85f)
-                        .height(16.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .shimmer(),
-                )
+                Shimmer(modifier = Modifier.fillMaxWidth().height(16.dp))
+                Shimmer(modifier = Modifier.fillMaxWidth(0.85f).height(16.dp))
             }
         }
     }

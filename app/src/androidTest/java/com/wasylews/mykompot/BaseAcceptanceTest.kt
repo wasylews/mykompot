@@ -43,8 +43,6 @@ import com.wasylews.mykompot.data.model.PaymentsEntity
 import com.wasylews.mykompot.data.model.ProfileEntity
 import com.wasylews.mykompot.data.model.TariffPlansEntity
 import com.wasylews.mykompot.domain.NotificationsPermission
-import com.wasylews.mykompot.domain.model.Payment
-import com.wasylews.mykompot.domain.model.PaymentSource
 import com.wasylews.mykompot.domain.model.Payments
 import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.TariffPlan
@@ -74,7 +72,6 @@ import org.koin.dsl.module
 import org.koin.test.KoinTest
 import org.koin.test.get
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -149,13 +146,6 @@ abstract class BaseAcceptanceTest : KoinTest {
     protected fun givenStoredPayments(payments: Payments) = runBlocking {
         get<LocalStorage>().savePayments(payments)
     }
-
-    protected fun payment(dateTime: LocalDateTime = LocalDateTime.of(2026, 10, 1, 10, 5)) = Payment(
-        dateTime = dateTime,
-        amount = 300,
-        tariffName = "Standart 100",
-        source = PaymentSource.PRIVAT24,
-    )
 
     protected fun givenPaymentDueProfileStored() = givenStoredSession(profile = paymentDueProfile())
 
@@ -325,14 +315,11 @@ abstract class BaseAcceptanceTest : KoinTest {
     }
 
     protected fun assertNoAdditionalProfileRequest(timeoutMillis: Long = 1_000) {
-        val baseline = dispatcher.recordedRequests().count { it.isProfileRefresh() }
-        val deadline = System.currentTimeMillis() + timeoutMillis
-        while (System.currentTimeMillis() < deadline) {
-            if (dispatcher.recordedRequests().count { it.isProfileRefresh() } > baseline) {
-                fail("Expected no additional profile refresh request")
-            }
-            Thread.sleep(50)
+        val baseline = countRequests { it.isProfileRefresh() }
+        val additionalRequest = awaitRequestCondition(timeoutMillis) {
+            countRequests { it.isProfileRefresh() } > baseline
         }
+        if (additionalRequest) fail("Expected no additional profile refresh request")
     }
 
     protected fun assertPlansRefreshRequested() {
@@ -345,14 +332,25 @@ abstract class BaseAcceptanceTest : KoinTest {
         expected: Int,
         timeoutMillis: Long = 20_000,
     ) {
+        awaitRequestCondition(timeoutMillis) { countRequests(predicate) >= expected }
+        val actual = countRequests(predicate)
+        if (actual < expected) {
+            fail("Expected at least $expected matching requests but found $actual")
+        }
+    }
+
+    private fun countRequests(predicate: (RecordedRequest) -> Boolean): Int = dispatcher.recordedRequests().count(predicate)
+
+    private fun awaitRequestCondition(
+        timeoutMillis: Long,
+        condition: () -> Boolean,
+    ): Boolean {
         val deadline = System.currentTimeMillis() + timeoutMillis
-        var actual = 0
         while (System.currentTimeMillis() < deadline) {
-            actual = dispatcher.recordedRequests().count(predicate)
-            if (actual >= expected) return
+            if (condition()) return true
             Thread.sleep(50)
         }
-        fail("Expected at least $expected matching requests but found $actual")
+        return false
     }
 
     private fun RecordedRequest.isProfileRefresh(): Boolean = url.encodedPath.contains("index.cgi") &&
