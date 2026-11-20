@@ -16,6 +16,7 @@
 
 package com.wasylews.mykompot.presentation.home
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -23,6 +24,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -141,14 +143,20 @@ private fun HomeContent(
                 .testTag(HOME_LIST_TEST_TAG),
             contentPadding = PaddingValues(horizontal = Spacing.lg, vertical = Spacing.lg),
         ) {
-            item(key = HOME_STATUS_KEY) {
-                StatusCard(
-                    state = state,
-                    onPayClick = onPayClick,
-                    onTariffClick = onTariffClick,
-                    onRetry = onRetry,
-                    modifier = Modifier.padding(bottom = Spacing.md),
-                )
+            stickyHeader(key = HOME_STATUS_KEY) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surface)
+                        .padding(bottom = Spacing.md),
+                ) {
+                    StatusCard(
+                        state = state,
+                        onPayClick = onPayClick,
+                        onTariffClick = onTariffClick,
+                        onRetry = onRetry,
+                    )
+                }
             }
             paymentsSection(
                 paymentsState = paymentsState,

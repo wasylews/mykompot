@@ -122,7 +122,7 @@ class PaymentsListTest : BaseAcceptanceTest() {
     }
 
     @Test
-    fun statusCardScrollsAwayWithPayments() {
+    fun keepsStatusCardPinnedWhileScrollingPayments() {
         // GIVEN a stored session, tariff catalog, profile and payments from server
         givenStoredSession(profile = allGoodProfile())
         givenStoredTariffPlans()
@@ -135,8 +135,8 @@ class PaymentsListTest : BaseAcceptanceTest() {
             // WHEN I scroll past the status card
             composeRule.onNodeWithTag(HOME_LIST_TEST_TAG).performTouchInput { swipeUp() }
 
-            // THEN the status card scrolls away instead of staying pinned
-            assertDoesNotShow(R.string.status_all_good)
+            // THEN the status card stays pinned above the payments
+            assertShows(R.string.status_all_good)
         }
     }
 
