@@ -17,6 +17,7 @@
 package com.wasylews.mykompot.domain
 
 import com.wasylews.mykompot.domain.model.AccountStatus
+import com.wasylews.mykompot.domain.model.PaymentDueThreshold
 import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.repository.PortalRepository
 import kotlinx.coroutines.flow.Flow
@@ -36,7 +37,7 @@ fun interface ObserveStatus {
 /**
  * Derives [AccountStatus] from the cached [com.wasylews.mykompot.domain.model.Profile]:
  * inactive accounts are [AccountStatus.State.SUSPENDED]; active accounts with a next payment due
- * within [PAYMENT_DUE_WINDOW_DAYS] days (including today/overdue) are
+ * within the [PaymentDueThreshold.THREE_DAYS_BEFORE] window (including today/overdue) are
  * [AccountStatus.State.PAYMENT_DUE]; others are [AccountStatus.State.ALL_GOOD].
  */
 @Factory
@@ -56,13 +57,9 @@ class ObserveStatusUseCase(
         val daysLeft = nextPaymentDate?.let { ChronoUnit.DAYS.between(today, it) }
         val state = when {
             !isActive -> AccountStatus.State.SUSPENDED
-            daysLeft != null && daysLeft <= PAYMENT_DUE_WINDOW_DAYS -> AccountStatus.State.PAYMENT_DUE
+            daysLeft != null && daysLeft <= PaymentDueThreshold.THREE_DAYS_BEFORE.daysBeforeDue -> AccountStatus.State.PAYMENT_DUE
             else -> AccountStatus.State.ALL_GOOD
         }
         return AccountStatus(state = state, profile = this, daysLeft = daysLeft)
-    }
-
-    private companion object {
-        const val PAYMENT_DUE_WINDOW_DAYS = 3L
     }
 }

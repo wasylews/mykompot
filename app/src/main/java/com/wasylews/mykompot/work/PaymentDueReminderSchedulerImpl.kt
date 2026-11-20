@@ -89,8 +89,16 @@ class PaymentDueReminderSchedulerImpl(
         }
 
         return buildList {
-            add(PaymentDueThreshold.THREE_DAYS_BEFORE to dueDate.minusDays(3).atTime(reminderTime).atZone(zoneId))
-            add(PaymentDueThreshold.ONE_DAY_BEFORE to dueDate.minusDays(1).atTime(reminderTime).atZone(zoneId))
+            add(
+                PaymentDueThreshold.THREE_DAYS_BEFORE to dueDate
+                    .minusDays(PaymentDueThreshold.THREE_DAYS_BEFORE.daysBeforeDue)
+                    .atTime(reminderTime).atZone(zoneId),
+            )
+            add(
+                PaymentDueThreshold.ONE_DAY_BEFORE to dueDate
+                    .minusDays(PaymentDueThreshold.ONE_DAY_BEFORE.daysBeforeDue)
+                    .atTime(reminderTime).atZone(zoneId),
+            )
             add(PaymentDueThreshold.DUE_DAY to dueDate.atTime(reminderTime).atZone(zoneId))
         }
     }
