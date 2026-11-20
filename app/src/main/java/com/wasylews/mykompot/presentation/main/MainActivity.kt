@@ -36,6 +36,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.wasylews.mykompot.domain.NotificationsPermission
 import com.wasylews.mykompot.domain.model.SessionState
+import com.wasylews.mykompot.presentation.home.HomeActions
 import com.wasylews.mykompot.presentation.home.HomeScreen
 import com.wasylews.mykompot.presentation.home.HomeViewModel
 import com.wasylews.mykompot.presentation.home.PaymentsViewModel
@@ -127,23 +128,25 @@ class MainActivity : ComponentActivity() {
             paymentMethodsState = paymentMethodsState,
             paymentsState = paymentsState,
             modifier = modifier,
-            onPullToRefresh = {
-                homeViewModel.refresh(userInitiated = true)
-                paymentsViewModel.refresh()
-            },
-            onRetry = { homeViewModel.refresh() },
-            onPayClick = paymentMethodsViewModel::open,
-            onTariffClick = tariffPlansViewModel::open,
-            onTariffRetry = tariffPlansViewModel::retry,
-            onTariffSheetDismiss = tariffPlansViewModel::dismiss,
-            onPaymentMethodsDismiss = paymentMethodsViewModel::dismiss,
-            onPaymentMethodClick = { method ->
-                paymentMethodsViewModel.dismiss()
-                onPaymentMethodClick(method)
-            },
-            onLoadMorePayments = paymentsViewModel::loadMorePayments,
-            onRetryLoadMorePayments = paymentsViewModel::retryLoadMorePayments,
-            onRetryPayments = paymentsViewModel::refresh,
+            actions = HomeActions(
+                onPullToRefresh = {
+                    homeViewModel.refresh(userInitiated = true)
+                    paymentsViewModel.refresh()
+                },
+                onRetry = { homeViewModel.refresh() },
+                onPayClick = paymentMethodsViewModel::open,
+                onTariffClick = tariffPlansViewModel::open,
+                onTariffRetry = tariffPlansViewModel::retry,
+                onTariffSheetDismiss = tariffPlansViewModel::dismiss,
+                onPaymentMethodsDismiss = paymentMethodsViewModel::dismiss,
+                onPaymentMethodClick = { method ->
+                    paymentMethodsViewModel.dismiss()
+                    onPaymentMethodClick(method)
+                },
+                onLoadMorePayments = paymentsViewModel::loadMorePayments,
+                onRetryLoadMorePayments = paymentsViewModel::retryLoadMorePayments,
+                onRetryPayments = paymentsViewModel::refresh,
+            ),
         )
     }
 

@@ -51,6 +51,21 @@ internal const val HOME_REFRESH_INDICATOR_TEST_TAG = "home_refresh_indicator"
 
 private const val HOME_STATUS_KEY = "home_status"
 
+/** User actions exposed by the home screen. */
+data class HomeActions(
+    val onPullToRefresh: () -> Unit = {},
+    val onRetry: () -> Unit = {},
+    val onPayClick: () -> Unit = {},
+    val onTariffClick: () -> Unit = {},
+    val onTariffRetry: () -> Unit = {},
+    val onTariffSheetDismiss: () -> Unit = {},
+    val onPaymentMethodsDismiss: () -> Unit = {},
+    val onPaymentMethodClick: (PaymentMethod) -> Unit = {},
+    val onLoadMorePayments: () -> Unit = {},
+    val onRetryLoadMorePayments: () -> Unit = {},
+    val onRetryPayments: () -> Unit = {},
+)
+
 @Composable
 fun HomeScreen(
     state: HomeUiState,
@@ -58,45 +73,29 @@ fun HomeScreen(
     paymentMethodsState: PaymentMethodsUiState,
     modifier: Modifier = Modifier,
     paymentsState: PaymentsUiState = PaymentsUiState(),
-    onPullToRefresh: () -> Unit = {},
-    onRetry: () -> Unit = {},
-    onPayClick: () -> Unit = {},
-    onTariffClick: () -> Unit = {},
-    onTariffRetry: () -> Unit = {},
-    onTariffSheetDismiss: () -> Unit = {},
-    onPaymentMethodsDismiss: () -> Unit = {},
-    onPaymentMethodClick: (PaymentMethod) -> Unit = {},
-    onLoadMorePayments: () -> Unit = {},
-    onRetryLoadMorePayments: () -> Unit = {},
-    onRetryPayments: () -> Unit = {},
+    actions: HomeActions = HomeActions(),
 ) {
     Box(modifier = modifier) {
         HomeContent(
             state = state,
             paymentsState = paymentsState,
-            onPullToRefresh = onPullToRefresh,
-            onRetry = onRetry,
-            onPayClick = onPayClick,
-            onTariffClick = onTariffClick,
-            onLoadMorePayments = onLoadMorePayments,
-            onRetryLoadMorePayments = onRetryLoadMorePayments,
-            onRetryPayments = onRetryPayments,
+            actions = actions,
             modifier = Modifier.fillMaxSize(),
         )
 
         if (tariffPlansState.isVisible) {
             TariffPlansBottomSheet(
                 state = tariffPlansState,
-                onDismissRequest = onTariffSheetDismiss,
-                onRetry = onTariffRetry,
+                onDismissRequest = actions.onTariffSheetDismiss,
+                onRetry = actions.onTariffRetry,
             )
         }
 
         if (paymentMethodsState.isVisible) {
             PaymentMethodsBottomSheet(
                 methods = paymentMethods,
-                onMethodClick = onPaymentMethodClick,
-                onDismissRequest = onPaymentMethodsDismiss,
+                onMethodClick = actions.onPaymentMethodClick,
+                onDismissRequest = actions.onPaymentMethodsDismiss,
             )
         }
     }
@@ -106,19 +105,13 @@ fun HomeScreen(
 private fun HomeContent(
     state: HomeUiState,
     paymentsState: PaymentsUiState,
-    onPullToRefresh: () -> Unit,
-    onRetry: () -> Unit,
-    onPayClick: () -> Unit,
-    onTariffClick: () -> Unit,
-    onLoadMorePayments: () -> Unit,
-    onRetryLoadMorePayments: () -> Unit,
-    onRetryPayments: () -> Unit,
+    actions: HomeActions,
     modifier: Modifier = Modifier,
 ) {
     val pullToRefreshState = rememberPullToRefreshState()
     PullToRefreshBox(
         isRefreshing = state.isRefreshing,
-        onRefresh = onPullToRefresh,
+        onRefresh = actions.onPullToRefresh,
         state = pullToRefreshState,
         modifier = modifier.testTag(HOME_SCREEN_TEST_TAG),
         indicator = {
@@ -152,17 +145,17 @@ private fun HomeContent(
                 ) {
                     StatusCard(
                         state = state,
-                        onPayClick = onPayClick,
-                        onTariffClick = onTariffClick,
-                        onRetry = onRetry,
+                        onPayClick = actions.onPayClick,
+                        onTariffClick = actions.onTariffClick,
+                        onRetry = actions.onRetry,
                     )
                 }
             }
             paymentsSection(
                 paymentsState = paymentsState,
-                onLoadMorePayments = onLoadMorePayments,
-                onRetryLoadMorePayments = onRetryLoadMorePayments,
-                onRetry = onRetryPayments,
+                onLoadMorePayments = actions.onLoadMorePayments,
+                onRetryLoadMorePayments = actions.onRetryLoadMorePayments,
+                onRetry = actions.onRetryPayments,
             )
         }
     }
