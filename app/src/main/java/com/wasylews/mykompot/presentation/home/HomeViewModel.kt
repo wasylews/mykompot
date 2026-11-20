@@ -16,7 +16,6 @@
 
 package com.wasylews.mykompot.presentation.home
 
-import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wasylews.mykompot.R
@@ -27,6 +26,7 @@ import com.wasylews.mykompot.domain.model.AccountStatus
 import com.wasylews.mykompot.domain.model.RefreshResult
 import com.wasylews.mykompot.domain.model.SessionState
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -40,14 +40,15 @@ import org.koin.core.annotation.KoinViewModel
 
 @KoinViewModel
 class HomeViewModel(
-    observeStatusUseCase: ObserveStatus,
+    observeStatus: ObserveStatus,
     private val refreshStatus: RefreshStatus,
     observeSession: ObserveSession,
 ) : ViewModel() {
     private val isRefreshing = MutableStateFlow(false)
     private val errorId = MutableStateFlow<Int?>(null)
+    private var refreshJob: Job? = null
 
-    private val latestStatus = observeStatusUseCase.statusFlow()
+    private val latestStatus = observeStatus.statusFlow()
         .catch { error ->
             if (error is CancellationException) throw error
             emit(null)
@@ -72,24 +73,22 @@ class HomeViewModel(
         errorId.value = null
     }
 
-    fun refresh() {
-        viewModelScope.launch {
+    fun refresh(userInitiated: Boolean = false) {
+        if (userInitiated) {
             isRefreshing.value = true
+        }
+        if (refreshJob?.isActive == true) {
+            return
+        }
+        errorId.value = null
+        refreshJob = viewModelScope.launch {
             try {
                 when (val result = refreshStatus()) {
-                    is RefreshResult.Failed -> {
-                        errorId.value = when (result) {
-                            RefreshResult.Failed.Network -> R.string.error_no_connection
-
-                            RefreshResult.Failed.Server,
-                            RefreshResult.Failed.Parse,
-                            -> R.string.error_server
-                        }
-                    }
-
+                    is RefreshResult.Failed -> errorId.value = result.toErrorId()
                     is RefreshResult.Updated, RefreshResult.Expired -> Unit
                 }
             } finally {
+                refreshJob = null
                 isRefreshing.value = false
             }
         }
@@ -101,51 +100,38 @@ class HomeViewModel(
         errorId,
     ) { status, isRefreshing, errorId ->
         HomeUiState(
-            content = status.toHomeContent(isRefreshing),
+            content = when {
+                status != null -> status.toHomeContent()
+                errorId != null -> HomeContent.Unknown
+                else -> HomeContent.Loading
+            },
             isRefreshing = isRefreshing,
             errorId = errorId,
         )
     }
-        .catch { error ->
-            if (error is CancellationException) throw error
-            emit(HomeUiState(content = HomeContent.Unknown))
-        }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
             initialValue = HomeUiState(),
         )
 
-    private fun AccountStatus?.toHomeContent(isRefreshing: Boolean): HomeContent = when (this) {
-        null -> {
-            if (isRefreshing) HomeContent.Loading else HomeContent.Unknown
-        }
-
-        else -> {
-            val copy = state.toStatusCopy()
-            HomeContent.Content(
-                account = this,
-                status = copy.status,
-                message = copy.message,
-                nextChargeLabel = copy.nextChargeLabel.takeIf { daysLeft != null },
-            )
-        }
-    }
-
-    private fun AccountStatus.State.toStatusCopy(): StatusCopy = when (this) {
-        AccountStatus.State.ALL_GOOD -> StatusCopy(
+    private fun AccountStatus.toHomeContent(): HomeContent.Content = when (state) {
+        AccountStatus.State.ALL_GOOD -> HomeContent.Content(
+            account = this,
             status = R.string.status_all_good,
             message = R.string.status_all_good_message,
-            nextChargeLabel = R.string.next_charge,
+            nextChargeLabel = R.string.next_charge.takeIf { daysLeft != null },
         )
 
-        AccountStatus.State.PAYMENT_DUE -> StatusCopy(
+        AccountStatus.State.PAYMENT_DUE -> HomeContent.Content(
+            account = this,
             status = R.string.status_payment_due,
             message = R.string.status_payment_due_message,
-            nextChargeLabel = R.string.due,
+            nextChargeLabel = R.string.due.takeIf { daysLeft != null },
         )
 
-        AccountStatus.State.SUSPENDED -> StatusCopy(
+        AccountStatus.State.SUSPENDED -> HomeContent.Content(
+            account = this,
             status = R.string.status_suspended,
             message = R.string.status_suspended_message,
             nextChargeLabel = null,
@@ -153,8 +139,10 @@ class HomeViewModel(
     }
 }
 
-private data class StatusCopy(
-    @StringRes val status: Int,
-    @StringRes val message: Int,
-    @StringRes val nextChargeLabel: Int?,
-)
+private fun RefreshResult.Failed.toErrorId(): Int = when (this) {
+    RefreshResult.Failed.Network -> R.string.error_no_connection
+
+    RefreshResult.Failed.Server,
+    RefreshResult.Failed.Parse,
+    -> R.string.error_server
+}

@@ -16,9 +16,6 @@
 
 package com.wasylews.mykompot.presentation.home
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,7 +26,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -43,7 +39,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import com.wasylews.mykompot.R
 import com.wasylews.mykompot.presentation.payments.PaymentMethod
 import com.wasylews.mykompot.presentation.payments.PaymentMethodsBottomSheet
 import com.wasylews.mykompot.presentation.payments.PaymentMethodsUiState
@@ -58,8 +53,7 @@ internal const val HOME_LOADING_TEST_TAG = "home_loading"
 internal const val HOME_LIST_TEST_TAG = "home_list"
 internal const val HOME_REFRESH_INDICATOR_TEST_TAG = "home_refresh_indicator"
 
-private const val HOME_HEADER_KEY = "home_header"
-private const val HEADER_CONTENT_TYPE = "header"
+private const val HOME_STATUS_KEY = "home_status"
 
 @Composable
 fun HomeScreen(
@@ -68,7 +62,8 @@ fun HomeScreen(
     paymentMethodsState: PaymentMethodsUiState,
     paymentsState: PaymentsUiState = PaymentsUiState(),
     modifier: Modifier = Modifier,
-    onRefresh: () -> Unit = {},
+    onPullToRefresh: () -> Unit = {},
+    onRetry: () -> Unit = {},
     onPayClick: () -> Unit = {},
     onTariffClick: () -> Unit = {},
     onTariffRetry: () -> Unit = {},
@@ -98,7 +93,8 @@ fun HomeScreen(
         HomeContent(
             state = state,
             paymentsState = paymentsState,
-            onRefresh = onRefresh,
+            onPullToRefresh = onPullToRefresh,
+            onRetry = onRetry,
             onPayClick = onPayClick,
             onTariffClick = onTariffClick,
             onLoadMorePayments = onLoadMorePayments,
@@ -109,14 +105,21 @@ fun HomeScreen(
                 .padding(innerPadding),
         )
 
-        HomeSheets(
-            tariffPlansState = tariffPlansState,
-            paymentMethodsState = paymentMethodsState,
-            onTariffRetry = onTariffRetry,
-            onTariffSheetDismiss = onTariffSheetDismiss,
-            onPaymentMethodsDismiss = onPaymentMethodsDismiss,
-            onPaymentMethodClick = onPaymentMethodClick,
-        )
+        if (tariffPlansState.isVisible) {
+            TariffPlansBottomSheet(
+                state = tariffPlansState,
+                onDismissRequest = onTariffSheetDismiss,
+                onRetry = onTariffRetry,
+            )
+        }
+
+        if (paymentMethodsState.isVisible) {
+            PaymentMethodsBottomSheet(
+                methods = paymentMethods,
+                onMethodClick = onPaymentMethodClick,
+                onDismissRequest = onPaymentMethodsDismiss,
+            )
+        }
     }
 }
 
@@ -124,7 +127,8 @@ fun HomeScreen(
 private fun HomeContent(
     state: HomeUiState,
     paymentsState: PaymentsUiState,
-    onRefresh: () -> Unit,
+    onPullToRefresh: () -> Unit,
+    onRetry: () -> Unit,
     onPayClick: () -> Unit,
     onTariffClick: () -> Unit,
     onLoadMorePayments: () -> Unit,
@@ -135,21 +139,23 @@ private fun HomeContent(
     val pullToRefreshState = rememberPullToRefreshState()
     PullToRefreshBox(
         isRefreshing = state.isRefreshing,
-        onRefresh = onRefresh,
+        onRefresh = onPullToRefresh,
         state = pullToRefreshState,
         modifier = modifier.testTag(HOME_SCREEN_TEST_TAG),
         indicator = {
-            // The status card shows its own progress while there is no content yet.
-            // A second spinner on top of it would only duplicate that signal.
-            if (state.content !is HomeContent.Loading) {
-                PullToRefreshDefaults.Indicator(
-                    state = pullToRefreshState,
-                    isRefreshing = state.isRefreshing,
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .testTag(HOME_REFRESH_INDICATOR_TEST_TAG),
-                )
-            }
+            PullToRefreshDefaults.Indicator(
+                state = pullToRefreshState,
+                isRefreshing = state.isRefreshing,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .then(
+                        if (state.isRefreshing) {
+                            Modifier.testTag(HOME_REFRESH_INDICATOR_TEST_TAG)
+                        } else {
+                            Modifier
+                        },
+                    ),
+            )
         },
     ) {
         LazyColumn(
@@ -158,16 +164,13 @@ private fun HomeContent(
                 .testTag(HOME_LIST_TEST_TAG),
             contentPadding = PaddingValues(horizontal = Spacing.lg, vertical = Spacing.lg),
         ) {
-            stickyHeader(key = HOME_HEADER_KEY, contentType = HEADER_CONTENT_TYPE) {
-                HomeHeader(
+            item(key = HOME_STATUS_KEY) {
+                StatusCard(
                     state = state,
                     onPayClick = onPayClick,
                     onTariffClick = onTariffClick,
-                    onRetry = onRefresh,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surface)
-                        .padding(bottom = Spacing.md),
+                    onRetry = onRetry,
+                    modifier = Modifier.padding(bottom = Spacing.md),
                 )
             }
             paymentsSection(
@@ -177,58 +180,6 @@ private fun HomeContent(
                 onRetry = onRetryPayments,
             )
         }
-    }
-}
-
-@Composable
-private fun HomeHeader(
-    state: HomeUiState,
-    onPayClick: () -> Unit,
-    onTariffClick: () -> Unit,
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(Spacing.lg),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            text = stringResource(R.string.your_internet),
-            style = MaterialTheme.typography.titleLarge,
-        )
-        StatusCard(
-            state = state,
-            onPayClick = onPayClick,
-            onTariffClick = onTariffClick,
-            onRetry = onRetry,
-        )
-    }
-}
-
-@Composable
-private fun HomeSheets(
-    tariffPlansState: TariffPlansUiState,
-    paymentMethodsState: PaymentMethodsUiState,
-    onTariffRetry: () -> Unit,
-    onTariffSheetDismiss: () -> Unit,
-    onPaymentMethodsDismiss: () -> Unit,
-    onPaymentMethodClick: (PaymentMethod) -> Unit,
-) {
-    if (tariffPlansState.isVisible) {
-        TariffPlansBottomSheet(
-            state = tariffPlansState,
-            onDismissRequest = onTariffSheetDismiss,
-            onRetry = onTariffRetry,
-        )
-    }
-
-    if (paymentMethodsState.isVisible) {
-        PaymentMethodsBottomSheet(
-            methods = paymentMethods,
-            onMethodClick = onPaymentMethodClick,
-            onDismissRequest = onPaymentMethodsDismiss,
-        )
     }
 }
 

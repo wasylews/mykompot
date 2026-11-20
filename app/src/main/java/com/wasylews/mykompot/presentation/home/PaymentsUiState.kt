@@ -28,6 +28,10 @@ data class PaymentsUiState(
     @StringRes val loadMoreErrorId: Int? = null,
 )
 
+/** The payments list is loading its first page with no cached rows, so it renders skeleton rows. */
+internal val PaymentsUiState.isShowingSkeleton: Boolean
+    get() = isLoading && items.isEmpty()
+
 data class PaymentItemUi(
     val amount: Int,
     val tariffName: String,

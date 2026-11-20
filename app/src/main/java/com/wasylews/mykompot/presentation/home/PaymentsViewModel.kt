@@ -32,6 +32,7 @@ import com.wasylews.mykompot.domain.model.SessionState
 import com.wasylews.mykompot.presentation.payments.PaymentMethod
 import com.wasylews.mykompot.presentation.payments.paymentMethods
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -63,6 +64,7 @@ class PaymentsViewModel(
     private val paymentsErrorId = MutableStateFlow<Int?>(null)
     private val paymentsLoadMoreErrorId = MutableStateFlow<Int?>(null)
     private val paymentsStreamErrorId = MutableStateFlow<Int?>(null)
+    private var refreshJob: Job? = null
 
     private val privat24Method = paymentMethods.first { it.titleRes == R.string.payment_method_privat24 }
     private val easyPayMethod = paymentMethods.first { it.titleRes == R.string.payment_method_easypay }
@@ -96,7 +98,8 @@ class PaymentsViewModel(
     }
 
     fun refresh() {
-        viewModelScope.launch {
+        refreshJob?.cancel()
+        val job = viewModelScope.launch {
             paymentsErrorId.value = null
             paymentsLoadMoreErrorId.value = null
             paymentsLoading.value = true
@@ -113,9 +116,12 @@ class PaymentsViewModel(
                     }
                 }
             } finally {
-                paymentsLoading.value = false
+                if (refreshJob == coroutineContext[Job]) {
+                    paymentsLoading.value = false
+                }
             }
         }
+        refreshJob = job
     }
 
     fun loadMorePayments() {

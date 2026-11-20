@@ -33,7 +33,6 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -47,6 +46,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -63,6 +63,8 @@ import com.wasylews.mykompot.ui.theme.MyKompotTheme
 import com.wasylews.mykompot.ui.theme.Spacing
 
 internal const val PAYMENTS_CONTENT_TYPE = "payment"
+internal const val PAYMENTS_SKELETON_TEST_TAG = "payments_skeleton"
+internal const val PAYMENTS_LOADING_MORE_TEST_TAG = "payments_loading_more"
 
 private const val PAYMENTS_TITLE_KEY = "payments_title"
 private const val PAYMENTS_STATE_KEY = "payments_state"
@@ -70,8 +72,8 @@ private const val LOADING_MORE_KEY = "payments_loading_more"
 private const val LOAD_MORE_ERROR_KEY = "payments_load_more_error"
 private const val LOAD_MORE_KEY = "payments_load_more"
 private const val EMPTY_STATE_HEIGHT_FRACTION = 0.5f
-private val PAYMENT_CARD_CORNER = 20.dp
-private val PAYMENT_CARD_BORDER = 1.dp
+internal val PAYMENT_CARD_CORNER = 20.dp
+internal val PAYMENT_CARD_BORDER = 1.dp
 
 internal fun LazyListScope.paymentsSection(
     paymentsState: PaymentsUiState,
@@ -110,18 +112,24 @@ private fun LazyListScope.paymentsPlaceholder(
 ) {
     val errorId = paymentsState.errorId
     item(key = PAYMENTS_STATE_KEY) {
-        PaymentsCenteredState(Modifier.fillParentMaxHeight(EMPTY_STATE_HEIGHT_FRACTION)) {
-            when {
-                paymentsState.isLoading -> CircularProgressIndicator()
+        when {
+            paymentsState.isShowingSkeleton -> {
+                PaymentsSkeletonList(modifier = Modifier.testTag(PAYMENTS_SKELETON_TEST_TAG))
+            }
 
-                errorId != null -> PaymentsErrorContent(errorId = errorId, onRetry = onRetry)
-
-                else -> Text(
-                    text = stringResource(R.string.no_payments_yet),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                )
+            else -> {
+                PaymentsCenteredState(Modifier.fillParentMaxHeight(EMPTY_STATE_HEIGHT_FRACTION)) {
+                    if (errorId != null) {
+                        PaymentsErrorContent(errorId = errorId, onRetry = onRetry)
+                    } else {
+                        Text(
+                            text = stringResource(R.string.no_payments_yet),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                }
             }
         }
     }
@@ -147,9 +155,10 @@ private fun LazyListScope.paymentItems(
 
     if (paymentsState.isLoadingMore) {
         item(key = LOADING_MORE_KEY) {
-            PaymentsCenteredState(modifier = Modifier.padding(vertical = Spacing.md)) {
-                CircularProgressIndicator(modifier = Modifier.size(24.dp))
-            }
+            PaymentsSkeletonList(
+                rows = 1,
+                modifier = Modifier.testTag(PAYMENTS_LOADING_MORE_TEST_TAG),
+            )
         }
     }
 
@@ -238,7 +247,7 @@ private fun PaymentRowItem(
  * Shape of a single row inside a card shared by adjacent lazy items: rounded outer corners on the
  * first and the last row, square edges in between.
  */
-private fun groupedRowShape(
+internal fun groupedRowShape(
     isFirst: Boolean,
     isLast: Boolean,
     corner: Dp,

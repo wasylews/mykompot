@@ -127,10 +127,11 @@ class MainActivity : ComponentActivity() {
             paymentMethodsState = paymentMethodsState,
             paymentsState = paymentsState,
             modifier = modifier,
-            onRefresh = {
-                homeViewModel.refresh()
+            onPullToRefresh = {
+                homeViewModel.refresh(userInitiated = true)
                 paymentsViewModel.refresh()
             },
+            onRetry = { homeViewModel.refresh() },
             onPayClick = paymentMethodsViewModel::open,
             onTariffClick = tariffPlansViewModel::open,
             onTariffRetry = tariffPlansViewModel::retry,

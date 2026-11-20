@@ -21,6 +21,7 @@ import com.wasylews.mykompot.domain.model.AccountStatus
 
 data class HomeUiState(
     val content: HomeContent = HomeContent.Loading,
+    /** Whether a user-initiated pull-to-refresh gesture is in progress. */
     val isRefreshing: Boolean = false,
     @StringRes val errorId: Int? = null,
 )

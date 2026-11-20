@@ -30,9 +30,12 @@ import com.wasylews.mykompot.presentation.FakeRefreshStatus
 import com.wasylews.mykompot.presentation.main.FakeObserveSession
 import com.wasylews.mykompot.presentation.profile
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -77,6 +80,28 @@ class HomeViewModelTest : BaseViewModelTest() {
             HomeUiState(content = allGoodContent, isRefreshing = false),
             vm.uiState.value,
         )
+    }
+
+    @Test
+    fun `cached profile is shown without pull to refresh indicator during background refresh`() = runTest {
+        // GIVEN a cached profile and a background refresh that is still in progress
+        val refreshStatus = FakeRefreshStatus().apply { pause() }
+        val vm = createViewModel(refreshStatus = refreshStatus)
+
+        vm.uiState.test {
+            // WHEN the screen opens before the cache has been read
+            assertEquals(HomeContent.Loading, awaitItem().content)
+
+            // THEN the cached content appears without a pull-to-refresh indicator
+            advanceUntilIdle()
+            val state = expectMostRecentItem()
+            assertEquals(allGoodContent, state.content)
+            assertFalse(state.isRefreshing)
+
+            refreshStatus.resume()
+            advanceUntilIdle()
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test
@@ -144,14 +169,14 @@ class HomeViewModelTest : BaseViewModelTest() {
         )
 
         vm.uiState.test {
-            // WHEN the screen opens
+            // WHEN the screen opens before the cached status has been read
             assertEquals(HomeContent.Loading, awaitItem().content)
 
-            // THEN I see loading while refreshing
+            // THEN I still see loading once there is no cached status and a refresh is running
             advanceUntilIdle()
             assertEquals(
-                HomeUiState(content = HomeContent.Loading, isRefreshing = true),
-                expectMostRecentItem(),
+                HomeUiState(content = HomeContent.Loading, isRefreshing = false),
+                vm.uiState.value,
             )
 
             // WHEN the refresh completes with no cached profile
@@ -236,8 +261,8 @@ class HomeViewModelTest : BaseViewModelTest() {
     }
 
     @Test
-    fun `refresh can be triggered manually`() = runTest {
-        // GIVEN a cached profile and an initial refresh completed
+    fun `pull to refresh shows indicator while refreshing`() = runTest {
+        // GIVEN a cached profile and an initial background refresh completed
         val refreshStatus = FakeRefreshStatus().apply { pause() }
         val vm = createViewModel(refreshStatus = refreshStatus)
 
@@ -245,7 +270,7 @@ class HomeViewModelTest : BaseViewModelTest() {
             assertEquals(HomeContent.Loading, awaitItem().content)
             advanceUntilIdle()
             assertEquals(
-                HomeUiState(content = allGoodContent, isRefreshing = true),
+                HomeUiState(content = allGoodContent, isRefreshing = false),
                 expectMostRecentItem(),
             )
 
@@ -253,17 +278,20 @@ class HomeViewModelTest : BaseViewModelTest() {
             advanceUntilIdle()
             assertEquals(
                 HomeUiState(content = allGoodContent, isRefreshing = false),
-                awaitItem(),
+                vm.uiState.value,
             )
 
-            // WHEN I refresh again
+            // WHEN I pull to refresh
             refreshStatus.pause()
-            vm.refresh()
+            vm.refresh(userInitiated = true)
             advanceUntilIdle()
 
-            // THEN I see the refreshing state while keeping content
+            // THEN I see the pull-to-refresh indicator while keeping content
             assertEquals(
-                HomeUiState(content = allGoodContent, isRefreshing = true),
+                HomeUiState(
+                    content = allGoodContent,
+                    isRefreshing = true,
+                ),
                 awaitItem(),
             )
             assertEquals(2, refreshStatus.calls)
@@ -280,18 +308,18 @@ class HomeViewModelTest : BaseViewModelTest() {
     }
 
     @Test
-    fun `manual refresh failure keeps cached content and shows error`() = runTest {
+    fun `background refresh failure keeps cached content and shows error`() = runTest {
         // GIVEN a cached profile and a successful initial refresh
         val refreshStatus = FakeRefreshStatus()
         val vm = createViewModel(refreshStatus = refreshStatus)
         advanceUntilIdle()
 
-        // WHEN a manual refresh fails
+        // WHEN a background refresh fails
         refreshStatus.result = RefreshResult.Failed.Network
         vm.refresh()
         advanceUntilIdle()
 
-        // THEN cached content stays and the connection error is shown
+        // THEN cached content stays and the connection error is shown without a PTR indicator
         assertEquals(
             HomeUiState(
                 content = allGoodContent,
@@ -301,5 +329,90 @@ class HomeViewModelTest : BaseViewModelTest() {
             vm.uiState.value,
         )
         assertEquals(2, refreshStatus.calls)
+    }
+
+    @Test
+    fun `retry with no cached profile shows loading then content instead of stale error`() = runTest {
+        // GIVEN a failed refresh with no cached profile
+        val statusFlow = MutableStateFlow<AccountStatus?>(null)
+        val refreshStatus = FakeRefreshStatus(result = RefreshResult.Failed.Server)
+        val vm = createViewModel(
+            observeStatus = ObserveStatus { statusFlow },
+            refreshStatus = refreshStatus,
+        )
+        advanceUntilIdle()
+        assertEquals(
+            HomeUiState(content = HomeContent.Unknown, errorId = R.string.error_server),
+            vm.uiState.value,
+        )
+
+        // WHEN a retry starts
+        refreshStatus.result = RefreshResult.Updated(profile())
+        refreshStatus.pause()
+        vm.refresh()
+        advanceUntilIdle()
+
+        // THEN the skeleton replaces the stale error state
+        assertEquals(
+            HomeUiState(content = HomeContent.Loading),
+            vm.uiState.value,
+        )
+
+        // AND the cached status emitted by the refresh replaces the skeleton
+        refreshStatus.resume()
+        statusFlow.value = allGoodStatus
+        advanceUntilIdle()
+        assertEquals(HomeUiState(content = allGoodContent), vm.uiState.value)
+    }
+
+    @Test
+    fun `user refresh during running refresh only shows indicator`() = runTest {
+        // GIVEN a background refresh that is still in progress
+        val refreshStatus = FakeRefreshStatus().apply { pause() }
+        val vm = createViewModel(refreshStatus = refreshStatus)
+        advanceUntilIdle()
+        assertEquals(1, refreshStatus.calls)
+        assertFalse(vm.uiState.value.isRefreshing)
+
+        // WHEN the user pulls to refresh while it is still running
+        vm.refresh(userInitiated = true)
+        advanceUntilIdle()
+
+        // THEN the indicator shows without starting a second refresh
+        assertTrue(vm.uiState.value.isRefreshing)
+        assertEquals(1, refreshStatus.calls)
+
+        // AND the indicator goes away when the running refresh finishes
+        refreshStatus.resume()
+        advanceUntilIdle()
+        assertFalse(vm.uiState.value.isRefreshing)
+        assertEquals(1, refreshStatus.calls)
+    }
+
+    @Test
+    fun `user refresh during failing refresh keeps running refresh error`() = runTest {
+        // GIVEN a background refresh that is still in progress and will fail
+        val refreshStatus = FakeRefreshStatus(result = RefreshResult.Failed.Server).apply { pause() }
+        val vm = createViewModel(refreshStatus = refreshStatus)
+        advanceUntilIdle()
+        assertEquals(1, refreshStatus.calls)
+        assertFalse(vm.uiState.value.isRefreshing)
+
+        // WHEN the user pulls to refresh while it is still running
+        vm.refresh(userInitiated = true)
+        advanceUntilIdle()
+
+        // THEN the user call does not clear the running refresh's eventual error
+        assertTrue(vm.uiState.value.isRefreshing)
+        assertEquals(1, refreshStatus.calls)
+
+        refreshStatus.resume()
+        advanceUntilIdle()
+        assertEquals(
+            HomeUiState(content = allGoodContent, errorId = R.string.error_server),
+            vm.uiState.value,
+        )
+        assertFalse(vm.uiState.value.isRefreshing)
+        assertEquals(1, refreshStatus.calls)
     }
 }

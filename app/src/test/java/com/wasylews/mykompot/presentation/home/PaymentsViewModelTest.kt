@@ -30,6 +30,7 @@ import com.wasylews.mykompot.presentation.BaseViewModelTest
 import com.wasylews.mykompot.presentation.main.FakeObserveSession
 import com.wasylews.mykompot.presentation.payments.paymentMethods
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -50,6 +51,18 @@ class PaymentsViewModelTest : BaseViewModelTest() {
         override fun now(): Instant = Instant.parse("2026-10-11T12:00:00Z")
     }
     private val zoneId = ZoneId.of("UTC")
+
+    private fun payment() = Payment(
+        dateTime = LocalDateTime.of(2026, 10, 1, 10, 5),
+        amount = 300,
+        tariffName = "Standart 100",
+        source = PaymentSource.PRIVAT24,
+    )
+
+    private fun paymentsWithPayment(hasMore: Boolean = false) = Payments(
+        items = listOf(payment()),
+        hasMore = hasMore,
+    )
 
     private fun createViewModel(
         observePayments: ObservePayments = FakeObservePayments(),
@@ -76,6 +89,47 @@ class PaymentsViewModelTest : BaseViewModelTest() {
 
         // THEN
         assertEquals(1, refreshPayments.calls)
+    }
+
+    @Test
+    fun `shows skeleton while refreshing without cached payments`() = runTest {
+        // GIVEN a cache that has not emitted yet and a refresh that is still in progress
+        val paymentsFlow = MutableSharedFlow<Payments?>()
+        val refreshPayments = FakeRefreshPayments().apply { pause() }
+        val vm = createViewModel(
+            observePayments = ObservePayments { paymentsFlow },
+            refreshPayments = refreshPayments,
+        )
+
+        // WHEN the refresh starts before the cache is available
+        advanceUntilIdle()
+
+        // THEN the skeleton is shown until there are rows to display
+        assertTrue(vm.uiState.value.isShowingSkeleton)
+        assertTrue(vm.uiState.value.isLoading)
+
+        // WHEN the cached payments arrive during the refresh
+        paymentsFlow.emit(
+            Payments(
+                items = listOf(
+                    Payment(
+                        dateTime = LocalDateTime.of(2026, 10, 1, 10, 5),
+                        amount = 300,
+                        tariffName = "Standart 100",
+                        source = PaymentSource.PRIVAT24,
+                    ),
+                ),
+                hasMore = false,
+            ),
+        )
+        advanceUntilIdle()
+
+        // THEN the cached rows replace the skeleton
+        assertFalse(vm.uiState.value.isShowingSkeleton)
+        assertTrue(vm.uiState.value.isLoading)
+
+        refreshPayments.resume()
+        advanceUntilIdle()
     }
 
     @Test
@@ -217,28 +271,62 @@ class PaymentsViewModelTest : BaseViewModelTest() {
     }
 
     @Test
-    fun `does not load more payments when none available or already loading`() = runTest {
-        // GIVEN no more payments
-        val observePayments = FakeObservePayments(Payments(items = emptyList(), hasMore = false))
-        val loadMorePayments = FakeLoadMorePayments()
-        val vm = createViewModel(
-            observePayments = observePayments,
-            loadMorePayments = loadMorePayments,
+    fun `does not load more payments without cache when unavailable or already loading`() = runTest {
+        // GIVEN no cached payments
+        val noCache = FakeLoadMorePayments()
+        val noCacheVm = createViewModel(
+            observePayments = FakeObservePayments(null),
+            loadMorePayments = noCache,
         )
         advanceUntilIdle()
 
         // WHEN I request more payments
-        vm.loadMorePayments()
+        noCacheVm.loadMorePayments()
         advanceUntilIdle()
 
         // THEN nothing is loaded
-        assertEquals(0, loadMorePayments.calls)
+        assertEquals(0, noCache.calls)
+
+        // GIVEN a first page with no more payments
+        val noMore = FakeLoadMorePayments()
+        val noMoreVm = createViewModel(
+            observePayments = FakeObservePayments(Payments(items = emptyList(), hasMore = false)),
+            loadMorePayments = noMore,
+        )
+        advanceUntilIdle()
+
+        // WHEN I request more payments
+        noMoreVm.loadMorePayments()
+        advanceUntilIdle()
+
+        // THEN nothing is loaded
+        assertEquals(0, noMore.calls)
+
+        // GIVEN a first page with more payments and a request already in flight
+        val loading = FakeLoadMorePayments().apply { pause() }
+        val loadingVm = createViewModel(
+            observePayments = FakeObservePayments(Payments(items = emptyList(), hasMore = true)),
+            loadMorePayments = loading,
+        )
+        advanceUntilIdle()
+
+        // WHEN I request more payments, then request again while the first has started
+        loadingVm.loadMorePayments()
+        advanceUntilIdle()
+        loadingVm.loadMorePayments()
+        advanceUntilIdle()
+
+        // THEN only the first request runs
+        assertEquals(1, loading.calls)
+        assertTrue(loadingVm.uiState.value.isLoadingMore)
+        loading.resume()
+        advanceUntilIdle()
     }
 
     @Test
-    fun `shows load more error and retries`() = runTest {
+    fun `shows load more error and retries while keeping cached rows`() = runTest {
         // GIVEN payments with more pages and a failing load-more
-        val observePayments = FakeObservePayments(Payments(items = emptyList(), hasMore = true))
+        val observePayments = FakeObservePayments(paymentsWithPayment(hasMore = true))
         val loadMorePayments = FakeLoadMorePayments().apply { result = PaymentsActionResult.Failed.Server }
         val vm = createViewModel(
             observePayments = observePayments,
@@ -246,6 +334,7 @@ class PaymentsViewModelTest : BaseViewModelTest() {
         )
         advanceUntilIdle()
         assertTrue(vm.uiState.value.hasMore)
+        assertEquals(1, vm.uiState.value.items.size)
         assertFalse(vm.uiState.value.isLoading)
         assertFalse(vm.uiState.value.isLoadingMore)
 
@@ -253,9 +342,10 @@ class PaymentsViewModelTest : BaseViewModelTest() {
         vm.loadMorePayments()
         advanceUntilIdle()
 
-        // THEN an inline error is shown
+        // THEN an inline error is shown without dropping the cached rows
         assertEquals(1, loadMorePayments.calls)
         assertEquals(R.string.error_server, vm.uiState.value.loadMoreErrorId)
+        assertEquals(1, vm.uiState.value.items.size)
         assertFalse(vm.uiState.value.isLoadingMore)
 
         // WHEN I retry successfully
@@ -266,5 +356,86 @@ class PaymentsViewModelTest : BaseViewModelTest() {
         // THEN the error is cleared
         assertNull(vm.uiState.value.loadMoreErrorId)
         assertEquals(2, loadMorePayments.calls)
+    }
+
+    @Test
+    fun `retry without cached payments clears error and shows skeleton then content`() = runTest {
+        // GIVEN a failed first-page refresh with no cached payments
+        val observePayments = FakeObservePayments(null)
+        val refreshPayments = FakeRefreshPayments().apply {
+            result = PaymentsActionResult.Failed.Server
+            pause()
+        }
+        val vm = createViewModel(
+            observePayments = observePayments,
+            refreshPayments = refreshPayments,
+        )
+        advanceUntilIdle()
+        assertTrue(vm.uiState.value.isShowingSkeleton)
+
+        refreshPayments.resume()
+        advanceUntilIdle()
+        assertEquals(R.string.error_server, vm.uiState.value.errorId)
+        assertFalse(vm.uiState.value.isShowingSkeleton)
+
+        // WHEN a retry starts
+        refreshPayments.result = PaymentsActionResult.Success
+        refreshPayments.pause()
+        vm.refresh()
+        advanceUntilIdle()
+
+        // THEN the stale error is replaced by skeleton rows
+        assertNull(vm.uiState.value.errorId)
+        assertTrue(vm.uiState.value.isShowingSkeleton)
+
+        // AND the rows emitted by the refresh replace the skeleton
+        observePayments.emit(paymentsWithPayment())
+        refreshPayments.resume()
+        advanceUntilIdle()
+        assertEquals(1, vm.uiState.value.items.size)
+        assertNull(vm.uiState.value.errorId)
+        assertFalse(vm.uiState.value.isShowingSkeleton)
+    }
+
+    @Test
+    fun `refresh failure with cached payments keeps rows without blocking error`() = runTest {
+        // GIVEN cached payments and a failing background refresh
+        val vm = createViewModel(
+            observePayments = FakeObservePayments(paymentsWithPayment()),
+            refreshPayments = FakeRefreshPayments().apply {
+                result = PaymentsActionResult.Failed.Network
+            },
+        )
+        advanceUntilIdle()
+
+        // THEN cached rows stay visible without a blocking error
+        assertEquals(1, vm.uiState.value.items.size)
+        assertNull(vm.uiState.value.errorId)
+        assertFalse(vm.uiState.value.isShowingSkeleton)
+    }
+
+    @Test
+    fun `new refresh cancels previous refresh and only latest completion clears loading`() = runTest {
+        // GIVEN a first-page refresh that is still running
+        val refreshPayments = FakeRefreshPayments().apply { repeat(2) { pause() } }
+        val vm = createViewModel(refreshPayments = refreshPayments)
+        advanceUntilIdle()
+        assertEquals(1, refreshPayments.calls)
+        assertTrue(vm.uiState.value.isLoading)
+
+        // WHEN a second refresh starts
+        vm.refresh()
+        advanceUntilIdle()
+        assertEquals(2, refreshPayments.calls)
+
+        // THEN the cancelled first refresh does not clear the loading flag
+        refreshPayments.resume(call = 1)
+        advanceUntilIdle()
+        assertTrue(vm.uiState.value.isLoading)
+
+        // AND only the latest refresh clears it
+        refreshPayments.resume(call = 2)
+        advanceUntilIdle()
+        assertFalse(vm.uiState.value.isLoading)
     }
 }

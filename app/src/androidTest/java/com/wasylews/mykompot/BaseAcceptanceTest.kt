@@ -28,6 +28,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -38,13 +39,18 @@ import androidx.datastore.core.DataStore
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.wasylews.mykompot.data.LocalStorage
+import com.wasylews.mykompot.data.model.PaymentsEntity
 import com.wasylews.mykompot.data.model.ProfileEntity
 import com.wasylews.mykompot.data.model.TariffPlansEntity
 import com.wasylews.mykompot.domain.NotificationsPermission
+import com.wasylews.mykompot.domain.model.Payment
+import com.wasylews.mykompot.domain.model.PaymentSource
+import com.wasylews.mykompot.domain.model.Payments
 import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.TariffPlan
 import com.wasylews.mykompot.domain.model.TariffPlans
 import com.wasylews.mykompot.presentation.home.HOME_LOADING_TEST_TAG
+import com.wasylews.mykompot.presentation.home.HOME_REFRESH_INDICATOR_TEST_TAG
 import com.wasylews.mykompot.presentation.home.HOME_SCREEN_TEST_TAG
 import com.wasylews.mykompot.presentation.main.MainActivity
 import kotlinx.coroutines.flow.first
@@ -58,6 +64,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Rule
 import org.koin.core.context.loadKoinModules
@@ -67,6 +74,7 @@ import org.koin.dsl.module
 import org.koin.test.KoinTest
 import org.koin.test.get
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -94,14 +102,22 @@ abstract class BaseAcceptanceTest : KoinTest {
 
     private val dispatcher = TestDispatcher()
 
+    private var expectedProfileRefreshes = 0
+    private var expectedPaymentsRefreshes = 0
+    private var expectedPlansRefreshes = 0
+
     @Before
     fun setup() {
+        expectedProfileRefreshes = 0
+        expectedPaymentsRefreshes = 0
+        expectedPlansRefreshes = 0
         grantNotificationPermission()
         cancelAllNotifications()
         runBlocking {
             getKoin().get<DataStore<ProfileEntity?>>(named("profile")).updateData { null }
             getKoin().get<DataStore<String?>>(named("session")).updateData { null }
             getKoin().get<DataStore<TariffPlansEntity?>>(named("tariffPlans")).updateData { null }
+            getKoin().get<DataStore<PaymentsEntity?>>(named("payments")).updateData { null }
         }
         loadKoinModules(testModule)
         resetServerResponses()
@@ -129,6 +145,17 @@ abstract class BaseAcceptanceTest : KoinTest {
     protected fun givenStoredTariffPlans(plans: List<TariffPlan> = defaultTariffPlans()) = runBlocking {
         get<LocalStorage>().saveTariffPlans(TariffPlans(plans))
     }
+
+    protected fun givenStoredPayments(payments: Payments) = runBlocking {
+        get<LocalStorage>().savePayments(payments)
+    }
+
+    protected fun payment(dateTime: LocalDateTime = LocalDateTime.of(2026, 10, 1, 10, 5)) = Payment(
+        dateTime = dateTime,
+        amount = 300,
+        tariffName = "Standart 100",
+        source = PaymentSource.PRIVAT24,
+    )
 
     protected fun givenPaymentDueProfileStored() = givenStoredSession(profile = paymentDueProfile())
 
@@ -288,26 +315,51 @@ abstract class BaseAcceptanceTest : KoinTest {
     }
 
     protected fun assertProfileRefreshRequested() {
-        assertNotNull(
-            takeRequestMatching { request ->
-                val path = request.url.encodedPath
-                path.contains("index.cgi") &&
-                    request.url.queryParameter(FEES_PAGE_QUERY_PARAM) != FEES_PAGE_INDEX
-            },
-        )
+        expectedProfileRefreshes++
+        assertRequestCount({ it.isProfileRefresh() }, expectedProfileRefreshes)
+    }
+
+    protected fun assertPaymentsRefreshRequested() {
+        expectedPaymentsRefreshes++
+        assertRequestCount({ it.isPaymentsRefresh() }, expectedPaymentsRefreshes)
+    }
+
+    protected fun assertNoAdditionalProfileRequest(timeoutMillis: Long = 1_000) {
+        val baseline = dispatcher.recordedRequests().count { it.isProfileRefresh() }
+        val deadline = System.currentTimeMillis() + timeoutMillis
+        while (System.currentTimeMillis() < deadline) {
+            if (dispatcher.recordedRequests().count { it.isProfileRefresh() } > baseline) {
+                fail("Expected no additional profile refresh request")
+            }
+            Thread.sleep(50)
+        }
     }
 
     protected fun assertPlansRefreshRequested() {
-        assertNotNull(takeRequestMatching { request -> request.url.encodedPath.contains("/plans") })
+        expectedPlansRefreshes++
+        assertRequestCount({ it.url.encodedPath.contains("/plans") }, expectedPlansRefreshes)
     }
 
-    protected fun takeRequestMatching(predicate: (RecordedRequest) -> Boolean): RecordedRequest? {
-        repeat(10) {
-            val request = server.takeRequest(2, TimeUnit.SECONDS) ?: return null
-            if (predicate(request)) return request
+    private fun assertRequestCount(
+        predicate: (RecordedRequest) -> Boolean,
+        expected: Int,
+        timeoutMillis: Long = 20_000,
+    ) {
+        val deadline = System.currentTimeMillis() + timeoutMillis
+        var actual = 0
+        while (System.currentTimeMillis() < deadline) {
+            actual = dispatcher.recordedRequests().count(predicate)
+            if (actual >= expected) return
+            Thread.sleep(50)
         }
-        return null
+        fail("Expected at least $expected matching requests but found $actual")
     }
+
+    private fun RecordedRequest.isProfileRefresh(): Boolean = url.encodedPath.contains("index.cgi") &&
+        url.queryParameter(FEES_PAGE_QUERY_PARAM) != FEES_PAGE_INDEX
+
+    private fun RecordedRequest.isPaymentsRefresh(): Boolean = url.encodedPath.contains("index.cgi") &&
+        url.queryParameter(FEES_PAGE_QUERY_PARAM) == FEES_PAGE_INDEX
 
     protected fun pullToRefresh() {
         composeRule.waitUntilExactlyOneExists(hasTestTag(HOME_SCREEN_TEST_TAG), 5_000)
@@ -317,6 +369,17 @@ abstract class BaseAcceptanceTest : KoinTest {
     protected fun assertShowsHomeLoading() {
         composeRule.waitUntilExactlyOneExists(hasTestTag(HOME_LOADING_TEST_TAG), 5_000)
         composeRule.onNodeWithTag(HOME_LOADING_TEST_TAG).assertIsDisplayed()
+    }
+
+    protected fun assertShowsRefreshIndicator() {
+        composeRule.waitUntilExactlyOneExists(hasTestTag(HOME_REFRESH_INDICATOR_TEST_TAG), 5_000)
+        composeRule.onNodeWithTag(HOME_REFRESH_INDICATOR_TEST_TAG).assertIsDisplayed()
+    }
+
+    protected fun assertNoRefreshIndicator() {
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(HOME_REFRESH_INDICATOR_TEST_TAG).fetchSemanticsNodes().isEmpty()
+        }
     }
 
     protected fun assertShowsRefreshError(
@@ -394,15 +457,23 @@ abstract class BaseAcceptanceTest : KoinTest {
     protected fun givenFeesPages(
         page1: String = HtmlFixtures.fees(),
         page2: String = HtmlFixtures.feesPage2(),
+        page2DelayMillis: Long = 0,
     ) {
         dispatcher.feesResponseFactory = { request ->
             val pg = request.url.queryParameter("pg")
-            response(body = if (pg == "25") page2 else page1)
+            if (pg == "25") {
+                response(body = page2, delayMillis = page2DelayMillis)
+            } else {
+                response(body = page1)
+            }
         }
     }
 
     private class TestDispatcher : Dispatcher() {
         private val queuedResponses = ArrayDeque<MockResponse>()
+        private val recordedRequests = mutableListOf<RecordedRequest>()
+
+        fun recordedRequests(): List<RecordedRequest> = synchronized(recordedRequests) { recordedRequests.toList() }
 
         @Volatile
         var profileResponseFactory: () -> MockResponse = { MockResponse.Builder().code(404).build() }
@@ -421,9 +492,11 @@ abstract class BaseAcceptanceTest : KoinTest {
 
         fun clear() {
             synchronized(queuedResponses) { queuedResponses.clear() }
+            synchronized(recordedRequests) { recordedRequests.clear() }
         }
 
         override fun dispatch(request: RecordedRequest): MockResponse {
+            synchronized(recordedRequests) { recordedRequests.add(request) }
             synchronized(queuedResponses) {
                 if (queuedResponses.isNotEmpty()) return queuedResponses.removeFirst()
             }

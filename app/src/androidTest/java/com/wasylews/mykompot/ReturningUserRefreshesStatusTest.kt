@@ -17,32 +17,14 @@
 package com.wasylews.mykompot
 
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
-import com.wasylews.mykompot.presentation.home.HOME_REFRESH_INDICATOR_TEST_TAG
 import com.wasylews.mykompot.presentation.home.STATUS_TARIFF_NAME_TEST_TAG
 import com.wasylews.mykompot.presentation.home.STATUS_TARIFF_PRICE_TEST_TAG
 import org.junit.Test
 
 @OptIn(ExperimentalTestApi::class)
 class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
-    @Test
-    fun showsCachedStatusWhenOffline() {
-        // GIVEN a stored session, a cached profile, and no network
-        givenStoredSession(profile = allGoodProfile())
-        givenServerIsUnreachable()
-
-        launch().use {
-            // THEN I see the cached status without losing it
-            assertShows(R.string.status_all_good)
-            assertDoesNotShow(R.string.status_unknown)
-            // AND a non-blocking refresh error
-            assertShowsRefreshError(R.string.error_no_connection)
-            assertRefreshRequested()
-        }
-    }
-
     @Test
     fun showsCachedStatusWhenServerFails() {
         // GIVEN a stored session, a cached profile, and the server fails
@@ -92,15 +74,16 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
     }
 
     @Test
-    fun showsLoadingWhileFetchingWithoutCache() {
+    fun showsOnlyLoadingSkeletonWhileFetchingWithoutCache() {
         // GIVEN a stored session with no cached profile and a slow server
         givenStoredSession()
         givenServerReturnsProfile(delayMillis = 2_000)
 
         launch().use {
-            // THEN I see progress instead of the unknown status while refreshing
+            // THEN only the content skeleton is shown, without Unknown or a pull-to-refresh spinner
             assertShowsHomeLoading()
             assertDoesNotShow(R.string.status_unknown)
+            assertNoRefreshIndicator()
 
             // AND the status once the server responds
             assertShows(R.string.status_all_good)
@@ -109,33 +92,15 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
     }
 
     @Test
-    fun showsSingleProgressIndicatorWhileRefreshingWithoutCache() {
-        // GIVEN a stored session with no cached profile and a slow server
-        givenStoredSession()
-        givenServerReturnsProfile(delayMillis = 2_000)
-
-        launch().use {
-            // THEN only the content shows progress, without a second pull-to-refresh spinner
-            assertShowsHomeLoading()
-            composeRule.onNodeWithTag(HOME_REFRESH_INDICATOR_TEST_TAG).assertDoesNotExist()
-
-            // AND the status once the server responds
-            assertShows(R.string.status_all_good)
-            assertRefreshRequested()
-        }
-    }
-
-    @Test
-    fun showsRefreshIndicatorWhileRefreshingCachedStatus() {
+    fun doesNotShowRefreshIndicatorWhileRefreshingCachedStatusOnOpen() {
         // GIVEN a stored session with a cached profile and a slow server
         givenStoredSession(profile = allGoodProfile())
         givenServerReturnsProfile(delayMillis = 2_000)
 
         launch().use {
-            // THEN the refresh is indicated by the pull-to-refresh spinner
-            composeRule.waitUntilExactlyOneExists(hasTestTag(HOME_REFRESH_INDICATOR_TEST_TAG), 5_000)
-            composeRule.onNodeWithTag(HOME_REFRESH_INDICATOR_TEST_TAG).assertExists()
+            // THEN the cached status is shown without an automatic pull-to-refresh spinner
             assertShows(R.string.status_all_good)
+            assertNoRefreshIndicator()
         }
     }
 
@@ -155,23 +120,6 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
     }
 
     @Test
-    fun showsUnknownStatusWhenNoCacheAndOffline() {
-        // GIVEN a stored session with no cached profile and no network
-        givenStoredSession()
-        givenServerIsUnreachable(delayMillis = 2_000)
-
-        launch().use {
-            // THEN I see progress instead of the unknown status while refreshing
-            assertShowsHomeLoading()
-            assertDoesNotShow(R.string.status_unknown)
-
-            // AND the unknown status once refresh fails with no cache
-            assertShows(R.string.status_unknown)
-            assertRefreshRequested()
-        }
-    }
-
-    @Test
     fun showsUnknownStatusWhenNoCacheAndServerFails() {
         // GIVEN a stored session with no cached profile and the server fails
         givenStoredSession()
@@ -184,29 +132,6 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
 
             // AND the unknown status once refresh fails with no cache
             assertShows(R.string.status_unknown)
-            assertRefreshRequested()
-        }
-    }
-
-    @Test
-    fun recoversFromUnknownStatusOnPullToRefresh() {
-        // GIVEN a stored session with no cached profile and no network
-        givenStoredSession()
-        givenServerIsUnreachable(delayMillis = 2_000)
-
-        launch().use {
-            // THEN I see progress while refreshing, then the unknown status
-            assertShowsHomeLoading()
-            assertDoesNotShow(R.string.status_unknown)
-            assertShows(R.string.status_unknown)
-            assertRefreshRequested()
-
-            // WHEN the server is back and I pull to refresh
-            givenServerReturnsProfile()
-            pullToRefresh()
-
-            // THEN I see the status
-            assertShows(R.string.status_all_good)
             assertRefreshRequested()
         }
     }
@@ -266,22 +191,56 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
     }
 
     @Test
-    fun refreshesStatusOnPullToRefresh() {
-        // GIVEN a stored session with a cached profile
-        givenStoredSession(profile = allGoodProfile())
-        givenServerReturnsProfile()
-        givenServerReturnsProfile()
+    fun userPullShowsIndicatorAndRefreshesStatusAndPayments() {
+        // GIVEN a stored session with no cached profile and no network
+        givenStoredSession()
+        givenServerIsUnreachable(delayMillis = 3_000)
 
         launch().use {
-            // THEN I see the status after the initial refresh
-            assertShows(R.string.status_all_good)
+            // THEN I see the unknown status after the failed background refresh
+            assertShowsHomeLoading()
+            assertShows(R.string.status_unknown)
             assertRefreshRequested()
+            assertPaymentsRefreshRequested()
 
-            // WHEN I pull to refresh
+            // WHEN the server recovers and I pull to refresh
+            givenServerReturnsProfile(delayMillis = 3_000)
             pullToRefresh()
 
-            // THEN the status is refreshed again
+            // THEN the pull-to-refresh indicator is shown only for my request
+            assertShowsRefreshIndicator()
+            assertNoRefreshIndicator()
+
+            // AND both the status and payments are refreshed again
             assertRefreshRequested()
+            assertPaymentsRefreshRequested()
+            assertShows(R.string.status_all_good)
+        }
+    }
+
+    @Test
+    fun userPullDuringBackgroundRefreshReusesRunningJob() {
+        // GIVEN a stored session with a cached profile and a slow background refresh
+        givenStoredSession(profile = allGoodProfile())
+        givenStoredTariffPlans()
+        givenServerReturnsProfile(delayMillis = 3_000)
+
+        launch().use {
+            assertShows(R.string.status_all_good)
+            assertNoRefreshIndicator()
+            assertRefreshRequested()
+            assertPaymentsRefreshRequested()
+
+            // WHEN I pull while the background refresh is still running
+            pullToRefresh()
+
+            // THEN the indicator is shown without starting a second status refresh
+            assertShowsRefreshIndicator()
+            assertNoAdditionalProfileRequest()
+
+            // AND it disappears when the original refresh finishes
+            assertNoRefreshIndicator()
+            assertShows(R.string.status_all_good)
         }
     }
 

@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -34,7 +35,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.model.AccountStatus
+import com.wasylews.mykompot.ui.components.shimmer
 import com.wasylews.mykompot.ui.theme.LocalStatusPalettes
 import com.wasylews.mykompot.ui.theme.MyKompotTheme
 import com.wasylews.mykompot.ui.theme.Spacing
@@ -83,15 +84,9 @@ fun StatusCard(
             onRetry = onRetry,
         )
 
-        HomeContent.Loading -> Box(
-            modifier = modifier
-                .fillMaxWidth()
-                .padding(vertical = Spacing.lg)
-                .testTag(HOME_LOADING_TEST_TAG),
-            contentAlignment = Alignment.Center,
-        ) {
-            CircularProgressIndicator()
-        }
+        HomeContent.Loading -> StatusCardSkeleton(
+            modifier = modifier.testTag(HOME_LOADING_TEST_TAG),
+        )
     }
 }
 
@@ -144,6 +139,67 @@ private fun ContentCard(
                         fontWeight = FontWeight.Bold,
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatusCardSkeleton(modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(26.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    ) {
+        Column(
+            modifier = Modifier.padding(22.dp),
+            verticalArrangement = Arrangement.spacedBy(Spacing.md),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(width = 96.dp, height = 28.dp)
+                    .clip(RoundedCornerShape(999.dp))
+                    .shimmer(),
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(0.7f)
+                    .height(36.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .shimmer(),
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.95f)
+                        .height(14.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .shimmer(),
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.75f)
+                        .height(14.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .shimmer(),
+                )
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(16.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .shimmer(),
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.85f)
+                        .height(16.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .shimmer(),
+                )
             }
         }
     }

@@ -23,20 +23,21 @@ import kotlinx.coroutines.CompletableDeferred
 class FakeRefreshPayments : RefreshPayments {
     var calls = 0
     var result: PaymentsActionResult = PaymentsActionResult.Success
-    private var gate: CompletableDeferred<Unit>? = null
+    private val gates = mutableListOf<CompletableDeferred<Unit>>()
 
+    /** Blocks the next call until its gate is resumed. */
     fun pause() {
-        gate = CompletableDeferred()
+        gates.add(CompletableDeferred())
     }
 
-    fun resume() {
-        gate?.complete(Unit)
-        gate = null
+    /** Releases the gate for a 1-based [call] number, defaulting to the first call. */
+    fun resume(call: Int = 1) {
+        gates.getOrNull(call - 1)?.complete(Unit)
     }
 
     override suspend fun invoke(): PaymentsActionResult {
-        calls++
-        gate?.await()
+        val call = ++calls
+        gates.getOrNull(call - 1)?.await()
         return result
     }
 }
