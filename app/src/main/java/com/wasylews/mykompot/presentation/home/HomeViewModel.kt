@@ -19,12 +19,10 @@ package com.wasylews.mykompot.presentation.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wasylews.mykompot.R
-import com.wasylews.mykompot.domain.ObserveSession
 import com.wasylews.mykompot.domain.ObserveStatus
 import com.wasylews.mykompot.domain.RefreshStatus
 import com.wasylews.mykompot.domain.model.AccountStatus
 import com.wasylews.mykompot.domain.model.RefreshResult
-import com.wasylews.mykompot.domain.model.SessionState
 import com.wasylews.mykompot.presentation.toErrorId
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -33,8 +31,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
@@ -43,7 +39,6 @@ import org.koin.core.annotation.KoinViewModel
 class HomeViewModel(
     observeStatus: ObserveStatus,
     private val refreshStatus: RefreshStatus,
-    observeSession: ObserveSession,
 ) : ViewModel() {
     private val isRefreshing = MutableStateFlow(false)
     private val errorId = MutableStateFlow<Int?>(null)
@@ -60,14 +55,10 @@ class HomeViewModel(
             initialValue = null,
         )
 
+    // The ViewModel is owned by the logged-in navigation destination, so creation means a
+    // session has started and one bootstrap refresh is sufficient.
     init {
-        observeSession.sessionStateFlow()
-            .onEach { state ->
-                if (state == SessionState.LoggedIn) {
-                    refresh()
-                }
-            }
-            .launchIn(viewModelScope)
+        refresh()
     }
 
     fun refresh(userInitiated: Boolean = false) {

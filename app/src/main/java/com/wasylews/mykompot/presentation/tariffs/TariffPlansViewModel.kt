@@ -20,11 +20,9 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wasylews.mykompot.R
-import com.wasylews.mykompot.domain.ObserveSession
 import com.wasylews.mykompot.domain.ObserveStatus
 import com.wasylews.mykompot.domain.ObserveTariffPlans
 import com.wasylews.mykompot.domain.RefreshTariffPlans
-import com.wasylews.mykompot.domain.model.SessionState
 import com.wasylews.mykompot.domain.model.TariffPlan
 import com.wasylews.mykompot.domain.model.TariffPlansActionResult
 import kotlinx.coroutines.CancellationException
@@ -33,8 +31,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
@@ -52,7 +48,6 @@ class TariffPlansViewModel(
     observeStatus: ObserveStatus,
     observeTariffPlans: ObserveTariffPlans,
     private val refreshTariffPlans: RefreshTariffPlans,
-    observeSession: ObserveSession,
 ) : ViewModel() {
     private val isVisible = MutableStateFlow(false)
     private val isLoading = MutableStateFlow(false)
@@ -65,14 +60,9 @@ class TariffPlansViewModel(
             initialValue = null,
         )
 
+    // Destination-scoped: this ViewModel exists only while the logged-in session is active.
     init {
-        observeSession.sessionStateFlow()
-            .onEach { state ->
-                if (state == SessionState.LoggedIn) {
-                    refresh()
-                }
-            }
-            .launchIn(viewModelScope)
+        refresh()
     }
 
     fun retry() {
