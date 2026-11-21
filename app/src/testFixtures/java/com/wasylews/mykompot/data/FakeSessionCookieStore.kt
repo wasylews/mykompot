@@ -19,7 +19,7 @@ package com.wasylews.mykompot.data
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
-internal class FakeSessionCookieStore(
+class FakeSessionCookieStore(
     sid: String? = null,
 ) : SessionCookieStore {
     private val sid = MutableStateFlow(sid)

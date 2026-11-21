@@ -43,10 +43,12 @@ import org.koin.dsl.module
 import org.koin.test.get
 import java.time.LocalDate
 import java.time.ZoneId
+import kotlin.time.Instant
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class PaymentDueNotificationTest : BaseAcceptanceTest() {
     private var appInForeground = false
+    private var zone: ZoneId = ZoneId.of("UTC")
 
     private val testModule = module {
         single<AppForegroundState> {
@@ -54,11 +56,14 @@ class PaymentDueNotificationTest : BaseAcceptanceTest() {
                 override fun isInForeground(): Boolean = appInForeground
             }
         }
-        single<ZoneId> { ZoneId.of("UTC") }
+        single<ZoneId> { zone }
     }
 
     @Before
     fun setUpEnvironment() {
+        appInForeground = false
+        zone = ZoneId.of("UTC")
+        clock.set(Instant.parse("2026-10-01T10:00:00Z"))
         // Channel importance is sticky even after deletion; start every test from a clean slate.
         notificationManager().deleteNotificationChannel(PAYMENT_CHANNEL_ID)
         loadKoinModules(testModule)
@@ -152,6 +157,43 @@ class PaymentDueNotificationTest : BaseAcceptanceTest() {
 
         assertNoNotificationPosted()
         assertLedgerEmpty()
+    }
+
+    @Test
+    fun postsDueDayReminderForLocalDateAheadOfUtc() {
+        zone = ZoneId.of("Pacific/Kiritimati")
+        // At UTC+14 this instant is already 2026-10-01 locally.
+        clock.set(Instant.parse("2026-09-30T12:00:00Z"))
+        givenStoredSession(profile = ProfileFixtures.profile(nextPaymentDate = TODAY))
+
+        assertEquals(ListenableWorker.Result.success(), runReminderWorker())
+
+        assertNotificationPosted(
+            titleRes = R.string.payment_due_today_title,
+            textRes = R.string.payment_due_today_text,
+        )
+        assertLedgerContains(reminderKey(PaymentDueThreshold.DUE_DAY, TODAY))
+    }
+
+    @Test
+    fun waitsForLocalMidnightBeforePostingDueDayReminder() {
+        zone = ZoneId.of("America/Los_Angeles")
+        givenStoredSession(profile = ProfileFixtures.profile(nextPaymentDate = TODAY))
+
+        // 23:30 UTC is still 2026-09-30 in California.
+        clock.set(Instant.parse("2026-09-30T23:30:00Z"))
+        assertEquals(ListenableWorker.Result.success(), runReminderWorker())
+        assertNoNotificationPosted()
+        assertLedgerEmpty()
+
+        // 07:30 UTC is just after local midnight on 2026-10-01.
+        clock.set(Instant.parse("2026-10-01T07:30:00Z"))
+        assertEquals(ListenableWorker.Result.success(), runReminderWorker())
+        assertNotificationPosted(
+            titleRes = R.string.payment_due_today_title,
+            textRes = R.string.payment_due_today_text,
+        )
+        assertLedgerContains(reminderKey(PaymentDueThreshold.DUE_DAY, TODAY))
     }
 
     @Test
