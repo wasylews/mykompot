@@ -22,7 +22,6 @@ import androidx.datastore.core.Serializer
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import com.wasylews.mykompot.data.model.PaymentsSerializer
 import com.wasylews.mykompot.data.model.ProfileEntitySerializer
-import com.wasylews.mykompot.data.model.SessionSerializer
 import com.wasylews.mykompot.data.model.TariffPlansSerializer
 import com.wasylews.mykompot.domain.model.Payment
 import com.wasylews.mykompot.domain.model.PaymentSource
@@ -91,44 +90,6 @@ class DataStoreLocalStorageTest {
     }
 
     @Test
-    fun `session flow emits null when nothing is stored`() = runTest {
-        val store = createLocalStorage()
-
-        val session = store.sessionFlow().first()
-
-        assertNull(session)
-    }
-
-    @Test
-    fun `saving a session stores it`() = runTest {
-        val store = createLocalStorage()
-
-        store.saveSession("test-session")
-
-        assertEquals("test-session", store.sessionFlow().first())
-    }
-
-    @Test
-    fun `clearing a session removes it`() = runTest {
-        val store = createLocalStorage()
-        store.saveSession("test-session")
-
-        store.clearSession()
-
-        assertNull(store.sessionFlow().first())
-    }
-
-    @Test
-    fun `saving a profile keeps the session`() = runTest {
-        val store = createLocalStorage()
-        store.saveSession("test-session")
-
-        store.saveProfile(profile())
-
-        assertEquals("test-session", store.sessionFlow().first())
-    }
-
-    @Test
     fun `clearing a profile removes it`() = runTest {
         val store = createLocalStorage()
         store.saveProfile(profile())
@@ -136,18 +97,6 @@ class DataStoreLocalStorageTest {
         store.clearProfile()
 
         assertNull(store.profileFlow().first())
-    }
-
-    @Test
-    fun `session survives a new store instance`() = runTest {
-        val sessionFile = File(tmp.root, SESSION_FILE)
-        val first = createLocalStorage(sessionFile = sessionFile)
-        first.saveSession("test-session")
-        closeStores()
-
-        val second = createLocalStorage(sessionFile = sessionFile)
-
-        assertEquals("test-session", second.sessionFlow().first())
     }
 
     @Test
@@ -164,19 +113,17 @@ class DataStoreLocalStorageTest {
     }
 
     @Test
-    fun `corrupt profile reads as null and keeps the session`() = runTest {
+    fun `corrupt profile reads as null`() = runTest {
         val profileFile = File(tmp.root, PROFILE_FILE)
-        val sessionFile = File(tmp.root, SESSION_FILE)
-        val first = createLocalStorage(profileFile, sessionFile)
-        first.saveSession("test-session")
+        val first = createLocalStorage(profileFile = profileFile)
+        first.saveProfile(profile())
         closeStores()
 
         profileFile.writeText("{not json")
 
-        val second = createLocalStorage(profileFile, sessionFile)
+        val second = createLocalStorage(profileFile = profileFile)
 
         assertNull(second.profileFlow().first())
-        assertEquals("test-session", second.sessionFlow().first())
     }
 
     @Test
@@ -191,24 +138,6 @@ class DataStoreLocalStorageTest {
         val second = createLocalStorage(plansFile = plansFile)
 
         assertNull(second.tariffPlansFlow().first())
-    }
-
-    @Test
-    fun `corrupt session reads as null and keeps the profile`() = runTest {
-        val profileFile = File(tmp.root, PROFILE_FILE)
-        val sessionFile = File(tmp.root, SESSION_FILE)
-        val profile = profile()
-        val first = createLocalStorage(profileFile, sessionFile)
-        first.saveProfile(profile)
-        first.saveSession("test-session")
-        closeStores()
-
-        sessionFile.writeBytes(byteArrayOf(0xC3.toByte(), 0x28))
-
-        val second = createLocalStorage(profileFile, sessionFile)
-
-        assertNull(second.sessionFlow().first())
-        assertEquals(profile, second.profileFlow().first())
     }
 
     @Test
@@ -297,18 +226,12 @@ class DataStoreLocalStorageTest {
 
     private fun createLocalStorage(
         profileFile: File = File(tmp.root, PROFILE_FILE),
-        sessionFile: File = File(tmp.root, SESSION_FILE),
         plansFile: File = File(tmp.root, PLANS_FILE),
         paymentsFile: File = File(tmp.root, PAYMENTS_FILE),
     ) = DataStoreLocalStorage(
         profileDataStore = createStore(
             file = profileFile,
             serializer = ProfileEntitySerializer,
-            corruptionHandler = ReplaceFileCorruptionHandler { null },
-        ),
-        sessionDataStore = createStore(
-            file = sessionFile,
-            serializer = SessionSerializer,
             corruptionHandler = ReplaceFileCorruptionHandler { null },
         ),
         tariffPlansDataStore = createStore(
@@ -371,7 +294,6 @@ class DataStoreLocalStorageTest {
 
     private companion object {
         const val PROFILE_FILE = "profile.json"
-        const val SESSION_FILE = "session.json"
         const val PLANS_FILE = "tariff_plans.json"
         const val PAYMENTS_FILE = "payments.json"
     }

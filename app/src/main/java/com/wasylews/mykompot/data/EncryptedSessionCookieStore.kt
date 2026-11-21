@@ -18,21 +18,30 @@ package com.wasylews.mykompot.data
 
 import android.content.Context
 import androidx.core.content.edit
+import androidx.datastore.dataStoreFile
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.koin.core.annotation.Singleton
 
-/** [SessionCookieStore] backed by app-private preferences. */
+/** [SessionCookieStore] backed by Keystore-encrypted preferences. */
 @Singleton
-class SharedPreferencesSessionCookieStore(
+class EncryptedSessionCookieStore(
     context: Context,
 ) : SessionCookieStore {
-    private val preferences = context.applicationContext.getSharedPreferences(
+    private val appContext = context.applicationContext
+    private val preferences = createEncryptedPreferences(
+        appContext,
         PREFERENCES_NAME,
-        Context.MODE_PRIVATE,
+        "encrypted session cookies",
     )
     private val sid = MutableStateFlow(preferences.getString(KEY_SID, null))
+
+    init {
+        if (sid.value == null) {
+            legacySid()?.let(::saveSid)
+        }
+    }
 
     override fun sid(): String? = sid.value
 
@@ -48,8 +57,26 @@ class SharedPreferencesSessionCookieStore(
 
     override fun sidFlow(): Flow<String?> = sid.asStateFlow()
 
-    private companion object {
-        const val PREFERENCES_NAME = "session_cookies"
-        const val KEY_SID = "sid"
+    private fun legacySid(): String? {
+        val legacyPreferences = appContext.getSharedPreferences(LEGACY_PREFERENCES_NAME, Context.MODE_PRIVATE)
+        legacyPreferences.getString(KEY_SID, null)
+            ?.takeIf(String::isNotBlank)
+            ?.let {
+                legacyPreferences.edit { remove(KEY_SID) }
+                return it
+            }
+
+        val legacyFile = appContext.dataStoreFile(LEGACY_SESSION_FILE)
+        if (!legacyFile.exists()) return null
+        val storedSid = runCatching { legacyFile.readText().trim().ifBlank { null } }.getOrNull()
+        legacyFile.delete()
+        return storedSid
+    }
+
+    companion object {
+        const val PREFERENCES_NAME = "session_cookies_encrypted"
+        private const val LEGACY_PREFERENCES_NAME = "session_cookies"
+        private const val LEGACY_SESSION_FILE = "session.json"
+        private const val KEY_SID = "sid"
     }
 }

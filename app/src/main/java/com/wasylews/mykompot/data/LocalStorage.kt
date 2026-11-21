@@ -33,17 +33,8 @@ interface LocalStorage {
     /** Emits the saved profile, or `null` when nothing usable is cached. */
     fun profileFlow(): Flow<Profile?>
 
-    /** Emits the stored session token, or `null` when absent. */
-    fun sessionFlow(): Flow<String?>
-
-    /** Persists the current session token ([sid]). */
-    suspend fun saveSession(sid: String)
-
     /** Removes the cached profile. */
     suspend fun clearProfile()
-
-    /** Removes the stored session token. */
-    suspend fun clearSession()
 
     /** Emits the cached tariff plans catalog, or `null` when absent. */
     fun tariffPlansFlow(): Flow<TariffPlans?>

@@ -593,7 +593,7 @@ class PortalRepositoryImplTest {
     private fun createPortalRepository(
         testScheduler: TestCoroutineScheduler,
         portalApi: FakePortalApi = FakePortalApi(activeProfileResponse()),
-        localStorage: LocalStorage = FakeLocalStorage(),
+        localStorage: FakeLocalStorage = FakeLocalStorage(),
         sessionCookieStore: SessionCookieStore = LocalStorageSessionCookieStore(localStorage),
     ): PortalRepositoryImpl = PortalRepositoryImpl(
         dispatcher = StandardTestDispatcher(testScheduler),
@@ -990,7 +990,7 @@ class PortalRepositoryPaymentsTest {
     private fun createPortalRepository(
         testScheduler: TestCoroutineScheduler,
         portalApi: FakePortalApi = FakePortalApi(activeProfileResponse()),
-        localStorage: LocalStorage = FakeLocalStorage(),
+        localStorage: FakeLocalStorage = FakeLocalStorage(),
         sessionCookieStore: SessionCookieStore = LocalStorageSessionCookieStore(localStorage),
     ): PortalRepositoryImpl = PortalRepositoryImpl(
         dispatcher = StandardTestDispatcher(testScheduler),
@@ -1102,7 +1102,7 @@ private class FakePortalApi(
 
 /** Test adapter that keeps the repository seam backed by the existing fake storage. */
 private class LocalStorageSessionCookieStore(
-    private val storage: LocalStorage,
+    private val storage: FakeLocalStorage,
 ) : SessionCookieStore {
     override fun sid(): String? = runBlocking { storage.sessionFlow().first() }
 
@@ -1127,9 +1127,9 @@ private class FakeLocalStorage : LocalStorage {
 
     override fun profileFlow(): Flow<Profile?> = savedProfile
 
-    override fun sessionFlow(): Flow<String?> = savedSession
+    fun sessionFlow(): Flow<String?> = savedSession
 
-    override suspend fun saveSession(sid: String) {
+    suspend fun saveSession(sid: String) {
         savedSession.value = sid
     }
 
@@ -1137,7 +1137,7 @@ private class FakeLocalStorage : LocalStorage {
         savedProfile.value = null
     }
 
-    override suspend fun clearSession() {
+    suspend fun clearSession() {
         savedSession.value = null
     }
 

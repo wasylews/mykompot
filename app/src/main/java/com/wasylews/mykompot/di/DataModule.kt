@@ -24,6 +24,7 @@ import androidx.datastore.dataStoreFile
 import com.wasylews.mykompot.BuildConfig
 import com.wasylews.mykompot.data.AuthApi
 import com.wasylews.mykompot.data.EncryptedCredentialsStore
+import com.wasylews.mykompot.data.EncryptedSessionCookieStore
 import com.wasylews.mykompot.data.LoginPageTo401Interceptor
 import com.wasylews.mykompot.data.PlansApi
 import com.wasylews.mykompot.data.PortalApi
@@ -31,12 +32,10 @@ import com.wasylews.mykompot.data.PortalAuthenticator
 import com.wasylews.mykompot.data.PortalCookieJar
 import com.wasylews.mykompot.data.PortalSessionTagInterceptor
 import com.wasylews.mykompot.data.SessionCookieStore
-import com.wasylews.mykompot.data.SharedPreferencesSessionCookieStore
 import com.wasylews.mykompot.data.model.PaymentsEntity
 import com.wasylews.mykompot.data.model.PaymentsSerializer
 import com.wasylews.mykompot.data.model.ProfileEntity
 import com.wasylews.mykompot.data.model.ProfileEntitySerializer
-import com.wasylews.mykompot.data.model.SessionSerializer
 import com.wasylews.mykompot.data.model.TariffPlansEntity
 import com.wasylews.mykompot.data.model.TariffPlansSerializer
 import com.wasylews.mykompot.domain.repository.CredentialsStore
@@ -75,7 +74,7 @@ class DataModule {
     ): PlansApi = retrofit.create()
 
     @Singleton
-    fun provideSessionCookieStore(context: Context): SessionCookieStore = SharedPreferencesSessionCookieStore(context)
+    fun provideSessionCookieStore(context: Context): SessionCookieStore = EncryptedSessionCookieStore(context)
 
     @Singleton
     fun provideCredentialsStore(context: Context): CredentialsStore = EncryptedCredentialsStore(context)
@@ -135,14 +134,6 @@ class DataModule {
         serializer = ProfileEntitySerializer,
         corruptionHandler = ReplaceFileCorruptionHandler { null },
         produceFile = { context.dataStoreFile("profile.json") },
-    )
-
-    @Singleton
-    @Named("session")
-    fun provideSessionDataStore(context: Context): DataStore<String?> = DataStoreFactory.create(
-        serializer = SessionSerializer,
-        corruptionHandler = ReplaceFileCorruptionHandler { null },
-        produceFile = { context.dataStoreFile("session.json") },
     )
 
     @Singleton

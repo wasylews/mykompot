@@ -17,22 +17,21 @@
 package com.wasylews.mykompot.data
 
 import android.content.Context
-import android.content.SharedPreferences
 import androidx.core.content.edit
-import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKey
 import com.wasylews.mykompot.domain.model.Credentials
 import com.wasylews.mykompot.domain.repository.CredentialsStore
 import org.koin.core.annotation.Singleton
-import java.io.IOException
-import java.security.GeneralSecurityException
 
 /** [CredentialsStore] backed by Keystore-encrypted preferences. */
 @Singleton
 class EncryptedCredentialsStore(
     context: Context,
 ) : CredentialsStore {
-    private val preferences = encryptedPreferences(context.applicationContext)
+    private val preferences = createEncryptedPreferences(
+        context.applicationContext,
+        PREFERENCES_NAME,
+        "encrypted credentials",
+    )
 
     override fun save(credentials: Credentials) {
         preferences.edit {
@@ -49,24 +48,6 @@ class EncryptedCredentialsStore(
 
     override fun clear() {
         preferences.edit { clear() }
-    }
-
-    @Suppress("DEPRECATION") // security-crypto 1.1.0 still exposes this Keystore-backed API.
-    private fun encryptedPreferences(context: Context): SharedPreferences = try {
-        val masterKey = MasterKey.Builder(context)
-            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-            .build()
-        EncryptedSharedPreferences.create(
-            context,
-            PREFERENCES_NAME,
-            masterKey,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
-        )
-    } catch (e: GeneralSecurityException) {
-        throw IllegalStateException("Unable to open encrypted credentials", e)
-    } catch (e: IOException) {
-        throw IllegalStateException("Unable to open encrypted credentials", e)
     }
 
     companion object {

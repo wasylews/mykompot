@@ -38,7 +38,6 @@ import java.time.LocalDateTime
 @Singleton
 class DataStoreLocalStorage(
     @Named("profile") private val profileDataStore: DataStore<ProfileEntity?>,
-    @Named("session") private val sessionDataStore: DataStore<String?>,
     @Named("tariffPlans") private val tariffPlansDataStore: DataStore<TariffPlansEntity?>,
     @Named("payments") private val paymentsDataStore: DataStore<PaymentsEntity?>,
 ) : LocalStorage {
@@ -48,18 +47,8 @@ class DataStoreLocalStorage(
 
     override fun profileFlow(): Flow<Profile?> = profileDataStore.data.map { it?.toDomain() }
 
-    override fun sessionFlow(): Flow<String?> = sessionDataStore.data
-
-    override suspend fun saveSession(sid: String) {
-        sessionDataStore.updateData { sid }
-    }
-
     override suspend fun clearProfile() {
         profileDataStore.updateData { null }
-    }
-
-    override suspend fun clearSession() {
-        sessionDataStore.updateData { null }
     }
 
     override fun tariffPlansFlow(): Flow<TariffPlans?> = tariffPlansDataStore.data.map { it?.toDomain() }

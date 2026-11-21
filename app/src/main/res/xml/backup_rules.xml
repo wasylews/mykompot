@@ -10,4 +10,5 @@
     <exclude domain="file" path="datastore/tariff_plans.json" />
     <exclude domain="sharedpref" path="credentials.xml" />
     <exclude domain="sharedpref" path="session_cookies.xml" />
+    <exclude domain="sharedpref" path="session_cookies_encrypted.xml" />
 </full-backup-content>
