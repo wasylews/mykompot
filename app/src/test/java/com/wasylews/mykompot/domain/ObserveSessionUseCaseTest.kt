@@ -18,8 +18,11 @@ package com.wasylews.mykompot.domain
 
 import app.cash.turbine.test
 import com.wasylews.mykompot.domain.model.SessionState
+import com.wasylews.mykompot.domain.repository.PortalRepository
 import com.wasylews.mykompot.presentation.FakePortalRepository
 import junit.framework.TestCase.assertEquals
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -43,4 +46,37 @@ class ObserveSessionUseCaseTest {
             awaitComplete()
         }
     }
+
+    @Test
+    fun `rotated cookie does not re-emit LoggedIn`() = runTest {
+        val useCase = ObserveSessionUseCase(
+            FakeSessionRepository(listOf("old-session", "new-session")),
+        )
+
+        useCase.sessionStateFlow().test {
+            assertEquals(SessionState.LoggedIn, awaitItem())
+            awaitComplete()
+        }
+    }
+
+    @Test
+    fun `cleared session emits LoggedOut`() = runTest {
+        val useCase = ObserveSessionUseCase(
+            FakeSessionRepository(listOf("session-id", null)),
+        )
+
+        useCase.sessionStateFlow().test {
+            assertEquals(SessionState.LoggedIn, awaitItem())
+            assertEquals(SessionState.LoggedOut, awaitItem())
+            awaitComplete()
+        }
+    }
+}
+
+private class FakeSessionRepository(
+    sessions: List<String?>,
+) : PortalRepository by FakePortalRepository() {
+    private val sessionValues: Flow<String?> = sessions.asFlow()
+
+    override fun sessionFlow(): Flow<String?> = sessionValues
 }

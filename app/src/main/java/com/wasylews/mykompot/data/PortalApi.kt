@@ -112,9 +112,6 @@ data class ProfilePageResponse(
     /** Heading containing the next periodic payment text/date (ISO date in parentheses). */
     @Selector("div.kabinet-styled_table-wrap_form h3")
     val nextPayment: String? = null,
-    /** Session token embedded in page markup, when provided. */
-    @Selector("input[name=sid]", attr = "value")
-    val sid: String? = null,
 ) {
     /** Account state label extracted from [status] (for example `Enable`). */
     val accountState: String?

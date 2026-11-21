@@ -19,6 +19,7 @@ package com.wasylews.mykompot.domain
 import com.wasylews.mykompot.domain.model.SessionState
 import com.wasylews.mykompot.domain.repository.PortalRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Factory
 
@@ -40,4 +41,5 @@ class ObserveSessionUseCase(
                 SessionState.LoggedIn
             }
         }
+        .distinctUntilChanged()
 }
