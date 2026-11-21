@@ -90,7 +90,7 @@ abstract class BaseAcceptanceTest : KoinTest {
 
     protected val server = MockWebServer()
 
-    protected val clock = MutableClock(Instant.parse("2026-10-01T10:00:00Z"))
+    protected val clock = MutableTestClock(Instant.parse("2026-10-01T10:00:00Z"))
 
     /**
      * Controls what the app sees when it checks whether it may post notifications.

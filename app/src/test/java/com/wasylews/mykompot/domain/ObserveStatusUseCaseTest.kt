@@ -17,6 +17,7 @@
 package com.wasylews.mykompot.domain
 
 import app.cash.turbine.test
+import com.wasylews.mykompot.MutableTestClock
 import com.wasylews.mykompot.domain.model.AccountStatus
 import com.wasylews.mykompot.presentation.FakePortalRepository
 import com.wasylews.mykompot.presentation.profile
@@ -34,7 +35,7 @@ class ObserveStatusUseCaseTest {
             repository = FakePortalRepository(
                 profile = profile().copy(nextPaymentDate = LocalDate.of(2026, 10, 27)),
             ),
-            clock = MutableClock(LocalDate.of(2026, 10, 20)),
+            clock = MutableTestClock.atStartOfDay(LocalDate.of(2026, 10, 20)),
         )
 
         // WHEN / THEN
@@ -53,7 +54,7 @@ class ObserveStatusUseCaseTest {
             repository = FakePortalRepository(
                 profile = profile().copy(nextPaymentDate = LocalDate.of(2026, 10, 27)),
             ),
-            clock = MutableClock(LocalDate.of(2026, 10, 24)),
+            clock = MutableTestClock.atStartOfDay(LocalDate.of(2026, 10, 24)),
         )
 
         // WHEN / THEN
@@ -72,7 +73,7 @@ class ObserveStatusUseCaseTest {
             repository = FakePortalRepository(
                 profile = profile().copy(nextPaymentDate = LocalDate.of(2026, 10, 27)),
             ),
-            clock = MutableClock(LocalDate.of(2026, 10, 29)),
+            clock = MutableTestClock.atStartOfDay(LocalDate.of(2026, 10, 29)),
         )
 
         // WHEN / THEN
@@ -94,7 +95,7 @@ class ObserveStatusUseCaseTest {
                     nextPaymentDate = LocalDate.of(2027, 12, 31),
                 ),
             ),
-            clock = MutableClock(LocalDate.of(2026, 10, 20)),
+            clock = MutableTestClock.atStartOfDay(LocalDate.of(2026, 10, 20)),
         )
 
         // WHEN / THEN
@@ -115,7 +116,7 @@ class ObserveStatusUseCaseTest {
                     nextPaymentDate = null,
                 ),
             ),
-            clock = MutableClock(LocalDate.of(2026, 10, 20)),
+            clock = MutableTestClock.atStartOfDay(LocalDate.of(2026, 10, 20)),
         )
 
         // WHEN / THEN
@@ -132,7 +133,7 @@ class ObserveStatusUseCaseTest {
         // GIVEN
         val useCase = ObserveStatusUseCase(
             repository = FakePortalRepository(profile = null),
-            clock = MutableClock(LocalDate.of(2026, 10, 20)),
+            clock = MutableTestClock.atStartOfDay(LocalDate.of(2026, 10, 20)),
         )
 
         // WHEN / THEN

@@ -16,6 +16,7 @@
 
 package com.wasylews.mykompot.presentation.home
 
+import com.wasylews.mykompot.MutableTestClock
 import com.wasylews.mykompot.PaymentFixtures
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.LoadMorePayments
@@ -40,14 +41,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDateTime
 import java.time.ZoneId
-import kotlin.time.Clock
 import kotlin.time.Instant
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PaymentsViewModelTest : BaseViewModelTest() {
-    private val fixedClock = object : Clock {
-        override fun now(): Instant = Instant.parse("2026-10-11T12:00:00Z")
-    }
+    private val testClock = MutableTestClock(Instant.parse("2026-10-11T12:00:00Z"))
     private val zoneId = ZoneId.of("UTC")
 
     private fun paymentsWithPayment(hasMore: Boolean = false) = Payments(
@@ -63,7 +61,7 @@ class PaymentsViewModelTest : BaseViewModelTest() {
         observePayments = observePayments,
         refreshPayments = refreshPayments,
         loadMorePaymentsUseCase = loadMorePayments,
-        clock = fixedClock,
+        clock = testClock,
         zoneId = zoneId,
     )
 
