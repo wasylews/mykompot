@@ -9,11 +9,15 @@
         <exclude domain="file" path="datastore/session.json" />
         <exclude domain="file" path="datastore/payments.json" />
         <exclude domain="file" path="datastore/tariff_plans.json" />
+        <exclude domain="sharedpref" path="credentials.xml" />
+        <exclude domain="sharedpref" path="session_cookies.xml" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="file" path="datastore/profile.json" />
         <exclude domain="file" path="datastore/session.json" />
         <exclude domain="file" path="datastore/payments.json" />
         <exclude domain="file" path="datastore/tariff_plans.json" />
+        <exclude domain="sharedpref" path="credentials.xml" />
+        <exclude domain="sharedpref" path="session_cookies.xml" />
     </device-transfer>
 </data-extraction-rules>

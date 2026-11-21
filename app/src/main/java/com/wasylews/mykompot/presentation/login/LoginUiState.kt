@@ -23,4 +23,5 @@ data class LoginUiState(
     val passwordState: TextFieldState,
     val isLoading: Boolean = false,
     val errorId: Int? = null,
+    val rememberMe: Boolean = false,
 )

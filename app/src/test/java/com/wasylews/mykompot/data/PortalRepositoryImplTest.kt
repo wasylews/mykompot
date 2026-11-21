@@ -49,11 +49,20 @@ import java.time.LocalDateTime
 class PortalRepositoryImplTest {
     @Test
     fun `login with wrong credentials`() = runTest {
-        val repo = createPortalRepository(testScheduler, FakePortalApi(genericError()))
+        val repo = createPortalRepository(testScheduler, FakePortalApi(loginPage()))
 
         val result = repo.login("user", "pass")
 
         assertEquals(LoginResult.InvalidCredentials, result)
+    }
+
+    @Test
+    fun `login with a generic portal error is a server failure`() = runTest {
+        val repo = createPortalRepository(testScheduler, FakePortalApi(genericError()))
+
+        val result = repo.login("user", "pass")
+
+        assertEquals(LoginResult.Failed(PortalFailure.Server), result)
     }
 
     @Test

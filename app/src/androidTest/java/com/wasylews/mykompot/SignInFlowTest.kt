@@ -52,6 +52,54 @@ class SignInFlowTest : BaseAcceptanceTest() {
     }
 
     @Test
+    fun remembersCredentialsWhenAsked() {
+        // GIVEN server is up
+        givenStoredTariffPlans()
+        givenServerReturnsProfile()
+
+        launch().use {
+            // WHEN I opt in and log in
+            performLogin(rememberMe = true)
+
+            // THEN my credentials are saved for automatic re-login
+            assertShows(R.string.status_all_good)
+            assertRememberedCredentials()
+        }
+    }
+
+    @Test
+    fun doesNotRememberCredentialsByDefault() {
+        // GIVEN server is up
+        givenStoredTariffPlans()
+        givenServerReturnsProfile()
+
+        launch().use {
+            // WHEN I log in without opting in
+            performLogin()
+
+            // THEN no credentials are saved
+            assertShows(R.string.status_all_good)
+            assertNoRememberedCredentials()
+        }
+    }
+
+    @Test
+    fun forgetsRememberedCredentialsWhenLoginFails() {
+        // GIVEN previously remembered credentials and a server that rejects them
+        givenStoredCredentials(username = "old-user", password = "old-pass")
+        givenServerResponse(body = HtmlFixtures.loginFailed())
+
+        launch().use {
+            // WHEN I try to log in again
+            performLogin(rememberMe = true)
+
+            // THEN the stale credentials are not kept
+            assertShows(R.string.error_invalid_credentials)
+            assertNoRememberedCredentials()
+        }
+    }
+
+    @Test
     fun signInFailsWithInvalidCredentials() {
         // GIVEN server is up
         givenServerResponse(body = HtmlFixtures.loginFailed())

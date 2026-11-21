@@ -18,11 +18,14 @@ package com.wasylews.mykompot.presentation.login
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
@@ -31,6 +34,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -52,8 +56,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTag
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -61,10 +68,13 @@ import com.wasylews.mykompot.R
 import com.wasylews.mykompot.ui.theme.MyKompotTheme
 import com.wasylews.mykompot.ui.theme.Spacing
 
+const val REMEMBER_ME_TEST_TAG = "remember_me"
+
 @Composable
 fun LoginScreen(
     uiState: LoginUiState,
     onLoginClick: () -> Unit,
+    onRememberMeChange: (Boolean) -> Unit,
     onErrorConsumed: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -86,6 +96,7 @@ fun LoginScreen(
         LoginForm(
             uiState = uiState,
             onLoginClick = onLoginClick,
+            onRememberMeChange = onRememberMeChange,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
@@ -98,6 +109,7 @@ fun LoginScreen(
 private fun LoginForm(
     uiState: LoginUiState,
     onLoginClick: () -> Unit,
+    onRememberMeChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
@@ -119,8 +131,40 @@ private fun LoginForm(
             passwordVisible = passwordVisible,
             onToggleVisibility = { passwordVisible = !passwordVisible },
         )
+        Spacer(modifier = Modifier.height(Spacing.md))
+        RememberMeCheckbox(
+            checked = uiState.rememberMe,
+            onCheckedChange = onRememberMeChange,
+        )
         Spacer(modifier = Modifier.height(Spacing.lg))
         LoginButton(isLoading = uiState.isLoading, onClick = onLoginClick)
+    }
+}
+
+@Composable
+private fun RememberMeCheckbox(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .toggleable(
+                value = checked,
+                role = Role.Checkbox,
+                onValueChange = onCheckedChange,
+            )
+            .semantics { testTag = REMEMBER_ME_TEST_TAG },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Checkbox(
+            checked = checked,
+            onCheckedChange = null,
+            modifier = Modifier.clearAndSetSemantics {},
+        )
+        Spacer(modifier = Modifier.width(Spacing.sm))
+        Text(stringResource(R.string.remember_me))
     }
 }
 
@@ -226,6 +270,7 @@ fun LoginScreenPreview() {
                 isLoading = false,
             ),
             onLoginClick = {},
+            onRememberMeChange = {},
             onErrorConsumed = {},
         )
     }

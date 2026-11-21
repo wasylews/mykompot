@@ -99,6 +99,7 @@ class MainActivity : ComponentActivity() {
                 SessionState.LoggedOut -> LoginScreen(
                     uiState = uiState,
                     onLoginClick = { loginViewModel.login() },
+                    onRememberMeChange = loginViewModel::setRememberMe,
                     onErrorConsumed = loginViewModel::clearError,
                     modifier = Modifier
                         .fillMaxSize()

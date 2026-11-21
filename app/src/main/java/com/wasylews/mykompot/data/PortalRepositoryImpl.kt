@@ -66,8 +66,11 @@ class PortalRepositoryImpl(
             val response = authApi.login(username, password, PORTAL_LANGUAGE)
             if (!response.isSuccessful) return@withContext LoginResult.Failed(PortalFailure.Server)
             val page = response.body() ?: return@withContext LoginResult.Failed(PortalFailure.Parse)
-            if (page.error != null) {
+            if (page.isLoginPage) {
                 return@withContext LoginResult.InvalidCredentials
+            }
+            if (page.error != null) {
+                return@withContext LoginResult.Failed(PortalFailure.Server)
             }
 
             val profile = page.toProfile() ?: return@withContext LoginResult.Failed(PortalFailure.Parse)

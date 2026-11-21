@@ -44,13 +44,16 @@ import com.wasylews.mykompot.data.model.PaymentsEntity
 import com.wasylews.mykompot.data.model.ProfileEntity
 import com.wasylews.mykompot.data.model.TariffPlansEntity
 import com.wasylews.mykompot.domain.NotificationsPermission
+import com.wasylews.mykompot.domain.model.Credentials
 import com.wasylews.mykompot.domain.model.Payments
 import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.TariffPlan
 import com.wasylews.mykompot.domain.model.TariffPlans
+import com.wasylews.mykompot.domain.repository.CredentialsStore
 import com.wasylews.mykompot.presentation.home.HOME_LOADING_TEST_TAG
 import com.wasylews.mykompot.presentation.home.HOME_REFRESH_INDICATOR_TEST_TAG
 import com.wasylews.mykompot.presentation.home.HOME_SCREEN_TEST_TAG
+import com.wasylews.mykompot.presentation.login.REMEMBER_ME_TEST_TAG
 import com.wasylews.mykompot.presentation.main.MainActivity
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -114,6 +117,7 @@ abstract class BaseAcceptanceTest : KoinTest {
         runBlocking {
             getKoin().get<DataStore<ProfileEntity?>>(named("profile")).updateData { null }
             getKoin().get<SessionCookieStore>().clear()
+            getKoin().get<CredentialsStore>().clear()
             getKoin().get<DataStore<TariffPlansEntity?>>(named("tariffPlans")).updateData { null }
             getKoin().get<DataStore<PaymentsEntity?>>(named("payments")).updateData { null }
         }
@@ -145,6 +149,24 @@ abstract class BaseAcceptanceTest : KoinTest {
 
     protected fun givenStoredPayments(payments: Payments) = runBlocking {
         get<LocalStorage>().savePayments(payments)
+    }
+
+    protected fun givenStoredCredentials(
+        username: String = "user",
+        password: String = "pass",
+    ) = runBlocking {
+        get<CredentialsStore>().save(Credentials(username, password))
+    }
+
+    protected fun assertRememberedCredentials(
+        username: String = "user",
+        password: String = "pass",
+    ) = runBlocking {
+        assertEquals(Credentials(username, password), get<CredentialsStore>().read())
+    }
+
+    protected fun assertNoRememberedCredentials() = runBlocking {
+        assertNull(get<CredentialsStore>().read())
     }
 
     protected fun givenPaymentDueProfileStored() = givenStoredSession(profile = paymentDueProfile())
@@ -179,9 +201,12 @@ abstract class BaseAcceptanceTest : KoinTest {
         tariffPlan = tariffPlan,
     )
 
-    protected fun performLogin() {
+    protected fun performLogin(rememberMe: Boolean = false) {
         assertShows(R.string.username).performTextInput("user")
         assertShows(R.string.password).performTextInput("pass")
+        if (rememberMe) {
+            composeRule.onNodeWithTag(REMEMBER_ME_TEST_TAG).performClick()
+        }
         assertShows(R.string.log_in).performClick()
     }
 

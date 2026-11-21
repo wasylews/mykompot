@@ -18,12 +18,15 @@ package com.wasylews.mykompot.presentation.login
 
 import app.cash.turbine.test
 import com.wasylews.mykompot.R
+import com.wasylews.mykompot.domain.FakeCredentialsStore
 import com.wasylews.mykompot.domain.FakePaymentDueReminderScheduler
 import com.wasylews.mykompot.domain.FakeSessionKeepAliveScheduler
+import com.wasylews.mykompot.domain.model.Credentials
 import com.wasylews.mykompot.domain.model.LoginResult
 import com.wasylews.mykompot.domain.model.PortalFailure
 import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.TariffPlan
+import com.wasylews.mykompot.domain.repository.CredentialsStore
 import com.wasylews.mykompot.presentation.BaseViewModelTest
 import com.wasylews.mykompot.presentation.FakePortalRepository
 import com.wasylews.mykompot.presentation.successLogin
@@ -65,6 +68,83 @@ class LoginViewModelTest : BaseViewModelTest() {
     }
 
     @Test
+    fun `successful opt-in login stores credentials`() = runTest {
+        // GIVEN
+        val store = FakeCredentialsStore()
+        val vm = loginViewModel(successLogin(profile), credentialsStore = store, profile = profile)
+
+        // WHEN
+        vm.setRememberMe(true)
+        vm.login()
+        advanceUntilIdle()
+
+        // THEN
+        assertEquals(Credentials("user", "pass"), store.read())
+        assertTrue(store.hasCredentials())
+    }
+
+    @Test
+    fun `successful login without opt-in does not store credentials`() = runTest {
+        // GIVEN
+        val store = FakeCredentialsStore()
+        val vm = loginViewModel(successLogin(profile), credentialsStore = store, profile = profile)
+
+        // WHEN
+        vm.login()
+        advanceUntilIdle()
+
+        // THEN
+        assertNull(store.read())
+        assertFalse(vm.uiState.value.rememberMe)
+    }
+
+    @Test
+    fun `invalid credentials clear remembered credentials`() = runTest {
+        // GIVEN
+        val store = FakeCredentialsStore()
+        store.save(Credentials("old-user", "old-pass"))
+        val vm = loginViewModel(LoginResult.InvalidCredentials, credentialsStore = store)
+
+        // WHEN
+        vm.setRememberMe(true)
+        vm.login()
+        advanceUntilIdle()
+
+        // THEN
+        assertNull(store.read())
+    }
+
+    @Test
+    fun `transient failure keeps remembered credentials`() = runTest {
+        // GIVEN
+        val store = FakeCredentialsStore()
+        val remembered = Credentials("user", "pass")
+        store.save(remembered)
+        val vm = loginViewModel(LoginResult.Failed(PortalFailure.Network), credentialsStore = store)
+
+        // WHEN
+        vm.setRememberMe(true)
+        vm.login()
+        advanceUntilIdle()
+
+        // THEN
+        assertEquals(remembered, store.read())
+    }
+
+    @Test
+    fun `remember me can be toggled`() = runTest {
+        // GIVEN
+        val vm = loginViewModel(successLogin(profile), profile = profile)
+
+        // WHEN / THEN
+        assertFalse(vm.uiState.value.rememberMe)
+        vm.setRememberMe(true)
+        assertTrue(vm.uiState.value.rememberMe)
+        vm.setRememberMe(false)
+        assertFalse(vm.uiState.value.rememberMe)
+    }
+
+    @Test
     fun `empty credentials are rejected without starting login`() = runTest {
         // GIVEN
         val scheduler = FakeSessionKeepAliveScheduler()
@@ -73,6 +153,7 @@ class LoginViewModelTest : BaseViewModelTest() {
             FakePortalRepository(successLogin(profile), profile = profile),
             scheduler,
             paymentScheduler,
+            FakeCredentialsStore(),
         )
 
         // WHEN
@@ -141,10 +222,12 @@ class LoginViewModelTest : BaseViewModelTest() {
         scheduler: FakeSessionKeepAliveScheduler = FakeSessionKeepAliveScheduler(),
         paymentScheduler: FakePaymentDueReminderScheduler = FakePaymentDueReminderScheduler(),
         profile: Profile? = this.profile,
+        credentialsStore: CredentialsStore = FakeCredentialsStore(),
     ): LoginViewModel = LoginViewModel(
         FakePortalRepository(result, profile = profile),
         scheduler,
         paymentScheduler,
+        credentialsStore,
     ).apply {
         usernameState.edit { replace(0, length, "user") }
         passwordState.edit { replace(0, length, "pass") }

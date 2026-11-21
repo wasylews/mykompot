@@ -24,7 +24,9 @@ import androidx.lifecycle.viewModelScope
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.PaymentDueReminderScheduler
 import com.wasylews.mykompot.domain.SessionKeepAliveScheduler
+import com.wasylews.mykompot.domain.model.Credentials
 import com.wasylews.mykompot.domain.model.LoginResult
+import com.wasylews.mykompot.domain.repository.CredentialsStore
 import com.wasylews.mykompot.domain.repository.PortalRepository
 import com.wasylews.mykompot.presentation.toErrorId
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,6 +41,7 @@ class LoginViewModel(
     private val repository: PortalRepository,
     private val sessionKeepAliveScheduler: SessionKeepAliveScheduler,
     private val paymentDueReminderScheduler: PaymentDueReminderScheduler,
+    private val credentialsStore: CredentialsStore,
 ) : ViewModel() {
     private val inputValidationRegex = """\w+""".toRegex()
 
@@ -59,15 +62,22 @@ class LoginViewModel(
     fun login() = viewModelScope.launch {
         if (!isUsernameValid || !isPasswordValid) return@launch
 
+        val username = usernameState.text.toString()
+        val password = passwordState.text.toString()
+        val rememberMe = _uiState.value.rememberMe
         _uiState.update { it.copy(isLoading = true, errorId = null) }
-        val errorId = when (val result = repository.login(usernameState.text.toString(), passwordState.text.toString())) {
+        val errorId = when (val result = repository.login(username, password)) {
             is LoginResult.Success -> {
+                if (rememberMe) {
+                    credentialsStore.save(Credentials(username, password))
+                }
                 sessionKeepAliveScheduler.schedule()
                 paymentDueReminderScheduler.schedule(result.profile)
                 null
             }
 
             LoginResult.InvalidCredentials -> {
+                credentialsStore.clear()
                 R.string.error_invalid_credentials
             }
 
@@ -76,6 +86,10 @@ class LoginViewModel(
             }
         }
         _uiState.update { it.copy(isLoading = false, errorId = errorId) }
+    }
+
+    fun setRememberMe(rememberMe: Boolean) {
+        _uiState.update { it.copy(rememberMe = rememberMe) }
     }
 
     fun clearError() {

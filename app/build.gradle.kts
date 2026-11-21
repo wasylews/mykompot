@@ -124,6 +124,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.datastore)
+    implementation(libs.androidx.security.crypto)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.process)
     implementation(libs.androidx.work.runtime.ktx)

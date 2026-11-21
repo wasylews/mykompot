@@ -23,6 +23,7 @@ import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.dataStoreFile
 import com.wasylews.mykompot.BuildConfig
 import com.wasylews.mykompot.data.AuthApi
+import com.wasylews.mykompot.data.EncryptedCredentialsStore
 import com.wasylews.mykompot.data.PlansApi
 import com.wasylews.mykompot.data.PortalApi
 import com.wasylews.mykompot.data.PortalCookieJar
@@ -35,6 +36,7 @@ import com.wasylews.mykompot.data.model.ProfileEntitySerializer
 import com.wasylews.mykompot.data.model.SessionSerializer
 import com.wasylews.mykompot.data.model.TariffPlansEntity
 import com.wasylews.mykompot.data.model.TariffPlansSerializer
+import com.wasylews.mykompot.domain.repository.CredentialsStore
 import dev.burnoo.kspoon.Kspoon
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -71,6 +73,9 @@ class DataModule {
 
     @Singleton
     fun provideSessionCookieStore(context: Context): SessionCookieStore = SharedPreferencesSessionCookieStore(context)
+
+    @Singleton
+    fun provideCredentialsStore(context: Context): CredentialsStore = EncryptedCredentialsStore(context)
 
     @Singleton
     fun provideCookieJar(store: SessionCookieStore): CookieJar = PortalCookieJar(store)
