@@ -143,7 +143,9 @@ class PaymentMethodsSheetTest : BaseAcceptanceTest() {
     }
 
     private fun stubExternalIntents() {
-        intending(not(isInternal())).respondWith(
+        // Keep this narrow: stubbing every non-internal intent also swallows intents fired during
+        // ActivityScenario.close(), which makes teardown wait ~45s for the destroy callback.
+        intending(allOf(hasAction(Intent.ACTION_VIEW), not(isInternal()))).respondWith(
             Instrumentation.ActivityResult(Activity.RESULT_OK, null),
         )
     }
