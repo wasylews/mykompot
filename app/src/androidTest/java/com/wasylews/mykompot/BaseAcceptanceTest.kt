@@ -337,6 +337,13 @@ abstract class BaseAcceptanceTest : KoinTest {
         assertRequestCount({ it.url.encodedPath.contains("/plans") }, expectedPlansRefreshes)
     }
 
+    protected fun assertPlansRequestHasNoSessionCookie() {
+        awaitRequestCondition(5_000) { countRequests { it.url.encodedPath.contains("/plans") } > 0 }
+        val request = dispatcher.recordedRequests().first { it.url.encodedPath.contains("/plans") }
+        val cookies = request.headers["Cookie"].orEmpty()
+        check("sid=" !in cookies) { "Plans request must not carry the session cookie: $cookies" }
+    }
+
     private fun assertRequestCount(
         predicate: (RecordedRequest) -> Boolean,
         expected: Int,

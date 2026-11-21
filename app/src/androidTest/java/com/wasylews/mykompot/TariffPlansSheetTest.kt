@@ -25,6 +25,24 @@ import org.junit.Test
 
 class TariffPlansSheetTest : BaseAcceptanceTest() {
     @Test
+    fun plansRequestDoesNotSendSessionCookie() {
+        // GIVEN a stored session and a tariff catalog
+        givenStoredSession()
+        givenStoredTariffPlans()
+        givenServerReturnsProfile()
+
+        launch().use {
+            assertShows(R.string.status_all_good)
+
+            // WHEN I open the tariff plans
+            openTariffPlans()
+
+            // THEN the public plans request does not carry the portal session cookie
+            assertPlansRequestHasNoSessionCookie()
+        }
+    }
+
+    @Test
     fun showsTariffPlansSheet() {
         val plans = defaultTariffPlans()
 

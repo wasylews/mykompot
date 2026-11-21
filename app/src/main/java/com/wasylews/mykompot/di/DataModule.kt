@@ -85,7 +85,9 @@ class DataModule {
 
     @Singleton
     @Named("plans")
-    fun providePlansOkHttpClient(cookieJar: CookieJar): OkHttpClient = okHttpClient(cookieJar)
+    fun providePlansOkHttpClient(): OkHttpClient = OkHttpClient.Builder()
+        .cookieJar(CookieJar.NO_COOKIES)
+        .build()
 
     @Singleton
     @Named("auth")
