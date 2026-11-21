@@ -29,52 +29,48 @@ import com.wasylews.mykompot.R
 import com.wasylews.mykompot.data.LocalStorage
 import com.wasylews.mykompot.domain.AppForegroundState
 import com.wasylews.mykompot.domain.NotificationsPermission
+import com.wasylews.mykompot.domain.PaymentDueNotifiedStore
+import com.wasylews.mykompot.domain.PaymentDueReminderResolver
 import com.wasylews.mykompot.domain.model.PaymentDueThreshold
 import com.wasylews.mykompot.presentation.main.MainActivity
 import kotlinx.coroutines.flow.first
 import org.koin.android.annotation.KoinWorker
-import java.time.LocalDate
+import java.time.ZoneId
+import kotlin.time.Clock
+import kotlin.time.toJavaInstant
 
+/** Daily background check that posts at most one notice per billing period and threshold. */
 @KoinWorker
 class PaymentDueReminderWorker(
     appContext: Context,
     params: WorkerParameters,
     private val localStorage: LocalStorage,
+    private val notifiedStore: PaymentDueNotifiedStore,
     private val appForegroundState: AppForegroundState,
     private val notificationManager: NotificationManager,
     private val notificationsPermission: NotificationsPermission,
+    private val clock: Clock,
+    private val zoneId: ZoneId,
 ) : CoroutineWorker(appContext, params) {
     override suspend fun doWork(): Result {
-        val reminder = reminderInput()
-        if (reminder != null && shouldNotify(reminder)) {
-            notifyPaymentDue(reminder.threshold)
+        val profile = localStorage.profileFlow().first()
+        val today = clock.now().toJavaInstant().atZone(zoneId).toLocalDate()
+        val reminder = PaymentDueReminderResolver.resolve(profile, today)
+
+        val postedKey = reminder?.let { candidate ->
+            val canPost = !appForegroundState.isInForeground() &&
+                !notifiedStore.isNotified(candidate.ledgerKey) &&
+                notificationsPermission.isGranted()
+            if (canPost && postNotification(candidate.threshold)) candidate.ledgerKey else null
         }
+
+        // Only a delivered notice consumes the ledger entry; permission/channel denials do not.
+        if (postedKey != null) notifiedStore.markNotified(postedKey)
         return Result.success()
     }
 
-    private fun reminderInput(): ReminderInput? {
-        val thresholdName = inputData.getString(PaymentDueReminderSchedulerImpl.KEY_THRESHOLD)
-        val dueDateString = inputData.getString(PaymentDueReminderSchedulerImpl.KEY_DUE_DATE)
-        if (thresholdName == null || dueDateString == null) return null
-
-        val threshold = runCatching { PaymentDueThreshold.valueOf(thresholdName) }.getOrNull()
-        val dueDate = runCatching { LocalDate.parse(dueDateString) }.getOrNull()
-        return if (threshold != null && dueDate != null) ReminderInput(threshold, dueDate) else null
-    }
-
-    private suspend fun shouldNotify(reminder: ReminderInput): Boolean {
-        if (appForegroundState.isInForeground()) return false
-        val profile = localStorage.profileFlow().first()
-        return profile != null && profile.isActive && profile.nextPaymentDate == reminder.dueDate
-    }
-
-    private data class ReminderInput(
-        val threshold: PaymentDueThreshold,
-        val dueDate: LocalDate,
-    )
-
-    private fun notifyPaymentDue(threshold: PaymentDueThreshold) {
-        if (!notificationsPermission.isGranted()) return
+    private fun postNotification(threshold: PaymentDueThreshold): Boolean {
+        val content = notificationContent(threshold) ?: return false
 
         val channel = NotificationChannel(
             PAYMENT_CHANNEL_ID,
@@ -82,7 +78,7 @@ class PaymentDueReminderWorker(
             NotificationManager.IMPORTANCE_DEFAULT,
         )
         notificationManager.createNotificationChannel(channel)
-        if (!notificationManager.canPostTo(PAYMENT_CHANNEL_ID)) return
+        if (!notificationManager.canPostTo(PAYMENT_CHANNEL_ID)) return false
 
         val intent = Intent(applicationContext, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -94,8 +90,6 @@ class PaymentDueReminderWorker(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
-        val content = threshold.notificationContent()
-
         val notification = NotificationCompat.Builder(applicationContext, PAYMENT_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(applicationContext.getString(content.titleRes))
@@ -105,19 +99,14 @@ class PaymentDueReminderWorker(
             .build()
 
         notificationManager.notify(content.notificationId, notification)
+        return true
     }
 
-    private fun PaymentDueThreshold.notificationContent(): NotificationContent = when (this) {
+    private fun notificationContent(threshold: PaymentDueThreshold): NotificationContent? = when (threshold) {
         PaymentDueThreshold.THREE_DAYS_BEFORE -> NotificationContent(
             titleRes = R.string.payment_due_in_three_days_title,
             textRes = R.string.payment_due_in_three_days_text,
             notificationId = NOTIFICATION_ID_THREE_DAYS,
-        )
-
-        PaymentDueThreshold.ONE_DAY_BEFORE -> NotificationContent(
-            titleRes = R.string.payment_due_tomorrow_title,
-            textRes = R.string.payment_due_tomorrow_text,
-            notificationId = NOTIFICATION_ID_ONE_DAY,
         )
 
         PaymentDueThreshold.DUE_DAY -> NotificationContent(
@@ -126,11 +115,7 @@ class PaymentDueReminderWorker(
             notificationId = NOTIFICATION_ID_DUE_DAY,
         )
 
-        PaymentDueThreshold.OVERDUE -> NotificationContent(
-            titleRes = R.string.payment_overdue_title,
-            textRes = R.string.payment_overdue_text,
-            notificationId = NOTIFICATION_ID_OVERDUE,
-        )
+        else -> null
     }
 
     private data class NotificationContent(
@@ -142,8 +127,6 @@ class PaymentDueReminderWorker(
     private companion object {
         const val PAYMENT_CHANNEL_ID = "payment_reminders"
         const val NOTIFICATION_ID_THREE_DAYS = 2001
-        const val NOTIFICATION_ID_ONE_DAY = 2002
         const val NOTIFICATION_ID_DUE_DAY = 2003
-        const val NOTIFICATION_ID_OVERDUE = 2004
     }
 }

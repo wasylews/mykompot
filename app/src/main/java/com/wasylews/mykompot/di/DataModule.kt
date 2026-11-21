@@ -32,6 +32,8 @@ import com.wasylews.mykompot.data.PortalAuthenticator
 import com.wasylews.mykompot.data.PortalCookieJar
 import com.wasylews.mykompot.data.PortalSessionTagInterceptor
 import com.wasylews.mykompot.data.SessionCookieStore
+import com.wasylews.mykompot.data.model.PaymentDueNotifiedEntity
+import com.wasylews.mykompot.data.model.PaymentDueNotifiedSerializer
 import com.wasylews.mykompot.data.model.PaymentsEntity
 import com.wasylews.mykompot.data.model.PaymentsSerializer
 import com.wasylews.mykompot.data.model.ProfileEntity
@@ -150,6 +152,14 @@ class DataModule {
         serializer = PaymentsSerializer,
         corruptionHandler = ReplaceFileCorruptionHandler { null },
         produceFile = { context.dataStoreFile("payments.json") },
+    )
+
+    @Singleton
+    @Named("paymentDueNotified")
+    fun providePaymentDueNotifiedDataStore(context: Context): DataStore<PaymentDueNotifiedEntity?> = DataStoreFactory.create(
+        serializer = PaymentDueNotifiedSerializer,
+        corruptionHandler = ReplaceFileCorruptionHandler { null },
+        produceFile = { context.dataStoreFile("payment_due_notified.json") },
     )
 }
 

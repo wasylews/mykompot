@@ -40,6 +40,7 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.wasylews.mykompot.data.LocalStorage
 import com.wasylews.mykompot.data.SessionCookieStore
+import com.wasylews.mykompot.data.model.PaymentDueNotifiedEntity
 import com.wasylews.mykompot.data.model.PaymentsEntity
 import com.wasylews.mykompot.data.model.ProfileEntity
 import com.wasylews.mykompot.data.model.TariffPlansEntity
@@ -120,6 +121,7 @@ abstract class BaseAcceptanceTest : KoinTest {
             getKoin().get<CredentialsStore>().clear()
             getKoin().get<DataStore<TariffPlansEntity?>>(named("tariffPlans")).updateData { null }
             getKoin().get<DataStore<PaymentsEntity?>>(named("payments")).updateData { null }
+            getKoin().get<DataStore<PaymentDueNotifiedEntity?>>(named("paymentDueNotified")).updateData { null }
         }
         loadKoinModules(testModule)
         resetServerResponses()

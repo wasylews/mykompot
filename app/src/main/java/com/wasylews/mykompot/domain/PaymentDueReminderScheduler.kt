@@ -18,11 +18,11 @@ package com.wasylews.mykompot.domain
 
 import com.wasylews.mykompot.domain.model.Profile
 
-/** Schedules or cancels payment-due reminder notifications based on the account profile. */
+/** Starts or stops the daily background check for payment-due reminders. */
 interface PaymentDueReminderScheduler {
-    /** Schedules reminders appropriate for [profile], or does nothing when reminders are not needed. */
+    /** Keeps the daily check running while [profile] can need reminders. */
     fun schedule(profile: Profile?)
 
-    /** Cancels any scheduled payment-due reminders. */
-    fun cancel()
+    /** Stops the daily check and forgets which reminders were already posted. */
+    suspend fun cancel()
 }

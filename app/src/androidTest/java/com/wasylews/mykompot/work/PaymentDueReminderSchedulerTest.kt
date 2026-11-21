@@ -16,122 +16,88 @@
 
 package com.wasylews.mykompot.work
 
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
-import com.wasylews.mykompot.MutableClock
-import com.wasylews.mykompot.domain.model.PaymentDueThreshold
+import com.wasylews.mykompot.FakePaymentDueNotifiedStore
 import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.TariffPlan
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
-import java.time.ZoneId
-import kotlin.time.Instant
+import java.util.concurrent.TimeUnit
 
 class PaymentDueReminderSchedulerTest : BaseWorkManagerSchedulerTest() {
+    private val notifiedStore = FakePaymentDueNotifiedStore()
+
+    private fun scheduler() = PaymentDueReminderSchedulerImpl(workManager, notifiedStore)
+
     @Test
-    fun schedulesThreeDayOneDayAndDueRemindersForUpcomingPayment() {
-        // 2026-10-01T07:00:00Z = 07:00 UTC, before 09:00 local (UTC)
-        val clock = MutableClock(Instant.parse("2026-10-01T07:00:00Z"))
-        val scheduler = PaymentDueReminderSchedulerImpl(workManager, clock, ZoneId.of("UTC"))
+    fun enqueuesOneDailyPeriodicWork() {
+        scheduler().schedule(profile(nextPaymentDate = LocalDate.parse("2026-10-04")))
 
-        scheduler.schedule(
-            profile(nextPaymentDate = LocalDate.parse("2026-10-04")),
-        )
-
-        assertEnqueued(PaymentDueThreshold.THREE_DAYS_BEFORE, "2026-10-04")
-        assertEnqueued(PaymentDueThreshold.ONE_DAY_BEFORE, "2026-10-04")
-        assertEnqueued(PaymentDueThreshold.DUE_DAY, "2026-10-04")
+        assertDailyWork(WorkInfo.State.ENQUEUED)
     }
 
     @Test
-    fun skipsRemindersWhoseTimeHasPassed() {
-        // 2026-10-01T10:00:00Z, after 09:00 UTC on 3-days-before day
-        val clock = MutableClock(Instant.parse("2026-10-01T10:00:00Z"))
-        val scheduler = PaymentDueReminderSchedulerImpl(workManager, clock, ZoneId.of("UTC"))
-
-        scheduler.schedule(
-            profile(nextPaymentDate = LocalDate.parse("2026-10-04")),
-        )
-
-        assertNotEnqueued(PaymentDueThreshold.THREE_DAYS_BEFORE, "2026-10-04")
-        assertEnqueued(PaymentDueThreshold.ONE_DAY_BEFORE, "2026-10-04")
-        assertEnqueued(PaymentDueThreshold.DUE_DAY, "2026-10-04")
-    }
-
-    @Test
-    fun schedulesOverdueReminderWhenPaymentIsPastDue() {
-        // 2026-10-05T07:00:00Z, due was 2026-10-04 (overdue), before 09:00 today
-        val clock = MutableClock(Instant.parse("2026-10-05T07:00:00Z"))
-        val scheduler = PaymentDueReminderSchedulerImpl(workManager, clock, ZoneId.of("UTC"))
-
-        scheduler.schedule(
-            profile(nextPaymentDate = LocalDate.parse("2026-10-04")),
-        )
-
-        assertEnqueued(PaymentDueThreshold.OVERDUE, "2026-10-04")
-        assertNotEnqueued(PaymentDueThreshold.THREE_DAYS_BEFORE, "2026-10-04")
-        assertNotEnqueued(PaymentDueThreshold.ONE_DAY_BEFORE, "2026-10-04")
-        assertNotEnqueued(PaymentDueThreshold.DUE_DAY, "2026-10-04")
-    }
-
-    @Test
-    fun cancelsRemindersWhenProfileIsMissingOrInactiveOrHasNoDueDate() {
-        val clock = MutableClock(Instant.parse("2026-10-01T07:00:00Z"))
-        val scheduler = PaymentDueReminderSchedulerImpl(workManager, clock, ZoneId.of("UTC"))
-
-        scheduler.schedule(profile(nextPaymentDate = LocalDate.parse("2026-10-04")))
-        scheduler.schedule(null)
-        assertNoReminders("2026-10-04")
-
-        scheduler.schedule(profile(nextPaymentDate = LocalDate.parse("2026-10-04")))
-        scheduler.schedule(profile(nextPaymentDate = LocalDate.parse("2026-10-04")).copy(isActive = false))
-        assertNoReminders("2026-10-04")
-
-        scheduler.schedule(profile(nextPaymentDate = LocalDate.parse("2026-10-04")))
-        scheduler.schedule(profile(nextPaymentDate = null))
-        assertNoReminders("2026-10-04")
-    }
-
-    @Test
-    fun reschedulesWhenDueDateChanges() {
-        val clock = MutableClock(Instant.parse("2026-10-01T07:00:00Z"))
-        val scheduler = PaymentDueReminderSchedulerImpl(workManager, clock, ZoneId.of("UTC"))
-
+    fun repeatedScheduleKeepsSingleWork() {
+        val scheduler = scheduler()
         scheduler.schedule(profile(nextPaymentDate = LocalDate.parse("2026-10-04")))
         scheduler.schedule(profile(nextPaymentDate = LocalDate.parse("2026-11-01")))
 
-        assertNoReminders("2026-10-04")
-        assertEnqueued(PaymentDueThreshold.THREE_DAYS_BEFORE, "2026-11-01")
-        assertEnqueued(PaymentDueThreshold.ONE_DAY_BEFORE, "2026-11-01")
-        assertEnqueued(PaymentDueThreshold.DUE_DAY, "2026-11-01")
-    }
-
-    private fun assertEnqueued(
-        threshold: PaymentDueThreshold,
-        dueDate: String,
-    ) {
-        val infos = workManager.getWorkInfosForUniqueWork(
-            PaymentDueReminderSchedulerImpl.workName(threshold, LocalDate.parse(dueDate)),
-        ).get()
+        val infos = workManager.getWorkInfosForUniqueWork(PaymentDueReminderSchedulerImpl.DAILY_WORK_NAME).get()
         assertEquals(1, infos.size)
         assertEquals(WorkInfo.State.ENQUEUED, infos.single().state)
     }
 
-    private fun assertNotEnqueued(
-        threshold: PaymentDueThreshold,
-        dueDate: String,
-    ) {
-        val infos = workManager.getWorkInfosForUniqueWork(
-            PaymentDueReminderSchedulerImpl.workName(threshold, LocalDate.parse(dueDate)),
-        ).get()
-        assertTrue(infos.isEmpty() || infos.none { it.state == WorkInfo.State.ENQUEUED })
+    @Test
+    fun cancelsDailyWorkWhenProfileCannotNeedReminders() {
+        val scheduler = scheduler()
+        listOf(
+            null,
+            profile(nextPaymentDate = LocalDate.parse("2026-10-04")).copy(isActive = false),
+            profile(nextPaymentDate = null),
+        ).forEach { invalidProfile ->
+            scheduler.schedule(profile(nextPaymentDate = LocalDate.parse("2026-10-04")))
+            scheduler.schedule(invalidProfile)
+            assertDailyWork(WorkInfo.State.CANCELLED)
+        }
     }
 
-    private fun assertNoReminders(dueDate: String) {
-        PaymentDueThreshold.entries.forEach { threshold ->
-            assertNotEnqueued(threshold, dueDate)
-        }
+    @Test
+    fun cancelsLegacyOneShotReminders() {
+        val legacy = OneTimeWorkRequestBuilder<PaymentDueReminderWorker>()
+            .setInitialDelay(10, TimeUnit.MINUTES)
+            .addTag(PaymentDueReminderSchedulerImpl.LEGACY_REMINDER_TAG)
+            .build()
+        workManager.enqueue(legacy)
+
+        scheduler().schedule(profile(nextPaymentDate = LocalDate.parse("2026-10-04")))
+
+        val infos = workManager.getWorkInfosByTag(PaymentDueReminderSchedulerImpl.LEGACY_REMINDER_TAG).get()
+        assertTrue(infos.isNotEmpty())
+        assertTrue(infos.all { it.state == WorkInfo.State.CANCELLED })
+    }
+
+    @Test
+    fun cancelClearsNotifiedLedger() = runBlocking {
+        val scheduler = scheduler()
+        scheduler.schedule(profile(nextPaymentDate = LocalDate.parse("2026-10-01")))
+        notifiedStore.markNotified("DUE_DAY|2026-10-01")
+
+        scheduler.cancel()
+
+        assertDailyWork(WorkInfo.State.CANCELLED)
+        assertFalse(notifiedStore.isNotified("DUE_DAY|2026-10-01"))
+    }
+
+    private fun assertDailyWork(state: WorkInfo.State) {
+        val infos = workManager.getWorkInfosForUniqueWork(PaymentDueReminderSchedulerImpl.DAILY_WORK_NAME).get()
+        assertEquals(1, infos.size)
+        assertEquals(state, infos.single().state)
+        assertTrue(infos.single().tags.contains(PaymentDueReminderSchedulerImpl.REMINDER_TAG))
     }
 
     private fun profile(nextPaymentDate: LocalDate?) = Profile(

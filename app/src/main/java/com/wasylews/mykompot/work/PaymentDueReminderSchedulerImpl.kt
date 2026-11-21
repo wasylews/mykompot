@@ -16,102 +16,62 @@
 
 package com.wasylews.mykompot.work
 
-import androidx.work.ExistingWorkPolicy
-import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.wasylews.mykompot.domain.PaymentDueNotifiedStore
 import com.wasylews.mykompot.domain.PaymentDueReminderScheduler
-import com.wasylews.mykompot.domain.model.PaymentDueThreshold
 import com.wasylews.mykompot.domain.model.Profile
 import org.koin.core.annotation.Singleton
-import java.time.Duration
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.ZoneId
-import java.time.ZonedDateTime
 import java.util.concurrent.TimeUnit
-import kotlin.time.Clock
-import kotlin.time.toJavaInstant
 
+/**
+ * Keeps one daily periodic check alive instead of scheduling fixed-time one-shot reminders.
+ *
+ * The worker re-evaluates the cached profile when it runs, so time and timezone changes need no
+ * rescheduling and the work survives process death and reboot.
+ */
 @Singleton
 class PaymentDueReminderSchedulerImpl(
     private val workManager: WorkManager,
-    private val clock: Clock,
-    private val zoneId: ZoneId = ZoneId.systemDefault(),
+    private val notifiedStore: PaymentDueNotifiedStore,
 ) : PaymentDueReminderScheduler {
     override fun schedule(profile: Profile?) {
-        workManager.cancelAllWorkByTag(REMINDER_TAG)
+        removeLegacyWork()
 
-        val dueDate = profile?.takeIf { it.isActive }?.nextPaymentDate ?: return
-        val now = now()
-        remindersFor(dueDate, now).forEach { (threshold, targetTime) ->
-            val delay = Duration.between(now, targetTime)
-            if (!delay.isPositive) return@forEach
-
-            val request = OneTimeWorkRequestBuilder<PaymentDueReminderWorker>()
-                .setInputData(
-                    androidx.work.workDataOf(
-                        KEY_THRESHOLD to threshold.name,
-                        KEY_DUE_DATE to dueDate.toString(),
-                    ),
-                )
-                .setInitialDelay(delay.toMillis(), TimeUnit.MILLISECONDS)
-                .addTag(REMINDER_TAG)
-                .build()
-
-            workManager.enqueueUniqueWork(
-                workName(threshold, dueDate),
-                ExistingWorkPolicy.REPLACE,
-                request,
-            )
+        if (profile?.takeIf { it.isActive }?.nextPaymentDate == null) {
+            workManager.cancelUniqueWork(DAILY_WORK_NAME)
+            return
         }
+
+        val request = PeriodicWorkRequestBuilder<PaymentDueReminderWorker>(
+            REPEAT_INTERVAL_HOURS,
+            TimeUnit.HOURS,
+            FLEX_INTERVAL_HOURS,
+            TimeUnit.HOURS,
+        )
+            .addTag(REMINDER_TAG)
+            .build()
+
+        // KEEP avoids extending the current period on every profile refresh.
+        workManager.enqueueUniquePeriodicWork(DAILY_WORK_NAME, ExistingPeriodicWorkPolicy.KEEP, request)
     }
 
-    override fun cancel() {
-        workManager.cancelAllWorkByTag(REMINDER_TAG)
+    override suspend fun cancel() {
+        workManager.cancelUniqueWork(DAILY_WORK_NAME)
+        removeLegacyWork()
+        notifiedStore.clear()
     }
 
-    private fun now(): ZonedDateTime = clock.now().toJavaInstant().atZone(zoneId)
-
-    private fun remindersFor(
-        dueDate: LocalDate,
-        now: ZonedDateTime,
-    ): List<Pair<PaymentDueThreshold, ZonedDateTime>> {
-        val reminderTime = LocalTime.of(REMINDER_HOUR, 0)
-        val today = now.toLocalDate()
-
-        if (dueDate.isBefore(today)) {
-            val overdueTime = if (now.toLocalTime().isBefore(reminderTime)) {
-                today.atTime(reminderTime).atZone(zoneId)
-            } else {
-                today.plusDays(1).atTime(reminderTime).atZone(zoneId)
-            }
-            return listOf(PaymentDueThreshold.OVERDUE to overdueTime)
-        }
-
-        return buildList {
-            add(
-                PaymentDueThreshold.THREE_DAYS_BEFORE to dueDate
-                    .minusDays(PaymentDueThreshold.THREE_DAYS_BEFORE.daysBeforeDue)
-                    .atTime(reminderTime).atZone(zoneId),
-            )
-            add(
-                PaymentDueThreshold.ONE_DAY_BEFORE to dueDate
-                    .minusDays(PaymentDueThreshold.ONE_DAY_BEFORE.daysBeforeDue)
-                    .atTime(reminderTime).atZone(zoneId),
-            )
-            add(PaymentDueThreshold.DUE_DAY to dueDate.atTime(reminderTime).atZone(zoneId))
-        }
+    private fun removeLegacyWork() {
+        workManager.cancelAllWorkByTag(LEGACY_REMINDER_TAG)
     }
 
     companion object {
-        const val REMINDER_TAG = "payment_due_reminder"
-        const val REMINDER_HOUR = 9
-        const val KEY_THRESHOLD = "threshold"
-        const val KEY_DUE_DATE = "dueDate"
-
-        fun workName(
-            threshold: PaymentDueThreshold,
-            dueDate: LocalDate,
-        ): String = "payment_due_${threshold.name}_$dueDate"
+        const val DAILY_WORK_NAME = "payment_due_daily"
+        const val REMINDER_TAG = "payment_due_daily_reminder"
+        const val LEGACY_REMINDER_TAG = "payment_due_reminder"
+        const val REPEAT_INTERVAL_HOURS = 24L
+        const val FLEX_INTERVAL_HOURS = 1L
     }
 }

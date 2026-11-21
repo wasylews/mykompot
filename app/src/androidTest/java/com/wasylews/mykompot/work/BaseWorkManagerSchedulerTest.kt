@@ -19,7 +19,11 @@ package com.wasylews.mykompot.work
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.work.Configuration
+import androidx.work.CoroutineWorker
+import androidx.work.ListenableWorker
 import androidx.work.WorkManager
+import androidx.work.WorkerFactory
+import androidx.work.WorkerParameters
 import androidx.work.testing.SynchronousExecutor
 import androidx.work.testing.WorkManagerTestInitHelper
 import org.junit.Before
@@ -34,8 +38,29 @@ abstract class BaseWorkManagerSchedulerTest {
         val config = Configuration.Builder()
             .setMinimumLoggingLevel(android.util.Log.DEBUG)
             .setExecutor(SynchronousExecutor())
+            .setWorkerFactory(NoOpWorkerFactory)
             .build()
         WorkManagerTestInitHelper.initializeTestWorkManager(context, config)
         workManager = WorkManager.getInstance(context)
     }
+}
+
+/** Scheduler tests only assert enqueue/cancel state; the worker behavior is covered separately. */
+private object NoOpWorkerFactory : WorkerFactory() {
+    override fun createWorker(
+        appContext: Context,
+        workerClassName: String,
+        workerParameters: WorkerParameters,
+    ): ListenableWorker? = if (workerClassName == PaymentDueReminderWorker::class.java.name) {
+        NoOpWorker(appContext, workerParameters)
+    } else {
+        null
+    }
+}
+
+private class NoOpWorker(
+    context: Context,
+    params: WorkerParameters,
+) : CoroutineWorker(context, params) {
+    override suspend fun doWork(): Result = Result.success()
 }

@@ -16,85 +16,193 @@
 
 package com.wasylews.mykompot
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
 import androidx.work.ListenableWorker
 import androidx.work.testing.TestListenableWorkerBuilder
-import androidx.work.workDataOf
 import com.wasylews.mykompot.domain.AppForegroundState
+import com.wasylews.mykompot.domain.PaymentDueNotifiedStore
+import com.wasylews.mykompot.domain.model.PaymentDueReminder
 import com.wasylews.mykompot.domain.model.PaymentDueThreshold
-import com.wasylews.mykompot.work.PaymentDueReminderSchedulerImpl
+import com.wasylews.mykompot.domain.model.Profile
+import com.wasylews.mykompot.domain.model.TariffPlan
 import com.wasylews.mykompot.work.PaymentDueReminderWorker
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.FixMethodOrder
 import org.junit.Test
+import org.junit.runners.MethodSorters
 import org.koin.androidx.workmanager.factory.KoinWorkerFactory
 import org.koin.core.context.loadKoinModules
 import org.koin.core.context.unloadKoinModules
 import org.koin.dsl.module
+import org.koin.test.get
+import java.time.LocalDate
+import java.time.ZoneId
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class PaymentDueNotificationTest : BaseAcceptanceTest() {
-    private val backgroundModule = module {
+    private var appInForeground = false
+
+    private val testModule = module {
         single<AppForegroundState> {
             object : AppForegroundState {
-                override fun isInForeground(): Boolean = false
+                override fun isInForeground(): Boolean = appInForeground
             }
         }
+        single<ZoneId> { ZoneId.of("UTC") }
     }
 
     @Before
-    fun setUpBackgroundState() {
-        loadKoinModules(backgroundModule)
+    fun setUpEnvironment() {
+        // Channel importance is sticky even after deletion; start every test from a clean slate.
+        notificationManager().deleteNotificationChannel(PAYMENT_CHANNEL_ID)
+        loadKoinModules(testModule)
     }
 
     @After
-    fun tearDownBackgroundState() {
-        unloadKoinModules(backgroundModule)
+    fun tearDownEnvironment() {
+        unloadKoinModules(testModule)
+        notificationManager().deleteNotificationChannel(PAYMENT_CHANNEL_ID)
     }
 
     @Test
-    fun postsPaymentReminderWhenAppIsInBackground() {
-        // GIVEN I am logged in and my payment is due today
-        givenStoredSession(profile = allGoodProfile())
+    fun postsThreeDayReminderWhenAppIsInBackground() {
+        givenStoredSession(profile = profile(dueDate = TODAY.plusDays(3)))
 
-        // WHEN the reminder runs in the background
-        val result = runReminderWorker()
+        assertEquals(ListenableWorker.Result.success(), runReminderWorker())
 
-        // THEN I am notified about the payment
-        assertEquals(ListenableWorker.Result.success(), result)
+        assertNotificationPosted(
+            titleRes = R.string.payment_due_in_three_days_title,
+            textRes = R.string.payment_due_in_three_days_text,
+        )
+        assertLedgerContains(reminderKey(PaymentDueThreshold.THREE_DAYS_BEFORE, TODAY.plusDays(3)))
+    }
+
+    @Test
+    fun postsDueDayReminderWhenAppIsInBackground() {
+        givenStoredSession(profile = profile(dueDate = TODAY))
+
+        assertEquals(ListenableWorker.Result.success(), runReminderWorker())
+
         assertNotificationPosted(
             titleRes = R.string.payment_due_today_title,
             textRes = R.string.payment_due_today_text,
         )
+        assertLedgerContains(reminderKey(PaymentDueThreshold.DUE_DAY, TODAY))
     }
 
     @Test
-    fun skipsPaymentReminderWhenNotificationsAreNotAllowed() {
-        // GIVEN notifications are not allowed
-        notificationsGranted = false
-        givenStoredSession(profile = allGoodProfile())
+    fun skipsOneDayBeforeAndOverdueReminders() {
+        listOf(TODAY.plusDays(1), TODAY.minusDays(1)).forEach { dueDate ->
+            givenStoredSession(profile = profile(dueDate = dueDate))
 
-        // WHEN the reminder runs in the background
-        val result = runReminderWorker()
+            assertEquals(ListenableWorker.Result.success(), runReminderWorker())
+        }
 
-        // THEN the run still succeeds, only the notification is skipped
-        assertEquals(ListenableWorker.Result.success(), result)
         assertNoNotificationPosted()
+        assertLedgerEmpty()
     }
 
-    private fun runReminderWorker(): ListenableWorker.Result {
-        val dueDate = allGoodProfile().nextPaymentDate.toString()
-        return runBlocking {
-            TestListenableWorkerBuilder<PaymentDueReminderWorker>(context)
-                .setInputData(
-                    workDataOf(
-                        PaymentDueReminderSchedulerImpl.KEY_THRESHOLD to PaymentDueThreshold.DUE_DAY.name,
-                        PaymentDueReminderSchedulerImpl.KEY_DUE_DATE to dueDate,
-                    ),
-                )
-                .setWorkerFactory(KoinWorkerFactory())
-                .build()
-                .doWork()
-        }
+    @Test
+    fun doesNotRepostReminderAfterItWasMarked() {
+        givenStoredSession(profile = profile(dueDate = TODAY))
+
+        runReminderWorker()
+        runReminderWorker()
+
+        assertEquals(1, notificationManager().activeNotifications.size)
+        assertLedgerContains(reminderKey(PaymentDueThreshold.DUE_DAY, TODAY))
+    }
+
+    @Test
+    fun notifiesAgainForANewDueDate() {
+        givenStoredSession(profile = profile(dueDate = TODAY))
+        runReminderWorker()
+
+        givenStoredSession(profile = profile(dueDate = TODAY.plusDays(3)))
+        runReminderWorker()
+
+        assertLedgerContains(reminderKey(PaymentDueThreshold.DUE_DAY, TODAY))
+        assertLedgerContains(reminderKey(PaymentDueThreshold.THREE_DAYS_BEFORE, TODAY.plusDays(3)))
+        assertEquals(2, notificationManager().activeNotifications.size)
+    }
+
+    @Test
+    fun skipsReminderWhenAppIsInForeground() {
+        appInForeground = true
+        givenStoredSession(profile = profile(dueDate = TODAY))
+
+        assertEquals(ListenableWorker.Result.success(), runReminderWorker())
+
+        assertNoNotificationPosted()
+        assertLedgerEmpty()
+    }
+
+    @Test
+    fun skipsReminderWhenNotificationsAreNotAllowed() {
+        notificationsGranted = false
+        givenStoredSession(profile = profile(dueDate = TODAY))
+
+        assertEquals(ListenableWorker.Result.success(), runReminderWorker())
+
+        assertNoNotificationPosted()
+        assertLedgerEmpty()
+    }
+
+    @Test
+    fun zSkipsReminderWhenChannelIsDisabled() {
+        notificationManager().createNotificationChannel(
+            NotificationChannel(PAYMENT_CHANNEL_ID, "disabled", NotificationManager.IMPORTANCE_NONE),
+        )
+        givenStoredSession(profile = profile(dueDate = TODAY))
+
+        assertEquals(ListenableWorker.Result.success(), runReminderWorker())
+
+        assertNoNotificationPosted()
+        assertLedgerEmpty()
+    }
+
+    private fun runReminderWorker(): ListenableWorker.Result = runBlocking {
+        TestListenableWorkerBuilder<PaymentDueReminderWorker>(context)
+            .setWorkerFactory(KoinWorkerFactory())
+            .build()
+            .doWork()
+    }
+
+    private fun notificationManager(): NotificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+    private fun assertLedgerContains(key: String) = runBlocking {
+        assertTrue(get<PaymentDueNotifiedStore>().isNotified(key))
+    }
+
+    private fun assertLedgerEmpty() = runBlocking {
+        assertFalse(get<PaymentDueNotifiedStore>().isNotified(reminderKey(PaymentDueThreshold.DUE_DAY, TODAY)))
+        assertFalse(
+            get<PaymentDueNotifiedStore>().isNotified(
+                reminderKey(PaymentDueThreshold.THREE_DAYS_BEFORE, TODAY.plusDays(3)),
+            ),
+        )
+    }
+
+    private fun reminderKey(
+        threshold: PaymentDueThreshold,
+        dueDate: LocalDate,
+    ): String = PaymentDueReminder(threshold, dueDate).ledgerKey
+
+    private fun profile(dueDate: LocalDate) = Profile(
+        isActive = true,
+        nextPaymentDate = dueDate,
+        tariffPlan = TariffPlan(id = "300GRN_100mb", name = "Standart 100", speed = 100, price = 300),
+    )
+
+    private companion object {
+        val TODAY: LocalDate = LocalDate.of(2026, 10, 1)
+        const val PAYMENT_CHANNEL_ID = "payment_reminders"
     }
 }

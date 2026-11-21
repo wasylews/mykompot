@@ -28,7 +28,7 @@ class FakePaymentDueReminderScheduler : PaymentDueReminderScheduler {
         lastScheduledProfile = profile
     }
 
-    override fun cancel() {
+    override suspend fun cancel() {
         cancelCalls++
     }
 }
