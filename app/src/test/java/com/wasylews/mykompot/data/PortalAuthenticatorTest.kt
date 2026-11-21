@@ -42,10 +42,7 @@ class PortalAuthenticatorTest {
     @Test
     fun `successful re-login retries the original request once`() {
         // GIVEN
-        val api = FakeAuthApi(
-            response = RetrofitResponse.success(profilePage()),
-            onLogin = { cookieStore.saveSid("new-session") },
-        )
+        val api = FakeAuthApi(response = RetrofitResponse.success(profilePage()))
         val authenticator = authenticator(api)
 
         // WHEN
@@ -54,6 +51,7 @@ class PortalAuthenticatorTest {
         // THEN
         assertNotNull(retry)
         assertNotNull(retry!!.tag(PortalReauthAttempt::class.java))
+        assertEquals("new-session", cookieStore.sid())
         assertEquals(1, api.loginCalls)
         assertEquals("user", api.lastUsername)
         assertEquals("pass", api.lastPassword)
@@ -128,7 +126,6 @@ class PortalAuthenticatorTest {
         val api = FakeAuthApi(
             response = RetrofitResponse.success(profilePage()),
             onLogin = {
-                cookieStore.saveSid("new-session")
                 enteredLogin.countDown()
                 releaseLogin.await(5, TimeUnit.SECONDS)
             },
@@ -184,6 +181,7 @@ class PortalAuthenticatorTest {
     private fun profilePage() = ProfilePageResponse(
         status = "State: Enable",
         plan = "[35] 300GRN_100mb",
+        sid = "new-session",
     )
 
     private class FakeAuthApi(

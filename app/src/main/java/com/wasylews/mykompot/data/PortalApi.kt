@@ -28,9 +28,10 @@ import retrofit2.http.Query
  * The portal is a legacy CGI application served as HTML from `index.cgi` pages
  * (authenticated pages are selected by the `index` query parameter).
  *
- * Session state is carried by a `sid` cookie returned in `Set-Cookie` and managed by a `CookieJar`.
- * When a session is no longer valid, the portal responds with its login page instead of the
- * requested data.
+ * Session state is carried by a `sid` value. The portal may return it either in a `Set-Cookie`
+ * header or in the landing page HTML; `CookieJar` handles the header while parsed responses carry
+ * the HTML value. When a session is no longer valid, the portal responds with its login page
+ * instead of the requested data.
  *
  * The UI language of portal responses depends on the selected language; this client requests
  * English content (`language=english` and `Cookie: language=english`) so parsing can rely on stable
@@ -78,6 +79,9 @@ data class ProfilePageResponse(
     /** Heading containing the next periodic payment text/date (ISO date in parentheses). */
     @Selector("div.kabinet-styled_table-wrap_form h3")
     val nextPayment: String? = null,
+    /** Session id rendered in authenticated pages when the portal does not send a `sid` cookie. */
+    @Selector("input[name=sid]", attr = "value")
+    val sid: String? = null,
 ) {
     /** Account state label extracted from [status] (for example `Enable`). */
     val accountState: String?

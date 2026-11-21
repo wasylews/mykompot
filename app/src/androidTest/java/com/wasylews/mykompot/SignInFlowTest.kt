@@ -52,6 +52,22 @@ class SignInFlowTest : BaseAcceptanceTest() {
     }
 
     @Test
+    fun signInSucceedsWhenPortalSendsSidOnlyInHtml() {
+        // GIVEN a real portal-style login response: the sid is in the HTML, not a Set-Cookie header
+        givenStoredTariffPlans()
+        givenHomeResponses(profileBody = HtmlFixtures.profile(sid = "html-session"))
+
+        launch().use {
+            // WHEN I log in
+            performLogin()
+
+            // THEN the session is established and I see the status
+            assertShows(R.string.status_all_good)
+            assertProfileRequestUsesSessionCookie("html-session")
+        }
+    }
+
+    @Test
     fun remembersCredentialsWhenAsked() {
         // GIVEN server is up
         givenStoredTariffPlans()

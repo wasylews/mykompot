@@ -32,6 +32,7 @@ class ProfilePageResponseTest {
         assertEquals("Enable", result.accountState)
         assertEquals("[35] 300GRN_100mb", result.plan)
         assertEquals("Next periodic payments throught days (2026-11-01)", result.nextPayment)
+        assertEquals("test-session", result.sid)
     }
 
     @Test

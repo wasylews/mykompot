@@ -72,18 +72,20 @@ class PortalAuthenticator(
                 return@withLock null
             }
 
+            val page = login.body()
             when {
                 !login.isSuccessful -> null
 
-                login.body()?.isLoginPage == true -> {
+                page?.isLoginPage == true -> {
                     credentialsStore.clear()
                     sessionCookieStore.clear()
                     null
                 }
 
-                login.body() == null -> null
+                page == null -> null
 
                 else -> {
+                    page.sid?.trim()?.takeIf { it.isNotEmpty() }?.let(sessionCookieStore::saveSid)
                     val newSid = sessionCookieStore.sid()
                     if (newSid == null || newSid == failedSid) {
                         null

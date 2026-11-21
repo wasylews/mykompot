@@ -62,6 +62,17 @@ class PortalRepositoryLoginTest {
     }
 
     @Test
+    fun `login stores sid parsed from response html`() = runTest {
+        val api = FakePortalApi(activeProfileResponse().copy(sid = "html-session"))
+        val repo = createPortalRepository(testScheduler, api)
+
+        val result = repo.login("user", "pass")
+
+        assertEquals(LoginResult.Success(profile()), result)
+        repo.expectSession("html-session")
+    }
+
+    @Test
     fun `network error`() = runTest {
         val portalApi = FakePortalApi(activeProfileResponse(), exception = IOException())
         val repo = createPortalRepository(testScheduler, portalApi)

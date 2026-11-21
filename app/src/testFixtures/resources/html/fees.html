@@ -47,27 +47,27 @@
 
 <div class='inner-left_col' id='kabinet-left_col'><!--left menu-->
 <ul class='inner_menu box_shadow border_rad' id='kabinet-menu'>
-<li class='inner_menu-item odd'><a title='User Information'  href="https://kompot.uz.ua:9443/index.cgi?index=10&amp;sid=REDACTED" id=form_info>User Information</a></li>
-<li class='inner_menu-item odd'><a title='Password'  href="https://kompot.uz.ua:9443/index.cgi?index=17&amp;sid=REDACTED" id=form_passwd>Password</a></li>
-<li class='inner_menu-item active'><a  href="https://kompot.uz.ua:9443/index.cgi?index=40&amp;sid=REDACTED" id=form_payments><b>Finances</b></a></li>
-<li class='inner_sub_menu-item sub_level1'><a  href="https://kompot.uz.ua:9443/index.cgi?index=41&amp;sid=REDACTED"><b>Fees</b></a></li>
-<li class='inner_sub_menu-item sub_level1'><a title='Payments'  href="https://kompot.uz.ua:9443/index.cgi?index=42&amp;sid=REDACTED">Payments</a></li>
-<li class='inner_sub_menu-item sub_level1'><a title='Balance recharge'  href="https://kompot.uz.ua:9443/index.cgi?index=45&amp;sid=REDACTED">Balance recharge</a></li>
-<li class='inner_menu-item odd'><a title='Internet'  href="https://kompot.uz.ua:9443/index.cgi?index=43&amp;sid=REDACTED" id=dv_user_info>Internet</a></li>
-<li class='inner_menu-item odd'><a title='Help Desk'  href="https://kompot.uz.ua:9443/index.cgi?index=47&amp;sid=REDACTED" id=msgs_user>Help Desk</a></li>
-<li class='inner_menu-item odd'><a title='Logout'  href="https://kompot.uz.ua:9443/index.cgi?index=1000&amp;sid=REDACTED" id=logout>Logout</a></li>
+<li class='inner_menu-item odd'><a title='User Information'  href="https://kompot.uz.ua:9443/index.cgi?index=10&amp;sid={{SID}}" id=form_info>User Information</a></li>
+<li class='inner_menu-item odd'><a title='Password'  href="https://kompot.uz.ua:9443/index.cgi?index=17&amp;sid={{SID}}" id=form_passwd>Password</a></li>
+<li class='inner_menu-item active'><a  href="https://kompot.uz.ua:9443/index.cgi?index=40&amp;sid={{SID}}" id=form_payments><b>Finances</b></a></li>
+<li class='inner_sub_menu-item sub_level1'><a  href="https://kompot.uz.ua:9443/index.cgi?index=41&amp;sid={{SID}}"><b>Fees</b></a></li>
+<li class='inner_sub_menu-item sub_level1'><a title='Payments'  href="https://kompot.uz.ua:9443/index.cgi?index=42&amp;sid={{SID}}">Payments</a></li>
+<li class='inner_sub_menu-item sub_level1'><a title='Balance recharge'  href="https://kompot.uz.ua:9443/index.cgi?index=45&amp;sid={{SID}}">Balance recharge</a></li>
+<li class='inner_menu-item odd'><a title='Internet'  href="https://kompot.uz.ua:9443/index.cgi?index=43&amp;sid={{SID}}" id=dv_user_info>Internet</a></li>
+<li class='inner_menu-item odd'><a title='Help Desk'  href="https://kompot.uz.ua:9443/index.cgi?index=47&amp;sid={{SID}}" id=msgs_user>Help Desk</a></li>
+<li class='inner_menu-item odd'><a title='Logout'  href="https://kompot.uz.ua:9443/index.cgi?index=1000&amp;sid={{SID}}" id=logout>Logout</a></li>
 </ul>
 </div><!--left menu-->
 
 <div class='kabinet-center_col'>				
 <br>
 <div id="rules">
-<ul><li class="center"><a onclick="javascript:showHidePageJump()" ><img src='/img/dropdown.png' /></a> <b>1</b> <a title='25'  href="https://kompot.uz.ua:9443/index.cgi?index=41&amp;UID=203&amp;sid=REDACTED&amp;pg=25">25</a> <a title='50'  href="https://kompot.uz.ua:9443/index.cgi?index=41&amp;UID=203&amp;sid=REDACTED&amp;pg=50">50</a> <a title='75'  href="https://kompot.uz.ua:9443/index.cgi?index=41&amp;UID=203&amp;sid=REDACTED&amp;pg=75">75</a> <a title='100'  href="https://kompot.uz.ua:9443/index.cgi?index=41&amp;UID=203&amp;sid=REDACTED&amp;pg=100">100</a> </li></ul>
+<ul><li class="center"><a onclick="javascript:showHidePageJump()" ><img src='/img/dropdown.png' /></a> <b>1</b> <a title='25'  href="https://kompot.uz.ua:9443/index.cgi?index=41&amp;UID=203&amp;sid={{SID}}&amp;pg=25">25</a> <a title='50'  href="https://kompot.uz.ua:9443/index.cgi?index=41&amp;UID=203&amp;sid={{SID}}&amp;pg=50">50</a> <a title='75'  href="https://kompot.uz.ua:9443/index.cgi?index=41&amp;UID=203&amp;sid={{SID}}&amp;pg=75">75</a> <a title='100'  href="https://kompot.uz.ua:9443/index.cgi?index=41&amp;UID=203&amp;sid={{SID}}&amp;pg=100">100</a> </li></ul>
 <div id="buttonJumpMenu">
     <div id='pageJumpWindow' class='box_shadow border_rad'>
       <h2>Перейти к странице:</h2>
       <input id='pagevalue' type='text'  size='5' maxlength='3' />
-      <button onclick="checkval('index.cgi?index=41&UID=203&sid=REDACTED&pg=')">OK</button>
+      <button onclick="checkval('index.cgi?index=41&UID=203&sid={{SID}}&pg=')">OK</button>
     </div>
 </div>
 </div>
@@ -109,12 +109,12 @@
 <div class='table_bot'></div>
 
 <div id="rules">
-<ul><li class="center"><a onclick="javascript:showHidePageJump()" ><img src='/img/dropdown.png' /></a> <b>1</b> <a title='25'  href="https://kompot.uz.ua:9443/index.cgi?index=41&amp;UID=203&amp;sid=REDACTED&amp;pg=25">25</a> <a title='50'  href="https://kompot.uz.ua:9443/index.cgi?index=41&amp;UID=203&amp;sid=REDACTED&amp;pg=50">50</a> <a title='75'  href="https://kompot.uz.ua:9443/index.cgi?index=41&amp;UID=203&amp;sid=REDACTED&amp;pg=75">75</a> <a title='100'  href="https://kompot.uz.ua:9443/index.cgi?index=41&amp;UID=203&amp;sid=REDACTED&amp;pg=100">100</a> </li></ul>
+<ul><li class="center"><a onclick="javascript:showHidePageJump()" ><img src='/img/dropdown.png' /></a> <b>1</b> <a title='25'  href="https://kompot.uz.ua:9443/index.cgi?index=41&amp;UID=203&amp;sid={{SID}}&amp;pg=25">25</a> <a title='50'  href="https://kompot.uz.ua:9443/index.cgi?index=41&amp;UID=203&amp;sid={{SID}}&amp;pg=50">50</a> <a title='75'  href="https://kompot.uz.ua:9443/index.cgi?index=41&amp;UID=203&amp;sid={{SID}}&amp;pg=75">75</a> <a title='100'  href="https://kompot.uz.ua:9443/index.cgi?index=41&amp;UID=203&amp;sid={{SID}}&amp;pg=100">100</a> </li></ul>
 <div id="buttonJumpMenu">
     <div id='pageJumpWindow' class='box_shadow border_rad'>
       <h2>Перейти к странице:</h2>
       <input id='pagevalue' type='text'  size='5' maxlength='3' />
-      <button onclick="checkval('index.cgi?index=41&UID=203&sid=REDACTED&pg=')">OK</button>
+      <button onclick="checkval('index.cgi?index=41&UID=203&sid={{SID}}&pg=')">OK</button>
     </div>
 </div>
 </div>

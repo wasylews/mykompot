@@ -47,19 +47,19 @@
 
 <div class='inner-left_col' id='kabinet-left_col'><!--left menu-->
 <ul class='inner_menu box_shadow border_rad' id='kabinet-menu'>
-<li class='inner_menu-item odd'><a title='User Information'  href="https://kompot.uz.ua:9443/index.cgi?index=10&amp;sid=2dyWSGNTtec1imAS" id=form_info>User Information</a></li>
-<li class='inner_menu-item odd'><a title='Password'  href="https://kompot.uz.ua:9443/index.cgi?index=17&amp;sid=2dyWSGNTtec1imAS" id=form_passwd>Password</a></li>
-<li class='inner_menu-item odd'><a title='Finances'  href="https://kompot.uz.ua:9443/index.cgi?index=40&amp;sid=2dyWSGNTtec1imAS" id=form_payments>Finances</a></li>
-<li class='inner_menu-item odd'><a title='Internet'  href="https://kompot.uz.ua:9443/index.cgi?index=43&amp;sid=2dyWSGNTtec1imAS" id=dv_user_info>Internet</a></li>
-<li class='inner_menu-item odd'><a title='Help Desk'  href="https://kompot.uz.ua:9443/index.cgi?index=47&amp;sid=2dyWSGNTtec1imAS" id=msgs_user>Help Desk</a></li>
-<li class='inner_menu-item odd'><a title='Logout'  href="https://kompot.uz.ua:9443/index.cgi?index=1000&amp;sid=2dyWSGNTtec1imAS" id=logout>Logout</a></li>
+<li class='inner_menu-item odd'><a title='User Information'  href="https://kompot.uz.ua:9443/index.cgi?index=10&amp;sid={{SID}}" id=form_info>User Information</a></li>
+<li class='inner_menu-item odd'><a title='Password'  href="https://kompot.uz.ua:9443/index.cgi?index=17&amp;sid={{SID}}" id=form_passwd>Password</a></li>
+<li class='inner_menu-item odd'><a title='Finances'  href="https://kompot.uz.ua:9443/index.cgi?index=40&amp;sid={{SID}}" id=form_payments>Finances</a></li>
+<li class='inner_menu-item odd'><a title='Internet'  href="https://kompot.uz.ua:9443/index.cgi?index=43&amp;sid={{SID}}" id=dv_user_info>Internet</a></li>
+<li class='inner_menu-item odd'><a title='Help Desk'  href="https://kompot.uz.ua:9443/index.cgi?index=47&amp;sid={{SID}}" id=msgs_user>Help Desk</a></li>
+<li class='inner_menu-item odd'><a title='Logout'  href="https://kompot.uz.ua:9443/index.cgi?index=1000&amp;sid={{SID}}" id=logout>Logout</a></li>
 </ul>
 </div><!--left menu-->
 
 <div class='kabinet-center_col'>				
 <div class='kabinet-styled_table-wrap_form box_shadow border_rad'>
 <TABLE width='600' class='form'>
-<TR class='odd'><TD><strong>Deposit:</strong></TD><TD>0.01    <a title='Create Invoice' class='link_button' href="https://kompot.uz.ua:9443/index.cgi?index=0&amp;SUM=0&amp;sid=2dyWSGNTtec1imAS">Create Invoice</a>   <a title='Balance recharge' class='link_button' href="https://kompot.uz.ua:9443/index.cgi?index=45&amp;SUM=0&amp;sid=2dyWSGNTtec1imAS">Balance recharge</a></TD></TR>
+<TR class='odd'><TD><strong>Deposit:</strong></TD><TD>0.01    <a title='Create Invoice' class='link_button' href="https://kompot.uz.ua:9443/index.cgi?index=0&amp;SUM=0&amp;sid={{SID}}">Create Invoice</a>   <a title='Balance recharge' class='link_button' href="https://kompot.uz.ua:9443/index.cgi?index=45&amp;SUM=0&amp;sid={{SID}}">Balance recharge</a></TD></TR>
 
 
 <TR class='odd'><TD><strong>Credit:</strong> Date: 0000-00-00</TD><TD>0.01 </TD></TR>
@@ -85,7 +85,7 @@
 
     <form action=https://kompot.uz.ua:9443/index.cgi>
     <input type=hidden name='index' value='10'>
-    <input type=hidden name='sid' value='2dyWSGNTtec1imAS'>
+    <input type=hidden name='sid' value='{{SID}}'>
     
     <strong>Change Credit</strong><BR>
     Sum: 

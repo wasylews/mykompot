@@ -74,6 +74,7 @@ class PortalRepositoryImpl(
             }
 
             val profile = page.toProfile() ?: return@withContext LoginResult.Failed(PortalFailure.Parse)
+            page.sid?.trim()?.takeIf { it.isNotEmpty() }?.let(sessionCookieStore::saveSid)
             localStorage.saveProfile(profile)
             LoginResult.Success(profile)
         } catch (_: HttpException) {

@@ -17,11 +17,14 @@
 package com.wasylews.mykompot
 
 object HtmlFixtures {
-    fun profile() = load("profile.html")
+    private const val SID_PLACEHOLDER = "{{SID}}"
+    private const val DEFAULT_SID = "test-session"
 
-    fun paymentDue() = load("payment-due.html")
+    fun profile(sid: String = DEFAULT_SID) = load("profile.html", sid)
 
-    fun suspended() = load("suspended.html")
+    fun paymentDue(sid: String = DEFAULT_SID) = load("payment-due.html", sid)
+
+    fun suspended(sid: String = DEFAULT_SID) = load("suspended.html", sid)
 
     fun loginFailed() = load("login-failed.html")
 
@@ -29,13 +32,17 @@ object HtmlFixtures {
 
     fun plans() = load("plans.html")
 
-    fun fees() = load("fees.html")
+    fun fees(sid: String = DEFAULT_SID) = load("fees.html", sid)
 
-    fun feesPage2() = load("fees-page2.html")
+    fun feesPage2(sid: String = DEFAULT_SID) = load("fees-page2.html", sid)
 
-    private fun load(name: String): String = requireNotNull(
+    private fun load(
+        name: String,
+        sid: String = DEFAULT_SID,
+    ): String = requireNotNull(
         HtmlFixtures::class.java.getResourceAsStream("/html/$name"),
     ) {
         "Missing HTML fixture: $name"
     }.bufferedReader().use { it.readText() }
+        .replace(SID_PLACEHOLDER, sid)
 }

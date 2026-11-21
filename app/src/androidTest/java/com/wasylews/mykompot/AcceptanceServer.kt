@@ -93,7 +93,7 @@ internal fun BaseAcceptanceTest.givenHomeResponses(
 }
 
 internal fun BaseAcceptanceTest.givenServerReturnsProfile(
-    body: String = HtmlFixtures.profile(),
+    body: String = HtmlFixtures.profile(sid = "test-session"),
     headers: Map<String, String> = emptyMap(),
     delayMillis: Long = 0,
 ) {
@@ -107,7 +107,7 @@ internal fun BaseAcceptanceTest.givenServerReturnsProfile(
 internal fun BaseAcceptanceTest.givenServerReturnsLoginSuccess(sid: String = "test-session") {
     dispatcher.loginResponseFactory = {
         response(
-            body = HtmlFixtures.profile(),
+            body = HtmlFixtures.profile(sid = sid),
             headers = mapOf("Set-Cookie" to "sid=$sid"),
         )
     }
@@ -142,7 +142,7 @@ private fun BaseAcceptanceTest.givenExpiredProfileResponses(
             response(body = HtmlFixtures.loginFailed())
         } else {
             response(
-                body = HtmlFixtures.profile(),
+                body = HtmlFixtures.profile(sid = newSid),
                 headers = mapOf("Set-Cookie" to "sid=$newSid"),
             )
         }
