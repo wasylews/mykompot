@@ -34,51 +34,42 @@ class RefreshStatusUseCaseTest {
     )
 
     @Test
-    fun `refreshes status and schedules keep alive and reminders when updated`() = runTest {
+    fun `refreshes status and schedules reminders when updated`() = runTest {
         val repository = FakePortalRepository(refreshResult = RefreshResult.Updated(profile), profile = profile)
-        val scheduler = FakeSessionKeepAliveScheduler()
         val paymentScheduler = FakePaymentDueReminderScheduler()
-        val useCase = RefreshStatusUseCase(repository, scheduler, paymentScheduler)
+        val useCase = RefreshStatusUseCase(repository, paymentScheduler)
 
         val result = useCase()
 
         assertEquals(RefreshResult.Updated(profile), result)
         assertEquals(1, repository.refreshCalls)
-        assertEquals(1, scheduler.scheduleCalls)
-        assertEquals(0, scheduler.cancelCalls)
         assertEquals(1, paymentScheduler.scheduleCalls)
         assertEquals(profile, paymentScheduler.lastScheduledProfile)
         assertEquals(0, paymentScheduler.cancelCalls)
     }
 
     @Test
-    fun `cancels keep alive and reminders when session expires`() = runTest {
+    fun `cancels reminders when session expires`() = runTest {
         val repository = FakePortalRepository(refreshResult = RefreshResult.Expired)
-        val scheduler = FakeSessionKeepAliveScheduler()
         val paymentScheduler = FakePaymentDueReminderScheduler()
-        val useCase = RefreshStatusUseCase(repository, scheduler, paymentScheduler)
+        val useCase = RefreshStatusUseCase(repository, paymentScheduler)
 
         val result = useCase()
 
         assertEquals(RefreshResult.Expired, result)
-        assertEquals(0, scheduler.scheduleCalls)
-        assertEquals(1, scheduler.cancelCalls)
         assertEquals(0, paymentScheduler.scheduleCalls)
         assertEquals(1, paymentScheduler.cancelCalls)
     }
 
     @Test
-    fun `does not change keep alive or reminders when refresh fails`() = runTest {
+    fun `does not change reminders when refresh fails`() = runTest {
         val repository = FakePortalRepository(refreshResult = RefreshResult.Failed(PortalFailure.Network))
-        val scheduler = FakeSessionKeepAliveScheduler()
         val paymentScheduler = FakePaymentDueReminderScheduler()
-        val useCase = RefreshStatusUseCase(repository, scheduler, paymentScheduler)
+        val useCase = RefreshStatusUseCase(repository, paymentScheduler)
 
         val result = useCase()
 
         assertEquals(RefreshResult.Failed(PortalFailure.Network), result)
-        assertEquals(0, scheduler.scheduleCalls)
-        assertEquals(0, scheduler.cancelCalls)
         assertEquals(0, paymentScheduler.scheduleCalls)
         assertEquals(0, paymentScheduler.cancelCalls)
     }

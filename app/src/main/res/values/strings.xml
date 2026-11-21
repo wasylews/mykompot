@@ -50,11 +50,9 @@
 
     <!-- Notifications -->
     <string name="notifications_rationale_title">Turn on notifications</string>
-    <string name="notifications_rationale_text">Get a reminder before your payment is due, and find out when you need to log in again. You can change this later in system settings.</string>
+    <string name="notifications_rationale_text">Get a reminder before your payment is due. You can change this later in system settings.</string>
     <string name="notifications_allow">Allow</string>
     <string name="notifications_not_now">Not now</string>
-    <string name="session_expired_notification_title">Session expired</string>
-    <string name="session_expired_notification_text">Log in again to see your account status.</string>
 
     <!-- Payment reminders -->
     <string name="payment_reminder_channel_name">Payment reminders</string>

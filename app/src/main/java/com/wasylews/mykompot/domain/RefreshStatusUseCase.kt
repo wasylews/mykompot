@@ -26,24 +26,20 @@ fun interface RefreshStatus {
 }
 
 /**
- * Refreshes profile data from [PortalRepository] and keeps background work in sync:
- * schedules session keep-alive and payment reminders on success, cancels them on session expiry.
+ * Refreshes profile data from [PortalRepository] and keeps payment reminders in sync.
  */
 @Factory
 class RefreshStatusUseCase(
     private val repository: PortalRepository,
-    private val sessionKeepAliveScheduler: SessionKeepAliveScheduler,
     private val paymentDueReminderScheduler: PaymentDueReminderScheduler,
 ) : RefreshStatus {
     override suspend fun invoke(): RefreshResult = when (val result = repository.refresh()) {
         is RefreshResult.Updated -> {
-            sessionKeepAliveScheduler.schedule()
             paymentDueReminderScheduler.schedule(result.profile)
             result
         }
 
         RefreshResult.Expired -> {
-            sessionKeepAliveScheduler.cancel()
             paymentDueReminderScheduler.cancel()
             result
         }

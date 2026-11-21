@@ -23,7 +23,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.PaymentDueReminderScheduler
-import com.wasylews.mykompot.domain.SessionKeepAliveScheduler
 import com.wasylews.mykompot.domain.model.Credentials
 import com.wasylews.mykompot.domain.model.LoginResult
 import com.wasylews.mykompot.domain.repository.CredentialsStore
@@ -39,7 +38,6 @@ import org.koin.core.annotation.KoinViewModel
 @KoinViewModel
 class LoginViewModel(
     private val repository: PortalRepository,
-    private val sessionKeepAliveScheduler: SessionKeepAliveScheduler,
     private val paymentDueReminderScheduler: PaymentDueReminderScheduler,
     private val credentialsStore: CredentialsStore,
 ) : ViewModel() {
@@ -71,7 +69,6 @@ class LoginViewModel(
                 if (rememberMe) {
                     credentialsStore.save(Credentials(username, password))
                 }
-                sessionKeepAliveScheduler.schedule()
                 paymentDueReminderScheduler.schedule(result.profile)
                 null
             }
