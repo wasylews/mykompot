@@ -112,6 +112,10 @@ android {
     }
 }
 
+base {
+    archivesName.set("mykompot-${android.defaultConfig.versionName}")
+}
+
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
