@@ -4,6 +4,7 @@
 
     <!-- Login -->
     <string name="log_in">Log in</string>
+    <string name="logging_in">Logging in…</string>
     <string name="password">Password</string>
     <string name="username">Username</string>
     <string name="welcome_back">Welcome back.</string>
@@ -35,6 +36,8 @@
     <string name="status_unknown_message">We couldn\'t check your status. Your account may still be fine.</string>
     <string name="tariff">Tariff</string>
     <string name="tariffs">Tariffs</string>
+    <string name="view_tariff_plans">View tariff plans</string>
+    <string name="open_payment_method">Open payment method</string>
     <string name="currency_symbol">₴</string>
     <string name="tariff_price">%1$d ₴</string>
     <string name="tariff_price_monthly">%1$d ₴/mo</string>

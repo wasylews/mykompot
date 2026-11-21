@@ -66,6 +66,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTag
@@ -261,10 +262,13 @@ private fun LoginButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val buttonLabel = stringResource(if (isLoading) R.string.logging_in else R.string.log_in)
     Button(
         onClick = onClick,
         enabled = !isLoading,
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics { contentDescription = buttonLabel },
     ) {
         if (isLoading) {
             CircularProgressIndicator(

@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -47,6 +48,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -279,6 +283,7 @@ private fun StatusChip(
     @StringRes status: Int,
     onColor: Color,
 ) {
+    val statusLabel = stringResource(status)
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(999.dp))
@@ -299,6 +304,8 @@ private fun StatusChip(
             fontWeight = FontWeight.Bold,
             letterSpacing = 0.66.sp,
             color = onColor,
+            // Keep the visual all-caps treatment without making screen readers spell out acronyms.
+            modifier = Modifier.semantics { contentDescription = statusLabel },
         )
     }
 }
@@ -332,6 +339,7 @@ private fun NextChargeBlock(
     onTariffClick: () -> Unit,
 ) {
     Column(
+        modifier = Modifier.semantics(mergeDescendants = true) {},
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         state.nextChargeLabel?.let {
@@ -389,7 +397,14 @@ private fun TariffBlock(
     onClick: () -> Unit,
 ) {
     Row(
-        modifier = Modifier.clickable(onClick = onClick),
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .clickable(
+                onClick = onClick,
+                onClickLabel = stringResource(R.string.view_tariff_plans),
+                role = Role.Button,
+            ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
     ) {
