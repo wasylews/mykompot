@@ -23,6 +23,8 @@ import kotlinx.serialization.Serializable
 data class PaymentsEntity(
     val items: List<PaymentEntity>,
     val hasMore: Boolean,
+    /** Absent in caches written before paginator offsets were persisted. */
+    val nextPageOffset: Int? = null,
 )
 
 /** Persisted form of [com.wasylews.mykompot.domain.model.Payment] stored in DataStore. */

@@ -71,11 +71,13 @@ class DataStoreLocalStorage(
 private fun PaymentsEntity.toDomain() = Payments(
     items = items.map { it.toDomain() },
     hasMore = hasMore,
+    nextPageOffset = nextPageOffset,
 )
 
 private fun Payments.toEntity() = PaymentsEntity(
     items = items.map { it.toEntity() },
     hasMore = hasMore,
+    nextPageOffset = nextPageOffset,
 )
 
 private fun PaymentEntity.toDomain() = Payment(

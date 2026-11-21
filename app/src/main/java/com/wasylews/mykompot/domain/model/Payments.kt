@@ -21,8 +21,10 @@ package com.wasylews.mykompot.domain.model
  *
  * @property items loaded payment entries in portal order.
  * @property hasMore whether more pages may be available to load.
+ * @property nextPageOffset row offset to request from the portal when loading more pages.
  */
 data class Payments(
     val items: List<Payment> = emptyList(),
     val hasMore: Boolean = false,
+    val nextPageOffset: Int? = null,
 )

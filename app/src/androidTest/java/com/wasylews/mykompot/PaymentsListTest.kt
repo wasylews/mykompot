@@ -158,16 +158,18 @@ class PaymentsListTest : BaseAcceptanceTest() {
                 composeRule.onNodeWithTag(HOME_LIST_TEST_TAG).performTouchInput { swipeUp() }
             }
 
-            // THEN I see entries from the next page (pg=25)
+            // THEN I see entries from the next page (pg=25). The first page already ends with
+            // 2024-10-15, so use the last row of page 2 to prove the next page was appended.
+            val page2Row = "5 Oct 2022, 00:00"
             composeRule.waitUntil(10_000) {
-                composeRule.onAllNodesWithText("15 Oct 2024, 09:39", substring = true)
+                composeRule.onAllNodesWithText(page2Row, substring = true)
                     .fetchSemanticsNodes().isNotEmpty()
             }
             composeRule
                 .onNodeWithTag(HOME_LIST_TEST_TAG)
-                .performScrollToNode(hasText("15 Oct 2024, 09:39", substring = true))
+                .performScrollToNode(hasText(page2Row, substring = true))
             composeRule
-                .onAllNodesWithText("15 Oct 2024, 09:39", substring = true)
+                .onAllNodesWithText(page2Row, substring = true)
                 .onFirst()
                 .assertIsDisplayed()
         }

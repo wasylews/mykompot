@@ -127,6 +127,15 @@ data class FeesPageResponse(
     /** Payment rows from the fees table. */
     @Selector("#kabinet-filter_table tr.odd, #kabinet-filter_table tr.even")
     val items: List<ParsedFeeItem> = emptyList(),
+    /** Page number of the currently displayed page, as rendered in the paginator. */
+    @Selector(".page_wrap li.center b")
+    val currentPage: String? = null,
+    /** Row offsets offered by the paginator links; the first page starts at 1. */
+    @Selector(".page_wrap li.center a[title]", attr = "title")
+    val pageOffsets: List<String> = emptyList(),
+    /** Total number of payment rows reported below the table. */
+    @Selector("#kabinet-filter_table tr td:nth-child(2) b")
+    val total: String? = null,
 ) {
     /**
      * `true` when the portal served its login page instead of the payments table, indicating the
@@ -134,6 +143,19 @@ data class FeesPageResponse(
      */
     val isLoginPage: Boolean
         get() = loginFormAction != null
+
+    /** Row offset of the current page, when a paginator is present. */
+    val currentOffset: Int? get() = currentPage?.trim()?.toIntOrNull()
+
+    /** Total row count from the portal, when present. */
+    val totalCount: Int? get() = total?.trim()?.toIntOrNull()
+
+    /** Next row offset advertised by the paginator, when there is a later page. */
+    val nextPageOffset: Int? get() {
+        val current = currentOffset ?: return null
+        return pageOffsets.mapNotNull { it.trim().toIntOrNull() }.distinct().filter { it > current }
+            .minOrNull()
+    }
 }
 
 /** Raw payment row scraped from the fees table. */

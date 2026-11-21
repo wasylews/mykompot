@@ -196,7 +196,7 @@ class PortalRepositoryImpl(
     override suspend fun loadMorePayments(): PaymentsActionResult = withContext(dispatcher) {
         val cached = localStorage.paymentsFlow().first() ?: return@withContext PaymentsActionResult.Success
         if (!cached.hasMore) return@withContext PaymentsActionResult.Success
-        fetchPayments(pg = cached.items.size, append = true)
+        fetchPayments(pg = cached.nextPageOffset ?: cached.items.size, append = true)
     }
 
     private suspend fun fetchPayments(
@@ -220,7 +220,7 @@ class PortalRepositoryImpl(
 
                     !response.isSuccessful -> PaymentsActionResult.Failed(PortalFailure.Server)
 
-                    else -> handleFeesResponse(response.body(), append)
+                    else -> handleFeesResponse(response.body(), pg, append)
                 }
             }
         }
@@ -232,6 +232,7 @@ class PortalRepositoryImpl(
 
     private suspend fun handleFeesResponse(
         page: FeesPageResponse?,
+        requestedOffset: Int?,
         append: Boolean,
     ): PaymentsActionResult = when {
         page == null -> PaymentsActionResult.Failed(PortalFailure.Parse)
@@ -243,27 +244,44 @@ class PortalRepositoryImpl(
 
         page.error != null -> PaymentsActionResult.Failed(PortalFailure.Server)
 
-        else -> {
-            val catalog = localStorage.tariffPlansFlow().first()?.plans.orEmpty()
-            val payments = page.items.mapNotNull { it.toDomain(catalog) }
-            if (page.items.isNotEmpty() && payments.isEmpty()) {
-                PaymentsActionResult.Failed(PortalFailure.Parse)
-            } else {
-                val merged = if (append) {
-                    localStorage.paymentsFlow().first()?.items.orEmpty() + payments
-                } else {
-                    payments
-                }
-                localStorage.savePayments(
-                    Payments(
-                        items = merged,
-                        hasMore = payments.size == PAGE_SIZE,
-                    ),
-                )
-                PaymentsActionResult.Success
-            }
-        }
+        else -> saveFeesPage(page, requestedOffset, append)
     }
+
+    private suspend fun saveFeesPage(
+        page: FeesPageResponse,
+        requestedOffset: Int?,
+        append: Boolean,
+    ): PaymentsActionResult {
+        val catalog = localStorage.tariffPlansFlow().first()?.plans.orEmpty()
+        val payments = page.items.mapNotNull { it.toDomain(catalog) }
+        if (page.items.isNotEmpty() && payments.isEmpty()) {
+            return PaymentsActionResult.Failed(PortalFailure.Parse)
+        }
+
+        val existing = if (append) localStorage.paymentsFlow().first()?.items.orEmpty() else emptyList()
+        val merged = (existing + payments).distinct()
+        // A page made entirely of rows we already have means the server repeated itself (or the
+        // paginator pointed backwards). Stop here instead of looping forever.
+        val repeatedPage = append && merged.size == existing.size
+        // Paginator values describe raw table rows, so they stay valid even if a row is dropped
+        // during mapping. Fall back to the previous size heuristic if absent.
+        val nextOffsetBySize = (requestedOffset ?: 0) + page.items.size
+        val hasMore = !repeatedPage && hasMoreAfter(page, nextOffsetBySize)
+        localStorage.savePayments(
+            Payments(
+                items = merged,
+                hasMore = hasMore,
+                nextPageOffset = if (hasMore) page.nextPageOffset ?: nextOffsetBySize else null,
+            ),
+        )
+        return PaymentsActionResult.Success
+    }
+
+    private fun hasMoreAfter(
+        page: FeesPageResponse,
+        nextOffsetBySize: Int,
+    ): Boolean = page.totalCount?.let { total -> nextOffsetBySize < total }
+        ?: (page.items.size == PAGE_SIZE)
 
     private fun ParsedFeeItem.toDomain(catalog: List<TariffPlan>): Payment? {
         val dateTime = runCatching {

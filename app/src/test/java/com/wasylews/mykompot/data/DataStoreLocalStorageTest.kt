@@ -290,6 +290,7 @@ class DataStoreLocalStorageTest {
             ),
         ),
         hasMore = true,
+        nextPageOffset = 25,
     )
 
     private companion object {

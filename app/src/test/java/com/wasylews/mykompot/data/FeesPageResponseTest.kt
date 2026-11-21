@@ -19,6 +19,7 @@ package com.wasylews.mykompot.data
 import com.wasylews.mykompot.HtmlFixtures
 import dev.burnoo.kspoon.Kspoon
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class FeesPageResponseTest {
@@ -68,5 +69,34 @@ class FeesPageResponseTest {
             ),
             result.items.last(),
         )
+    }
+
+    @Test
+    fun `parses paginator and total on the first page`() {
+        val result = Kspoon.parse<FeesPageResponse>(HtmlFixtures.fees())
+
+        assertEquals(1, result.currentOffset)
+        assertEquals(listOf(25, 50, 75, 100), result.pageOffsets.map { it.toInt() }.distinct())
+        assertEquals(120, result.totalCount)
+        assertEquals(25, result.nextPageOffset)
+    }
+
+    @Test
+    fun `parses paginator and total on a later page`() {
+        val result = Kspoon.parse<FeesPageResponse>(HtmlFixtures.feesPage2())
+
+        assertEquals(25, result.currentOffset)
+        assertEquals(listOf(1, 50, 75, 100), result.pageOffsets.map { it.toInt() }.distinct())
+        assertEquals(121, result.totalCount)
+        assertEquals(50, result.nextPageOffset)
+    }
+
+    @Test
+    fun `missing paginator has no derived paging data`() {
+        val result = Kspoon.parse<FeesPageResponse>("<html><body></body></html>")
+
+        assertNull(result.currentOffset)
+        assertNull(result.totalCount)
+        assertNull(result.nextPageOffset)
     }
 }

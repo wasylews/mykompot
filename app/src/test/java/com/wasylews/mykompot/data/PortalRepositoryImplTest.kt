@@ -47,6 +47,7 @@ import retrofit2.HttpException
 import retrofit2.Response
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 class PortalRepositoryImplTest {
     @Test
@@ -831,6 +832,144 @@ class PortalRepositoryPaymentsTest {
     }
 
     @Test
+    fun `refreshPayments uses paginator total and next offset`() = runTest {
+        val storage = FakeLocalStorage().apply { saveSession("test-session") }
+        val api = FakePortalApi(
+            response = activeProfileResponse(),
+            feesResponse = Response.success(
+                FeesPageResponse(
+                    items = List(25) { feeItem(it) },
+                    currentPage = "1",
+                    pageOffsets = listOf("25", "50", "75", "100"),
+                    total = "120",
+                ),
+            ),
+        )
+        val repo = createPortalRepository(testScheduler, portalApi = api, localStorage = storage)
+
+        assertEquals(PaymentsActionResult.Success, repo.refreshPayments())
+
+        repo.paymentsFlow().test {
+            val payments = awaitItem()
+            assertEquals(25, payments?.items?.size)
+            assertEquals(true, payments?.hasMore)
+            assertEquals(25, payments?.nextPageOffset)
+        }
+    }
+
+    @Test
+    fun `paginator total stops loading at the last page`() = runTest {
+        val storage = FakeLocalStorage().apply {
+            saveSession("test-session")
+            savePayments(
+                Payments(
+                    items = List(100) { feeItem(it + 100).toPayment() },
+                    hasMore = true,
+                    nextPageOffset = 100,
+                ),
+            )
+        }
+        val api = FakePortalApi(
+            response = activeProfileResponse(),
+            feesResponse = Response.success(
+                FeesPageResponse(
+                    items = List(20) { feeItem(it) },
+                    currentPage = "100",
+                    pageOffsets = listOf("1", "25", "50", "75"),
+                    total = "120",
+                ),
+            ),
+        )
+        val repo = createPortalRepository(testScheduler, portalApi = api, localStorage = storage)
+
+        assertEquals(PaymentsActionResult.Success, repo.loadMorePayments())
+
+        assertEquals(listOf<Int?>(100), api.feesPgRequests)
+        repo.paymentsFlow().test {
+            val payments = awaitItem()
+            assertEquals(120, payments?.items?.size)
+            assertEquals(false, payments?.hasMore)
+            assertNull(payments?.nextPageOffset)
+        }
+    }
+
+    @Test
+    fun `loadMorePayments uses the stored paginator offset`() = runTest {
+        val storage = FakeLocalStorage().apply {
+            saveSession("test-session")
+            savePayments(
+                Payments(
+                    items = listOf(feeItem(0).toPayment()),
+                    hasMore = true,
+                    nextPageOffset = 25,
+                ),
+            )
+        }
+        val api = FakePortalApi(
+            response = activeProfileResponse(),
+            feesResponse = Response.success(FeesPageResponse(items = listOf(feeItem(1)))),
+        )
+        val repo = createPortalRepository(testScheduler, portalApi = api, localStorage = storage)
+
+        assertEquals(PaymentsActionResult.Success, repo.loadMorePayments())
+
+        assertEquals(listOf<Int?>(25), api.feesPgRequests)
+    }
+
+    @Test
+    fun `loadMorePayments does not duplicate rows repeated across pages`() = runTest {
+        val repeated = feeItem(0).toPayment()
+        val storage = FakeLocalStorage().apply {
+            saveSession("test-session")
+            savePayments(Payments(items = listOf(repeated), hasMore = true, nextPageOffset = 25))
+        }
+        val api = FakePortalApi(
+            response = activeProfileResponse(),
+            feesResponse = Response.success(FeesPageResponse(items = listOf(feeItem(0), feeItem(1)))),
+        )
+        val repo = createPortalRepository(testScheduler, portalApi = api, localStorage = storage)
+
+        assertEquals(PaymentsActionResult.Success, repo.loadMorePayments())
+
+        repo.paymentsFlow().test {
+            val payments = awaitItem()
+            assertEquals(2, payments?.items?.size)
+            assertEquals(repeated, payments?.items?.first())
+        }
+    }
+
+    @Test
+    fun `loadMorePayments stops when the server repeats a page`() = runTest {
+        val storage = FakeLocalStorage().apply {
+            saveSession("test-session")
+            savePayments(
+                Payments(items = listOf(feeItem(0).toPayment()), hasMore = true, nextPageOffset = 25),
+            )
+        }
+        val api = FakePortalApi(
+            response = activeProfileResponse(),
+            feesResponse = Response.success(
+                FeesPageResponse(
+                    items = listOf(feeItem(0)),
+                    currentPage = "25",
+                    pageOffsets = listOf("1", "50"),
+                    total = "100",
+                ),
+            ),
+        )
+        val repo = createPortalRepository(testScheduler, portalApi = api, localStorage = storage)
+
+        assertEquals(PaymentsActionResult.Success, repo.loadMorePayments())
+
+        repo.paymentsFlow().test {
+            val payments = awaitItem()
+            assertEquals(1, payments?.items?.size)
+            assertEquals(false, payments?.hasMore)
+            assertNull(payments?.nextPageOffset)
+        }
+    }
+
+    @Test
     fun `refreshPayments replaces cached pages`() = runTest {
         val storage = FakeLocalStorage().apply {
             saveSession("test-session")
@@ -1020,9 +1159,16 @@ class PortalRepositoryPaymentsTest {
 
     private fun feeItem(index: Int) = ParsedFeeItem(
         date = LocalDateTime.of(2026, 10, 1, 10, 0).minusDays(index.toLong())
-            .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+            .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
         description = "abonplata_privatbank",
         sum = "300",
+    )
+
+    private fun ParsedFeeItem.toPayment() = Payment(
+        dateTime = LocalDateTime.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+        amount = sum.toInt(),
+        tariffName = sum,
+        source = PaymentSource.PRIVAT24,
     )
 }
 
