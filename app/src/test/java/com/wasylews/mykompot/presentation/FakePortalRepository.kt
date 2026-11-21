@@ -42,6 +42,7 @@ class FakePortalRepository(
 ) : PortalRepository {
     private val tariffPlans = tariffPlans?.let { TariffPlans(it) }
     var refreshCalls = 0
+    var logOutCalls = 0
     var refreshTariffPlansCalls = 0
     var refreshPaymentsCalls = 0
     var loadMorePaymentsCalls = 0
@@ -54,6 +55,10 @@ class FakePortalRepository(
     override suspend fun refresh(): RefreshResult {
         refreshCalls++
         return refreshResult
+    }
+
+    override suspend fun logOut() {
+        logOutCalls++
     }
 
     override fun profileFlow(): Flow<Profile?> = flowOf(profile)

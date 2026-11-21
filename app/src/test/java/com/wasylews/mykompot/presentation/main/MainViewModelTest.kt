@@ -17,6 +17,7 @@
 package com.wasylews.mykompot.presentation.main
 
 import app.cash.turbine.test
+import com.wasylews.mykompot.domain.LogOut
 import com.wasylews.mykompot.domain.ObserveSession
 import com.wasylews.mykompot.domain.model.SessionState
 import com.wasylews.mykompot.presentation.BaseViewModelTest
@@ -33,7 +34,7 @@ class MainViewModelTest : BaseViewModelTest() {
     @Test
     fun `starts in loading then resolves to logged in`() = runTest {
         val observeSession = FakeObserveSession()
-        val vm = MainViewModel(observeSession)
+        val vm = MainViewModel(observeSession, FakeLogOut())
 
         vm.sessionState.test {
             assertEquals(SessionState.Loading, awaitItem())
@@ -49,7 +50,7 @@ class MainViewModelTest : BaseViewModelTest() {
     @Test
     fun `starts in loading then resolves to logged out`() = runTest {
         val observeSession = FakeObserveSession()
-        val vm = MainViewModel(observeSession)
+        val vm = MainViewModel(observeSession, FakeLogOut())
 
         vm.sessionState.test {
             assertEquals(SessionState.Loading, awaitItem())
@@ -65,7 +66,7 @@ class MainViewModelTest : BaseViewModelTest() {
     @Test
     fun `updates session state when session changes`() = runTest {
         val observeSession = FakeObserveSession(SessionState.LoggedIn)
-        val vm = MainViewModel(observeSession)
+        val vm = MainViewModel(observeSession, FakeLogOut())
 
         vm.sessionState.test {
             assertEquals(SessionState.Loading, awaitItem())
@@ -78,6 +79,25 @@ class MainViewModelTest : BaseViewModelTest() {
 
             cancelAndIgnoreRemainingEvents()
         }
+    }
+
+    @Test
+    fun `logout invokes log out use case`() = runTest {
+        val logOut = FakeLogOut()
+        val vm = MainViewModel(FakeObserveSession(), logOut)
+
+        vm.logOut()
+        advanceUntilIdle()
+
+        assertEquals(1, logOut.calls)
+    }
+}
+
+class FakeLogOut : LogOut {
+    var calls = 0
+
+    override suspend fun invoke() {
+        calls++
     }
 }
 

@@ -449,6 +449,9 @@ abstract class BaseAcceptanceTest : KoinTest {
         return false
     }
 
+    private fun RecordedRequest.isLoginRequest(): Boolean = url.encodedPath.contains("index.cgi") &&
+        method == "POST"
+
     private fun RecordedRequest.isProfileRefresh(): Boolean = url.encodedPath.contains("index.cgi") &&
         method == "GET" &&
         url.queryParameter(FEES_PAGE_QUERY_PARAM) != FEES_PAGE_INDEX
@@ -492,6 +495,24 @@ abstract class BaseAcceptanceTest : KoinTest {
     protected fun assertSessionCleared() = runBlocking {
         assertNull(get<SessionCookieStore>().sidFlow().first())
         assertNull(get<LocalStorage>().profileFlow().first())
+    }
+
+    protected fun assertLogoutClearedLocalState() = runBlocking {
+        assertNull(get<SessionCookieStore>().sidFlow().first())
+        assertNull(get<LocalStorage>().profileFlow().first())
+        assertNull(get<LocalStorage>().paymentsFlow().first())
+        assertNull(get<CredentialsStore>().read())
+    }
+
+    protected fun assertStoredTariffPlans(expected: List<TariffPlan>) = runBlocking {
+        assertEquals(TariffPlans(expected), get<LocalStorage>().tariffPlansFlow().first())
+    }
+
+    protected fun assertLoginRequestDoesNotUseSessionCookie(sid: String) {
+        awaitRequestCondition(5_000) { countRequests { it.isLoginRequest() } > 0 }
+        val request = dispatcher.recordedRequests().last { it.isLoginRequest() }
+        val cookies = request.headers["Cookie"].orEmpty()
+        check("sid=$sid" !in cookies) { "Old session cookie was still sent: $cookies" }
     }
 
     protected fun assertNoNotificationPosted() {

@@ -25,15 +25,21 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.NotificationsPermission
 import com.wasylews.mykompot.domain.model.SessionState
 import com.wasylews.mykompot.presentation.home.HomeActions
@@ -60,6 +66,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun MainContent(onPaymentMethodClick: (PaymentMethod) -> Unit) {
         val mainViewModel = koinViewModel<MainViewModel>()
@@ -76,6 +83,18 @@ class MainActivity : ComponentActivity() {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             containerColor = MaterialTheme.colorScheme.surface,
+            topBar = {
+                if (sessionState == SessionState.LoggedIn) {
+                    TopAppBar(
+                        title = { Text(stringResource(R.string.app_name)) },
+                        actions = {
+                            TextButton(onClick = { mainViewModel.logOut() }) {
+                                Text(stringResource(R.string.log_out))
+                            }
+                        },
+                    )
+                }
+            },
         ) { innerPadding ->
             when (sessionState) {
                 SessionState.Loading -> {

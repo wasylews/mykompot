@@ -178,6 +178,28 @@ class PortalRepositoryImplTest {
     }
 
     @Test
+    fun `logout clears session caches but keeps tariff plans`() = runTest {
+        val cachedPayments = Payments(items = emptyList(), hasMore = false)
+        val cachedPlans = TariffPlans(
+            plans = listOf(TariffPlan(id = "300GRN_100mb", name = "Standart 100", speed = 100, price = 300)),
+        )
+        val storage = FakeLocalStorage().apply {
+            saveSession("test-session")
+            saveProfile(profile())
+            savePayments(cachedPayments)
+            saveTariffPlans(cachedPlans)
+        }
+        val repo = createPortalRepository(testScheduler, localStorage = storage)
+
+        repo.logOut()
+
+        repo.expectProfile(null)
+        repo.expectSession(null)
+        assertNull(storage.paymentsFlow().first())
+        assertEquals(cachedPlans, storage.tariffPlansFlow().first())
+    }
+
+    @Test
     fun `refresh keeps cached profile on network error`() = runTest {
         val cachedProfile = profile()
         val (repo, api) = refreshFixture(

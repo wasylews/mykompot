@@ -140,6 +140,10 @@ class PortalRepositoryImpl(
         }
     }
 
+    override suspend fun logOut() = withContext(dispatcher) {
+        clearSessionCaches()
+    }
+
     override fun profileFlow(): Flow<Profile?> = localStorage.profileFlow()
 
     override fun sessionFlow(): Flow<String?> = sessionCookieStore.sidFlow()

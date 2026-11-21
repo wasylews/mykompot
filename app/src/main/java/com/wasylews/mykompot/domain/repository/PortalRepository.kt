@@ -49,6 +49,13 @@ interface PortalRepository {
      */
     suspend fun refresh(): RefreshResult
 
+    /**
+     * Clears the stored session and session-scoped caches locally.
+     *
+     * The portal's logout endpoint does not invalidate the token, so this never contacts the portal.
+     */
+    suspend fun logOut()
+
     /** Observes the cached account profile, or `null` when unavailable. */
     fun profileFlow(): Flow<Profile?>
 
