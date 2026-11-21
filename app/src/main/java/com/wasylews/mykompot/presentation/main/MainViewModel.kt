@@ -20,9 +20,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wasylews.mykompot.domain.LogOut
 import com.wasylews.mykompot.domain.ObserveSession
+import com.wasylews.mykompot.domain.RestoreSession
 import com.wasylews.mykompot.domain.model.SessionState
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
@@ -31,10 +37,36 @@ import org.koin.core.annotation.KoinViewModel
 class MainViewModel(
     observeSession: ObserveSession,
     private val logOutUseCase: LogOut,
+    restoreSession: RestoreSession,
 ) : ViewModel() {
-    val sessionState = observeSession.sessionStateFlow()
+    private val sessionFlow = observeSession.sessionStateFlow()
+        .shareIn(viewModelScope, SharingStarted.Eagerly, replay = 1)
+    private val restoreFinished = MutableStateFlow(false)
+
+    val sessionState: StateFlow<SessionState> = combine(
+        sessionFlow,
+        restoreFinished,
+    ) { session, finished ->
+        when {
+            session == SessionState.LoggedIn -> SessionState.LoggedIn
+            !finished -> SessionState.Loading
+            else -> SessionState.LoggedOut
+        }
+    }
         .catch { emit(SessionState.LoggedOut) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, SessionState.Loading)
+
+    init {
+        viewModelScope.launch {
+            try {
+                if (sessionFlow.first() != SessionState.LoggedIn) {
+                    restoreSession()
+                }
+            } finally {
+                restoreFinished.value = true
+            }
+        }
+    }
 
     fun logOut() = viewModelScope.launch {
         logOutUseCase()

@@ -85,12 +85,13 @@ class SignInFlowTest : BaseAcceptanceTest() {
 
     @Test
     fun forgetsRememberedCredentialsWhenLoginFails() {
-        // GIVEN previously remembered credentials and a server that rejects them
+        // GIVEN remembered credentials that cannot be restored while the server is unavailable
         givenStoredCredentials(username = "old-user", password = "old-pass")
+        givenServerResponse(status = 502)
         givenServerResponse(body = HtmlFixtures.loginFailed())
 
         launch().use {
-            // WHEN I try to log in again
+            // WHEN I try to log in again and the portal rejects the credentials
             performLogin(rememberMe = true)
 
             // THEN the stale credentials are not kept

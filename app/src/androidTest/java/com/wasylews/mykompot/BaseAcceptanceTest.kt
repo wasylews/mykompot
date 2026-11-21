@@ -311,6 +311,10 @@ abstract class BaseAcceptanceTest : KoinTest {
         newSid: String = "new-session",
     ) {
         givenExpiredProfileResponses(oldSid, newSid)
+        givenRememberedCredentialsAreRejected()
+    }
+
+    protected fun givenRememberedCredentialsAreRejected() {
         dispatcher.loginResponseFactory = { response(body = HtmlFixtures.loginFailed()) }
     }
 

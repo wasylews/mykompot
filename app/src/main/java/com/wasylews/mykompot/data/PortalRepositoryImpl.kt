@@ -111,11 +111,6 @@ class PortalRepositoryImpl(
 
     override suspend fun refresh(): RefreshResult = withContext(dispatcher) {
         try {
-            val session = sessionFlow().first()
-            if (session == null) {
-                clearSessionCaches()
-                return@withContext RefreshResult.Expired
-            }
             val response = portalApi.fetchProfile()
             if (response.code() == HTTP_UNAUTHORIZED) {
                 clearSessionCaches()
@@ -203,26 +198,16 @@ class PortalRepositoryImpl(
         pg: Int?,
         append: Boolean,
     ): PaymentsActionResult = try {
-        val session = sessionFlow().first()
+        val response = portalApi.fetchFees(pg)
         when {
-            session == null -> {
+            response.code() == HTTP_UNAUTHORIZED -> {
                 clearSessionCaches()
                 PaymentsActionResult.Expired
             }
 
-            else -> {
-                val response = portalApi.fetchFees(pg)
-                when {
-                    response.code() == HTTP_UNAUTHORIZED -> {
-                        clearSessionCaches()
-                        PaymentsActionResult.Expired
-                    }
+            !response.isSuccessful -> PaymentsActionResult.Failed(PortalFailure.Server)
 
-                    !response.isSuccessful -> PaymentsActionResult.Failed(PortalFailure.Server)
-
-                    else -> handleFeesResponse(response.body(), pg, append)
-                }
-            }
+            else -> handleFeesResponse(response.body(), pg, append)
         }
     } catch (_: HttpException) {
         PaymentsActionResult.Failed(PortalFailure.Server)

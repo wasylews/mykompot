@@ -41,6 +41,8 @@ class FakePortalRepository(
     var tariffPlansResult: TariffPlansActionResult = TariffPlansActionResult.Success,
 ) : PortalRepository {
     private val tariffPlans = tariffPlans?.let { TariffPlans(it) }
+    var loginCalls = 0
+    var lastLogin: Pair<String, String>? = null
     var refreshCalls = 0
     var logOutCalls = 0
     var refreshTariffPlansCalls = 0
@@ -50,7 +52,11 @@ class FakePortalRepository(
     override suspend fun login(
         username: String,
         password: String,
-    ): LoginResult = result
+    ): LoginResult {
+        loginCalls++
+        lastLogin = username to password
+        return result
+    }
 
     override suspend fun refresh(): RefreshResult {
         refreshCalls++

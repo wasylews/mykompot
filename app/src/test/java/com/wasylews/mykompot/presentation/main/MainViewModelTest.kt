@@ -19,6 +19,7 @@ package com.wasylews.mykompot.presentation.main
 import app.cash.turbine.test
 import com.wasylews.mykompot.domain.LogOut
 import com.wasylews.mykompot.domain.ObserveSession
+import com.wasylews.mykompot.domain.RestoreSession
 import com.wasylews.mykompot.domain.model.SessionState
 import com.wasylews.mykompot.presentation.BaseViewModelTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -34,7 +35,7 @@ class MainViewModelTest : BaseViewModelTest() {
     @Test
     fun `starts in loading then resolves to logged in`() = runTest {
         val observeSession = FakeObserveSession()
-        val vm = MainViewModel(observeSession, FakeLogOut())
+        val vm = MainViewModel(observeSession, FakeLogOut(), FakeRestoreSession())
 
         vm.sessionState.test {
             assertEquals(SessionState.Loading, awaitItem())
@@ -50,7 +51,7 @@ class MainViewModelTest : BaseViewModelTest() {
     @Test
     fun `starts in loading then resolves to logged out`() = runTest {
         val observeSession = FakeObserveSession()
-        val vm = MainViewModel(observeSession, FakeLogOut())
+        val vm = MainViewModel(observeSession, FakeLogOut(), FakeRestoreSession())
 
         vm.sessionState.test {
             assertEquals(SessionState.Loading, awaitItem())
@@ -66,7 +67,7 @@ class MainViewModelTest : BaseViewModelTest() {
     @Test
     fun `updates session state when session changes`() = runTest {
         val observeSession = FakeObserveSession(SessionState.LoggedIn)
-        val vm = MainViewModel(observeSession, FakeLogOut())
+        val vm = MainViewModel(observeSession, FakeLogOut(), FakeRestoreSession())
 
         vm.sessionState.test {
             assertEquals(SessionState.Loading, awaitItem())
@@ -82,9 +83,47 @@ class MainViewModelTest : BaseViewModelTest() {
     }
 
     @Test
+    fun `waits for session restore before resolving logged out`() = runTest {
+        val observeSession = FakeObserveSession(SessionState.LoggedOut)
+        val restoreSession = FakeRestoreSession()
+        val vm = MainViewModel(observeSession, FakeLogOut(), restoreSession)
+
+        advanceUntilIdle()
+
+        assertEquals(1, restoreSession.calls)
+        assertEquals(SessionState.LoggedOut, vm.sessionState.value)
+    }
+
+    @Test
+    fun `shows logged in after restore creates a session`() = runTest {
+        val observeSession = FakeObserveSession(SessionState.LoggedOut)
+        val restoreSession = FakeRestoreSession().apply {
+            onInvoke = { observeSession.setState(SessionState.LoggedIn) }
+        }
+        val vm = MainViewModel(observeSession, FakeLogOut(), restoreSession)
+
+        advanceUntilIdle()
+
+        assertEquals(1, restoreSession.calls)
+        assertEquals(SessionState.LoggedIn, vm.sessionState.value)
+    }
+
+    @Test
+    fun `skips restore when a session already exists`() = runTest {
+        val observeSession = FakeObserveSession(SessionState.LoggedIn)
+        val restoreSession = FakeRestoreSession()
+        val vm = MainViewModel(observeSession, FakeLogOut(), restoreSession)
+
+        advanceUntilIdle()
+
+        assertEquals(0, restoreSession.calls)
+        assertEquals(SessionState.LoggedIn, vm.sessionState.value)
+    }
+
+    @Test
     fun `logout invokes log out use case`() = runTest {
         val logOut = FakeLogOut()
-        val vm = MainViewModel(FakeObserveSession(), logOut)
+        val vm = MainViewModel(FakeObserveSession(), logOut, FakeRestoreSession())
 
         vm.logOut()
         advanceUntilIdle()
@@ -98,6 +137,16 @@ class FakeLogOut : LogOut {
 
     override suspend fun invoke() {
         calls++
+    }
+}
+
+class FakeRestoreSession : RestoreSession {
+    var calls = 0
+    var onInvoke: () -> Unit = {}
+
+    override suspend fun invoke() {
+        calls++
+        onInvoke()
     }
 }
 

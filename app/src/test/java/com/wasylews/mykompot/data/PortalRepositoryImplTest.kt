@@ -41,6 +41,7 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 import okio.IOException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import retrofit2.Call
 import retrofit2.HttpException
@@ -393,14 +394,14 @@ class PortalRepositoryImplTest {
     }
 
     @Test
-    fun `refresh returns expired when no session is stored`() = runTest {
+    fun `refresh requests the profile even when no session is stored`() = runTest {
         val api = FakePortalApi(activeProfileResponse())
         val repo = createPortalRepository(testScheduler, portalApi = api)
 
         val result = repo.refresh()
 
-        assertEquals(RefreshResult.Expired, result)
-        assertEquals(0, api.fetchCalls)
+        assertTrue(result is RefreshResult.Updated)
+        assertEquals(1, api.fetchCalls)
     }
 
     @Test
@@ -1116,14 +1117,14 @@ class PortalRepositoryPaymentsTest {
     }
 
     @Test
-    fun `refreshPayments returns expired when session is missing`() = runTest {
+    fun `refreshPayments requests fees even when no session is stored`() = runTest {
         val api = FakePortalApi(response = activeProfileResponse())
         val repo = createPortalRepository(testScheduler, portalApi = api)
 
         val result = repo.refreshPayments()
 
-        assertEquals(PaymentsActionResult.Expired, result)
-        assertEquals(0, api.fetchFeesCalls)
+        assertEquals(PaymentsActionResult.Success, result)
+        assertEquals(1, api.fetchFeesCalls)
     }
 
     private fun createPortalRepository(
