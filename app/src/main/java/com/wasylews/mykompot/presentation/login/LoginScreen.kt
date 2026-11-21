@@ -16,7 +16,10 @@
 
 package com.wasylews.mykompot.presentation.login
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -24,8 +27,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
@@ -55,6 +60,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -119,6 +127,8 @@ private fun LoginForm(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        AppLogo()
+        Spacer(modifier = Modifier.height(Spacing.lg))
         Text(
             text = stringResource(R.string.welcome_back),
             style = MaterialTheme.typography.headlineMedium,
@@ -138,6 +148,25 @@ private fun LoginForm(
         )
         Spacer(modifier = Modifier.height(Spacing.lg))
         LoginButton(isLoading = uiState.isLoading, onClick = onLoginClick)
+    }
+}
+
+@Composable
+private fun AppLogo(modifier: Modifier = Modifier) {
+    // The launcher mipmap resolves to an adaptive icon XML on API 26+, which Compose cannot paint.
+    // Rebuild the same icon from its vector foreground and the launcher background color.
+    Box(
+        modifier = modifier
+            .size(88.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(colorResource(R.color.launcher_background)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Image(
+            painter = painterResource(R.drawable.ic_launcher_foreground),
+            contentDescription = stringResource(R.string.app_name),
+            modifier = Modifier.fillMaxSize(),
+        )
     }
 }
 
