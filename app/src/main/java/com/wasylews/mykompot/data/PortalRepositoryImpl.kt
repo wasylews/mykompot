@@ -52,7 +52,9 @@ import java.time.format.DateTimeFormatter
 @Singleton
 class PortalRepositoryImpl(
     private val dispatcher: CoroutineDispatcher,
-    private val api: PortalApi,
+    private val authApi: AuthApi,
+    private val portalApi: PortalApi,
+    private val plansApi: PlansApi,
     private val localStorage: LocalStorage,
     private val sessionCookieStore: SessionCookieStore,
 ) : PortalRepository {
@@ -61,7 +63,7 @@ class PortalRepositoryImpl(
         password: String,
     ): LoginResult = withContext(dispatcher) {
         return@withContext try {
-            val response = api.login(username, password, PORTAL_LANGUAGE)
+            val response = authApi.login(username, password, PORTAL_LANGUAGE)
             if (!response.isSuccessful) return@withContext LoginResult.Failed(PortalFailure.Server)
             val page = response.body() ?: return@withContext LoginResult.Failed(PortalFailure.Parse)
             if (page.error != null) {
@@ -111,7 +113,7 @@ class PortalRepositoryImpl(
                 clearSessionCaches()
                 return@withContext RefreshResult.Expired
             }
-            val response = api.fetchProfile()
+            val response = portalApi.fetchProfile()
             if (!response.isSuccessful) return@withContext RefreshResult.Failed(PortalFailure.Server)
 
             val page = response.body() ?: return@withContext RefreshResult.Failed(PortalFailure.Parse)
@@ -140,7 +142,7 @@ class PortalRepositoryImpl(
     override suspend fun refreshTariffPlans(): TariffPlansActionResult = withContext(dispatcher) {
         try {
             val cached = localStorage.tariffPlansFlow().first()
-            val response = api.fetchPlans(
+            val response = plansApi.fetchPlans(
                 ifNoneMatch = cached?.etag,
                 ifModifiedSince = cached?.lastModified,
             )
@@ -198,7 +200,7 @@ class PortalRepositoryImpl(
             }
 
             else -> {
-                val response = api.fetchFees(pg)
+                val response = portalApi.fetchFees(pg)
                 when {
                     !response.isSuccessful -> PaymentsActionResult.Failed(PortalFailure.Server)
                     else -> handleFeesResponse(response.body(), append)

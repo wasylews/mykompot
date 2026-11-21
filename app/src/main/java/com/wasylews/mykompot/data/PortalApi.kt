@@ -16,23 +16,17 @@
 
 package com.wasylews.mykompot.data
 
-import com.wasylews.mykompot.BuildConfig
 import dev.burnoo.kspoon.annotation.Selector
 import kotlinx.serialization.Serializable
 import retrofit2.Response
-import retrofit2.http.Field
-import retrofit2.http.FormUrlEncoded
 import retrofit2.http.GET
-import retrofit2.http.Header
-import retrofit2.http.POST
 import retrofit2.http.Query
 
 /**
  * Retrofit client for the Kompot customer portal.
  *
  * The portal is a legacy CGI application served as HTML from `index.cgi` pages
- * (authenticated pages are selected by the `index` query parameter). Plans are served from a
- * separate public `/plans/` page on [BuildConfig.PLANS_BASE_URL].
+ * (authenticated pages are selected by the `index` query parameter).
  *
  * Session state is carried by a `sid` cookie returned in `Set-Cookie` and managed by a `CookieJar`.
  * When a session is no longer valid, the portal responds with its login page instead of the
@@ -44,39 +38,11 @@ import retrofit2.http.Query
  */
 interface PortalApi {
     /**
-     * Authenticates the user and returns the landing/profile page on success.
-     *
-     * @param username portal account login.
-     * @param password portal account password.
-     * @param language portal UI language (for example `english`); affects the language of the
-     * returned HTML.
-     */
-    @FormUrlEncoded
-    @POST("/index.cgi")
-    suspend fun login(
-        @Field("user") username: String,
-        @Field("passwd") password: String,
-        @Field("language") language: String,
-    ): Response<ProfilePageResponse>
-
-    /**
      * Fetches the Internet/service profile page (`index=43`), which contains account status, tariff,
      * and next payment information. Authentication is carried by the `sid` cookie.
      */
     @GET("/index.cgi?index=43")
     suspend fun fetchProfile(): Response<ProfilePageResponse>
-
-    /**
-     * Fetches the public tariff plans page.
-     *
-     * Supports conditional requests: a `304 Not Modified` response means the cached catalog is still
-     * current when [ifNoneMatch]/[ifModifiedSince] validators are provided.
-     */
-    @GET("${BuildConfig.PLANS_BASE_URL}/plans/")
-    suspend fun fetchPlans(
-        @Header("If-None-Match") ifNoneMatch: String? = null,
-        @Header("If-Modified-Since") ifModifiedSince: String? = null,
-    ): Response<PlansPageResponse>
 
     /**
      * Fetches the fees/payments history page (`index=41`).

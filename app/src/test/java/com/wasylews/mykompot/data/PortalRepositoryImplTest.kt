@@ -537,12 +537,14 @@ class PortalRepositoryImplTest {
 
     private fun createPortalRepository(
         testScheduler: TestCoroutineScheduler,
-        portalApi: PortalApi = FakePortalApi(activeProfileResponse()),
+        portalApi: FakePortalApi = FakePortalApi(activeProfileResponse()),
         localStorage: LocalStorage = FakeLocalStorage(),
         sessionCookieStore: SessionCookieStore = LocalStorageSessionCookieStore(localStorage),
     ): PortalRepositoryImpl = PortalRepositoryImpl(
         dispatcher = StandardTestDispatcher(testScheduler),
-        api = portalApi,
+        authApi = portalApi,
+        portalApi = portalApi,
+        plansApi = portalApi,
         localStorage = localStorage,
         sessionCookieStore = sessionCookieStore,
     )
@@ -908,12 +910,14 @@ class PortalRepositoryPaymentsTest {
 
     private fun createPortalRepository(
         testScheduler: TestCoroutineScheduler,
-        portalApi: PortalApi = FakePortalApi(activeProfileResponse()),
+        portalApi: FakePortalApi = FakePortalApi(activeProfileResponse()),
         localStorage: LocalStorage = FakeLocalStorage(),
         sessionCookieStore: SessionCookieStore = LocalStorageSessionCookieStore(localStorage),
     ): PortalRepositoryImpl = PortalRepositoryImpl(
         dispatcher = StandardTestDispatcher(testScheduler),
-        api = portalApi,
+        authApi = portalApi,
+        portalApi = portalApi,
+        plansApi = portalApi,
         localStorage = localStorage,
         sessionCookieStore = sessionCookieStore,
     )
@@ -954,7 +958,9 @@ private class FakePortalApi(
     private val feesException: Exception? = null,
     private val feesResponse: Response<FeesPageResponse>? = null,
     private val feesResponsesByPg: Map<Int?, Response<FeesPageResponse>> = emptyMap(),
-) : PortalApi {
+) : AuthApi,
+    PortalApi,
+    PlansApi {
     var fetchCalls = 0
     var fetchPlansCalls = 0
     var fetchFeesCalls = 0

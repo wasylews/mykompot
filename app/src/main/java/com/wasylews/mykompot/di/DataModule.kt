@@ -22,6 +22,8 @@ import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.dataStoreFile
 import com.wasylews.mykompot.BuildConfig
+import com.wasylews.mykompot.data.AuthApi
+import com.wasylews.mykompot.data.PlansApi
 import com.wasylews.mykompot.data.PortalApi
 import com.wasylews.mykompot.data.PortalCookieJar
 import com.wasylews.mykompot.data.SessionCookieStore
@@ -53,7 +55,19 @@ import retrofit2.create
 @Configuration
 class DataModule {
     @Singleton
-    fun providePortalApi(retrofit: Retrofit) = retrofit.create<PortalApi>()
+    fun provideAuthApi(
+        @Named("auth") retrofit: Retrofit,
+    ): AuthApi = retrofit.create()
+
+    @Singleton
+    fun providePortalApi(
+        @Named("portal") retrofit: Retrofit,
+    ): PortalApi = retrofit.create()
+
+    @Singleton
+    fun providePlansApi(
+        @Named("plans") retrofit: Retrofit,
+    ): PlansApi = retrofit.create()
 
     @Singleton
     fun provideSessionCookieStore(context: Context): SessionCookieStore = SharedPreferencesSessionCookieStore(context)
@@ -62,18 +76,34 @@ class DataModule {
     fun provideCookieJar(store: SessionCookieStore): CookieJar = PortalCookieJar(store)
 
     @Singleton
-    fun provideOkHttpClient(cookieJar: CookieJar): OkHttpClient = OkHttpClient.Builder()
-        .cookieJar(cookieJar)
-        .build()
+    @Named("auth")
+    fun provideAuthOkHttpClient(cookieJar: CookieJar): OkHttpClient = okHttpClient(cookieJar)
 
     @Singleton
-    fun provideRetrofit(client: OkHttpClient) = Retrofit
-        .Builder()
-        .client(client)
-        .addConverterFactory(
-            Kspoon.toFormat().asConverterFactory("text/html; charset=UTF8".toMediaType()),
-        ).baseUrl(BuildConfig.BASE_URL)
-        .build()
+    @Named("portal")
+    fun providePortalOkHttpClient(cookieJar: CookieJar): OkHttpClient = okHttpClient(cookieJar)
+
+    @Singleton
+    @Named("plans")
+    fun providePlansOkHttpClient(cookieJar: CookieJar): OkHttpClient = okHttpClient(cookieJar)
+
+    @Singleton
+    @Named("auth")
+    fun provideAuthRetrofit(
+        @Named("auth") client: OkHttpClient,
+    ): Retrofit = htmlRetrofit(client, BuildConfig.BASE_URL)
+
+    @Singleton
+    @Named("portal")
+    fun providePortalRetrofit(
+        @Named("portal") client: OkHttpClient,
+    ): Retrofit = htmlRetrofit(client, BuildConfig.BASE_URL)
+
+    @Singleton
+    @Named("plans")
+    fun providePlansRetrofit(
+        @Named("plans") client: OkHttpClient,
+    ): Retrofit = htmlRetrofit(client, BuildConfig.PLANS_BASE_URL + "/")
 
     @Singleton
     fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
@@ -110,3 +140,16 @@ class DataModule {
         produceFile = { context.dataStoreFile("payments.json") },
     )
 }
+
+private fun okHttpClient(cookieJar: CookieJar): OkHttpClient = OkHttpClient.Builder()
+    .cookieJar(cookieJar)
+    .build()
+
+private fun htmlRetrofit(
+    client: OkHttpClient,
+    baseUrl: String,
+): Retrofit = Retrofit.Builder()
+    .client(client)
+    .addConverterFactory(Kspoon.toFormat().asConverterFactory("text/html; charset=UTF8".toMediaType()))
+    .baseUrl(baseUrl)
+    .build()
