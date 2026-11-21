@@ -1,12 +1,22 @@
-# Add project specific R8 rules here.
-# AGP will combine all keep rule files in src/main/keepRules to pass to R8
-#
-# For more details, see
-#   https://d.android.com/r/tools/r8/keep-rules
+# Project-specific R8 rules. Keep only reflective/entry-point types whose names or members
+# R8 cannot see from direct references; library consumer rules cover the frameworks themselves.
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Retrofit creates dynamic proxies for service interfaces at runtime.
+-keep interface com.wasylews.mykompot.data.AuthApi { *; }
+-keep interface com.wasylews.mykompot.data.PortalApi { *; }
+-keep interface com.wasylews.mykompot.data.PlansApi { *; }
+
+# kspoon decodes scraped HTML through kotlinx.serialization. Retrofit asks the serializer for
+# these response types using the generic return type, so both the models and their generated
+# serializers must survive shrinking.
+-keep class com.wasylews.mykompot.data.ProfilePageResponse { *; }
+-keep class com.wasylews.mykompot.data.PlansPageResponse { *; }
+-keep class com.wasylews.mykompot.data.ParsedPlanItem { *; }
+-keep class com.wasylews.mykompot.data.FeesPageResponse { *; }
+-keep class com.wasylews.mykompot.data.ParsedFeeItem { *; }
+-keep class com.wasylews.mykompot.data.model.** { *; }
+
+# WorkManager instantiates workers by class name via the Koin worker factory.
+-keep class com.wasylews.mykompot.work.PaymentDueReminderWorker {
+    public <init>(android.content.Context, androidx.work.WorkerParameters);
+}

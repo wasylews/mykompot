@@ -55,6 +55,7 @@ import org.koin.core.annotation.Singleton
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import retrofit2.create
+import java.util.concurrent.TimeUnit
 
 @Module
 @ComponentScan("com.wasylews.mykompot.data")
@@ -105,9 +106,7 @@ class DataModule {
 
     @Singleton
     @Named("plans")
-    fun providePlansOkHttpClient(): OkHttpClient = OkHttpClient.Builder()
-        .cookieJar(CookieJar.NO_COOKIES)
-        .build()
+    fun providePlansOkHttpClient(): OkHttpClient = okHttpClient(CookieJar.NO_COOKIES)
 
     @Singleton
     @Named("auth")
@@ -163,9 +162,21 @@ class DataModule {
     )
 }
 
-private fun okHttpClient(cookieJar: CookieJar): OkHttpClient = OkHttpClient.Builder()
+internal fun okHttpClient(cookieJar: CookieJar): OkHttpClient = OkHttpClient.Builder()
     .cookieJar(cookieJar)
+    .connectTimeout(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+    .readTimeout(READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+    .writeTimeout(WRITE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+    .callTimeout(CALL_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+    .retryOnConnectionFailure(true)
+    .followRedirects(true)
+    .followSslRedirects(true)
     .build()
+
+private const val CONNECT_TIMEOUT_SECONDS = 15L
+private const val READ_TIMEOUT_SECONDS = 20L
+private const val WRITE_TIMEOUT_SECONDS = 20L
+private const val CALL_TIMEOUT_SECONDS = 30L
 
 private fun htmlRetrofit(
     client: OkHttpClient,
