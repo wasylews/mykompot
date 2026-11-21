@@ -17,6 +17,7 @@
 package com.wasylews.mykompot.presentation.login
 
 import app.cash.turbine.test
+import com.wasylews.mykompot.ProfileFixtures
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.FakeCredentialsStore
 import com.wasylews.mykompot.domain.FakePaymentDueReminderScheduler
@@ -24,7 +25,6 @@ import com.wasylews.mykompot.domain.model.Credentials
 import com.wasylews.mykompot.domain.model.LoginResult
 import com.wasylews.mykompot.domain.model.PortalFailure
 import com.wasylews.mykompot.domain.model.Profile
-import com.wasylews.mykompot.domain.model.TariffPlan
 import com.wasylews.mykompot.domain.repository.CredentialsStore
 import com.wasylews.mykompot.presentation.BaseViewModelTest
 import com.wasylews.mykompot.presentation.FakePortalRepository
@@ -41,11 +41,7 @@ import java.time.LocalDate
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class LoginViewModelTest : BaseViewModelTest() {
-    private val profile = Profile(
-        isActive = true,
-        nextPaymentDate = LocalDate.parse("2026-10-04"),
-        tariffPlan = TariffPlan(id = "300GRN_100mb", name = "Standart 100", speed = 100, price = 300),
-    )
+    private val profile = ProfileFixtures.profile(nextPaymentDate = LocalDate.parse("2026-10-04"))
 
     @Test
     fun `successful login completes without error and schedules reminders`() = runTest {

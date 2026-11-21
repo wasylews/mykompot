@@ -16,10 +16,9 @@
 
 package com.wasylews.mykompot.domain
 
+import com.wasylews.mykompot.ProfileFixtures
 import com.wasylews.mykompot.domain.model.PaymentDueReminder
 import com.wasylews.mykompot.domain.model.PaymentDueThreshold
-import com.wasylews.mykompot.domain.model.Profile
-import com.wasylews.mykompot.domain.model.TariffPlan
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -30,7 +29,7 @@ class PaymentDueReminderResolverTest {
 
     @Test
     fun `resolves three-day heads-up`() {
-        val reminder = PaymentDueReminderResolver.resolve(profile(dueDate = today.plusDays(3)), today)
+        val reminder = PaymentDueReminderResolver.resolve(ProfileFixtures.profile(nextPaymentDate = today.plusDays(3)), today)
 
         assertEquals(PaymentDueThreshold.THREE_DAYS_BEFORE, reminder?.threshold)
         assertEquals(today.plusDays(3), reminder?.dueDate)
@@ -38,7 +37,7 @@ class PaymentDueReminderResolverTest {
 
     @Test
     fun `resolves due-day reminder`() {
-        val reminder = PaymentDueReminderResolver.resolve(profile(dueDate = today), today)
+        val reminder = PaymentDueReminderResolver.resolve(ProfileFixtures.profile(nextPaymentDate = today), today)
 
         assertEquals(PaymentDueThreshold.DUE_DAY, reminder?.threshold)
         assertEquals(today, reminder?.dueDate)
@@ -46,21 +45,21 @@ class PaymentDueReminderResolverTest {
 
     @Test
     fun `does not resolve one-day-before or overdue`() {
-        assertNull(PaymentDueReminderResolver.resolve(profile(dueDate = today.plusDays(1)), today))
-        assertNull(PaymentDueReminderResolver.resolve(profile(dueDate = today.minusDays(1)), today))
+        assertNull(PaymentDueReminderResolver.resolve(ProfileFixtures.profile(nextPaymentDate = today.plusDays(1)), today))
+        assertNull(PaymentDueReminderResolver.resolve(ProfileFixtures.profile(nextPaymentDate = today.minusDays(1)), today))
     }
 
     @Test
     fun `does not resolve outside the two reminder days`() {
-        assertNull(PaymentDueReminderResolver.resolve(profile(dueDate = today.plusDays(2)), today))
-        assertNull(PaymentDueReminderResolver.resolve(profile(dueDate = today.plusDays(4)), today))
+        assertNull(PaymentDueReminderResolver.resolve(ProfileFixtures.profile(nextPaymentDate = today.plusDays(2)), today))
+        assertNull(PaymentDueReminderResolver.resolve(ProfileFixtures.profile(nextPaymentDate = today.plusDays(4)), today))
     }
 
     @Test
     fun `does not resolve without an active profile and due date`() {
         assertNull(PaymentDueReminderResolver.resolve(null, today))
-        assertNull(PaymentDueReminderResolver.resolve(profile(dueDate = null), today))
-        assertNull(PaymentDueReminderResolver.resolve(profile(dueDate = today).copy(isActive = false), today))
+        assertNull(PaymentDueReminderResolver.resolve(ProfileFixtures.profile(nextPaymentDate = null), today))
+        assertNull(PaymentDueReminderResolver.resolve(ProfileFixtures.profile(nextPaymentDate = today).copy(isActive = false), today))
     }
 
     @Test
@@ -69,10 +68,4 @@ class PaymentDueReminderResolverTest {
 
         assertEquals("THREE_DAYS_BEFORE|2026-10-04", reminder.ledgerKey)
     }
-
-    private fun profile(dueDate: LocalDate?) = Profile(
-        isActive = true,
-        nextPaymentDate = dueDate,
-        tariffPlan = TariffPlan(id = "300GRN_100mb", name = "Standart 100", speed = 100, price = 300),
-    )
 }

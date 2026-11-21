@@ -41,7 +41,7 @@ class PaymentsListTest : BaseAcceptanceTest() {
     @Test
     fun showsPaymentsUnderStatusCard() {
         // GIVEN a stored session, tariff catalog, profile and payments from a slow first page
-        givenStoredSession(profile = allGoodProfile())
+        givenStoredSession(profile = ProfileFixtures.allGoodProfile())
         givenStoredTariffPlans()
         givenHomeResponses(feesDelayMillis = 4_000)
 
@@ -72,7 +72,7 @@ class PaymentsListTest : BaseAcceptanceTest() {
     @Test
     fun keepsCachedPaymentsVisibleDuringBackgroundRefresh() {
         // GIVEN cached payments and a slow background refresh
-        givenStoredSession(profile = allGoodProfile())
+        givenStoredSession(profile = ProfileFixtures.allGoodProfile())
         givenStoredTariffPlans()
         givenStoredPayments(Payments(items = listOf(PaymentFixtures.payment()), hasMore = false))
         givenHomeResponses(feesDelayMillis = 3_000)
@@ -99,7 +99,7 @@ class PaymentsListTest : BaseAcceptanceTest() {
     @Test
     fun showsPaymentsErrorAndRetriesWhenFirstPageFailsWithoutCache() {
         // GIVEN a stored session with no cached payments and a failing first page
-        givenStoredSession(profile = allGoodProfile())
+        givenStoredSession(profile = ProfileFixtures.allGoodProfile())
         givenStoredTariffPlans()
         givenHomeResponses(feesStatus = 502)
 
@@ -124,7 +124,7 @@ class PaymentsListTest : BaseAcceptanceTest() {
     @Test
     fun keepsStatusCardPinnedWhileScrollingPayments() {
         // GIVEN a stored session, tariff catalog, profile and payments from server
-        givenStoredSession(profile = allGoodProfile())
+        givenStoredSession(profile = ProfileFixtures.allGoodProfile())
         givenStoredTariffPlans()
         givenHomeResponses()
 
@@ -143,7 +143,7 @@ class PaymentsListTest : BaseAcceptanceTest() {
     @Test
     fun loadsNextPaymentsPageOnScroll() {
         // GIVEN a stored session, tariff catalog, profile and paginated payments from server
-        givenStoredSession(profile = allGoodProfile())
+        givenStoredSession(profile = ProfileFixtures.allGoodProfile())
         givenStoredTariffPlans()
         givenHomeResponses()
         givenFeesPages()
@@ -178,7 +178,7 @@ class PaymentsListTest : BaseAcceptanceTest() {
     @Test
     fun showsSkeletonWhileLoadingNextPaymentsPage() {
         // GIVEN paginated payments whose next page is slow
-        givenStoredSession(profile = allGoodProfile())
+        givenStoredSession(profile = ProfileFixtures.allGoodProfile())
         givenStoredTariffPlans()
         givenHomeResponses()
         givenFeesPages(page2DelayMillis = 2_000)

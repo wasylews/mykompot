@@ -21,12 +21,11 @@ import android.app.NotificationManager
 import android.content.Context
 import androidx.work.ListenableWorker
 import androidx.work.testing.TestListenableWorkerBuilder
+import com.wasylews.mykompot.ProfileFixtures
 import com.wasylews.mykompot.domain.AppForegroundState
 import com.wasylews.mykompot.domain.PaymentDueNotifiedStore
 import com.wasylews.mykompot.domain.model.PaymentDueReminder
 import com.wasylews.mykompot.domain.model.PaymentDueThreshold
-import com.wasylews.mykompot.domain.model.Profile
-import com.wasylews.mykompot.domain.model.TariffPlan
 import com.wasylews.mykompot.work.PaymentDueReminderWorker
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -73,7 +72,7 @@ class PaymentDueNotificationTest : BaseAcceptanceTest() {
 
     @Test
     fun postsThreeDayReminderWhenAppIsInBackground() {
-        givenStoredSession(profile = profile(dueDate = TODAY.plusDays(3)))
+        givenStoredSession(profile = ProfileFixtures.profile(nextPaymentDate = TODAY.plusDays(3)))
 
         assertEquals(ListenableWorker.Result.success(), runReminderWorker())
 
@@ -86,7 +85,7 @@ class PaymentDueNotificationTest : BaseAcceptanceTest() {
 
     @Test
     fun postsDueDayReminderWhenAppIsInBackground() {
-        givenStoredSession(profile = profile(dueDate = TODAY))
+        givenStoredSession(profile = ProfileFixtures.profile(nextPaymentDate = TODAY))
 
         assertEquals(ListenableWorker.Result.success(), runReminderWorker())
 
@@ -100,7 +99,7 @@ class PaymentDueNotificationTest : BaseAcceptanceTest() {
     @Test
     fun skipsOneDayBeforeAndOverdueReminders() {
         listOf(TODAY.plusDays(1), TODAY.minusDays(1)).forEach { dueDate ->
-            givenStoredSession(profile = profile(dueDate = dueDate))
+            givenStoredSession(profile = ProfileFixtures.profile(nextPaymentDate = dueDate))
 
             assertEquals(ListenableWorker.Result.success(), runReminderWorker())
         }
@@ -111,7 +110,7 @@ class PaymentDueNotificationTest : BaseAcceptanceTest() {
 
     @Test
     fun doesNotRepostReminderAfterItWasMarked() {
-        givenStoredSession(profile = profile(dueDate = TODAY))
+        givenStoredSession(profile = ProfileFixtures.profile(nextPaymentDate = TODAY))
 
         runReminderWorker()
         runReminderWorker()
@@ -122,10 +121,10 @@ class PaymentDueNotificationTest : BaseAcceptanceTest() {
 
     @Test
     fun notifiesAgainForANewDueDate() {
-        givenStoredSession(profile = profile(dueDate = TODAY))
+        givenStoredSession(profile = ProfileFixtures.profile(nextPaymentDate = TODAY))
         runReminderWorker()
 
-        givenStoredSession(profile = profile(dueDate = TODAY.plusDays(3)))
+        givenStoredSession(profile = ProfileFixtures.profile(nextPaymentDate = TODAY.plusDays(3)))
         runReminderWorker()
 
         assertLedgerContains(reminderKey(PaymentDueThreshold.DUE_DAY, TODAY))
@@ -136,7 +135,7 @@ class PaymentDueNotificationTest : BaseAcceptanceTest() {
     @Test
     fun skipsReminderWhenAppIsInForeground() {
         appInForeground = true
-        givenStoredSession(profile = profile(dueDate = TODAY))
+        givenStoredSession(profile = ProfileFixtures.profile(nextPaymentDate = TODAY))
 
         assertEquals(ListenableWorker.Result.success(), runReminderWorker())
 
@@ -147,7 +146,7 @@ class PaymentDueNotificationTest : BaseAcceptanceTest() {
     @Test
     fun skipsReminderWhenNotificationsAreNotAllowed() {
         notificationsGranted = false
-        givenStoredSession(profile = profile(dueDate = TODAY))
+        givenStoredSession(profile = ProfileFixtures.profile(nextPaymentDate = TODAY))
 
         assertEquals(ListenableWorker.Result.success(), runReminderWorker())
 
@@ -160,7 +159,7 @@ class PaymentDueNotificationTest : BaseAcceptanceTest() {
         notificationManager().createNotificationChannel(
             NotificationChannel(PAYMENT_CHANNEL_ID, "disabled", NotificationManager.IMPORTANCE_NONE),
         )
-        givenStoredSession(profile = profile(dueDate = TODAY))
+        givenStoredSession(profile = ProfileFixtures.profile(nextPaymentDate = TODAY))
 
         assertEquals(ListenableWorker.Result.success(), runReminderWorker())
 
@@ -194,12 +193,6 @@ class PaymentDueNotificationTest : BaseAcceptanceTest() {
         threshold: PaymentDueThreshold,
         dueDate: LocalDate,
     ): String = PaymentDueReminder(threshold, dueDate).ledgerKey
-
-    private fun profile(dueDate: LocalDate) = Profile(
-        isActive = true,
-        nextPaymentDate = dueDate,
-        tariffPlan = TariffPlan(id = "300GRN_100mb", name = "Standart 100", speed = 100, price = 300),
-    )
 
     private companion object {
         val TODAY: LocalDate = LocalDate.of(2026, 10, 1)

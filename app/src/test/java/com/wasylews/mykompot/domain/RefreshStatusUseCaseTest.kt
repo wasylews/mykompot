@@ -16,10 +16,9 @@
 
 package com.wasylews.mykompot.domain
 
+import com.wasylews.mykompot.ProfileFixtures
 import com.wasylews.mykompot.domain.model.PortalFailure
-import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.RefreshResult
-import com.wasylews.mykompot.domain.model.TariffPlan
 import com.wasylews.mykompot.presentation.FakePortalRepository
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -27,11 +26,7 @@ import org.junit.Test
 import java.time.LocalDate
 
 class RefreshStatusUseCaseTest {
-    private val profile = Profile(
-        isActive = true,
-        nextPaymentDate = LocalDate.parse("2026-10-04"),
-        tariffPlan = TariffPlan(id = "300GRN_100mb", name = "Standart 100", speed = 100, price = 300),
-    )
+    private val profile = ProfileFixtures.profile(nextPaymentDate = LocalDate.parse("2026-10-04"))
 
     @Test
     fun `refreshes status and schedules reminders when updated`() = runTest {

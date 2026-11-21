@@ -22,7 +22,7 @@ class ExpiredSessionAutoLoginTest : BaseAcceptanceTest() {
     @Test
     fun silentlyReLoginsAndRetriesExpiredProfile() {
         // GIVEN an expired session with remembered credentials
-        givenStoredSession(sid = "old-session", profile = allGoodProfile())
+        givenStoredSession(sid = "old-session", profile = ProfileFixtures.allGoodProfile())
         givenStoredCredentials()
         givenStoredTariffPlans()
         givenExpiredSessionWithAutoLogin()
@@ -40,7 +40,7 @@ class ExpiredSessionAutoLoginTest : BaseAcceptanceTest() {
     @Test
     fun returnsToLoginWhenRememberedCredentialsAreRejected() {
         // GIVEN an expired session with credentials the server rejects
-        givenStoredSession(sid = "old-session", profile = allGoodProfile())
+        givenStoredSession(sid = "old-session", profile = ProfileFixtures.allGoodProfile())
         givenStoredCredentials(username = "bad-user", password = "bad-pass")
         givenStoredTariffPlans()
         givenExpiredSessionWithInvalidCredentials()

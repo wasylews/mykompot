@@ -76,7 +76,6 @@ import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.koin.test.KoinTest
 import org.koin.test.get
-import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -145,7 +144,7 @@ abstract class BaseAcceptanceTest : KoinTest {
         if (profile != null) get<LocalStorage>().saveProfile(profile)
     }
 
-    protected fun givenStoredTariffPlans(plans: List<TariffPlan> = defaultTariffPlans()) = runBlocking {
+    protected fun givenStoredTariffPlans(plans: List<TariffPlan> = ProfileFixtures.tariffPlans()) = runBlocking {
         get<LocalStorage>().saveTariffPlans(TariffPlans(plans))
     }
 
@@ -171,37 +170,10 @@ abstract class BaseAcceptanceTest : KoinTest {
         assertNull(get<CredentialsStore>().read())
     }
 
-    protected fun givenPaymentDueProfileStored() = givenStoredSession(profile = paymentDueProfile())
-
     protected fun givenPaymentDueHome() {
-        givenPaymentDueProfileStored()
+        givenStoredSession(profile = ProfileFixtures.paymentDueProfile())
         givenHomeResponses(profileBody = HtmlFixtures.paymentDue())
     }
-
-    protected fun defaultTariffPlan() = TariffPlan(
-        id = "300GRN_100mb",
-        name = "Standart 100",
-        speed = 100,
-        price = 300,
-    )
-
-    protected fun defaultTariffPlans(): List<TariffPlan> = listOf(
-        TariffPlan(id = "260GRN_50mb", name = "Econom 50", speed = 50, price = 260),
-        TariffPlan(id = "300GRN_100mb", name = "Standart 100", speed = 100, price = 300),
-        TariffPlan(id = "350GRN_300mb", name = "LUX 300", speed = 300, price = 350),
-    )
-
-    protected fun allGoodProfile(tariffPlan: TariffPlan = defaultTariffPlan()) = Profile(
-        isActive = true,
-        nextPaymentDate = LocalDate.of(2026, 11, 1),
-        tariffPlan = tariffPlan,
-    )
-
-    protected fun paymentDueProfile(tariffPlan: TariffPlan = defaultTariffPlan()) = Profile(
-        isActive = true,
-        nextPaymentDate = LocalDate.of(2026, 10, 2),
-        tariffPlan = tariffPlan,
-    )
 
     protected fun performLogin(rememberMe: Boolean = false) {
         assertShows(R.string.username).performTextInput("user")

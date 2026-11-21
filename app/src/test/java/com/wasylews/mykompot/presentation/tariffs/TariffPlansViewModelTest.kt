@@ -17,13 +17,13 @@
 package com.wasylews.mykompot.presentation.tariffs
 
 import app.cash.turbine.test
+import com.wasylews.mykompot.ProfileFixtures
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.ObserveStatus
 import com.wasylews.mykompot.domain.ObserveTariffPlans
 import com.wasylews.mykompot.domain.RefreshTariffPlans
 import com.wasylews.mykompot.domain.model.AccountStatus
 import com.wasylews.mykompot.domain.model.PortalFailure
-import com.wasylews.mykompot.domain.model.TariffPlan
 import com.wasylews.mykompot.domain.model.TariffPlansActionResult
 import com.wasylews.mykompot.presentation.BaseViewModelTest
 import com.wasylews.mykompot.presentation.FakeObserveStatusUseCase
@@ -39,11 +39,7 @@ import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TariffPlansViewModelTest : BaseViewModelTest() {
-    private val plans = listOf(
-        TariffPlan(id = "260GRN_50mb", name = "Econom 50", speed = 50, price = 260),
-        TariffPlan(id = "300GRN_100mb", name = "Standart 100", speed = 100, price = 300),
-        TariffPlan(id = "350GRN_300mb", name = "LUX 300", speed = 300, price = 350),
-    )
+    private val plans = ProfileFixtures.tariffPlans()
 
     private val status = AccountStatus(
         state = AccountStatus.State.ALL_GOOD,

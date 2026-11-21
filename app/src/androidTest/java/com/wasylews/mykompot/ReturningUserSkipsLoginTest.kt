@@ -30,7 +30,7 @@ class ReturningUserSkipsLoginTest : BaseAcceptanceTest() {
     @Test
     fun skipsLoginAndShowsStatus() {
         // GIVEN a stored session, tariff catalog, and a server profile
-        givenStoredSession(profile = allGoodProfile())
+        givenStoredSession(profile = ProfileFixtures.allGoodProfile())
         givenStoredTariffPlans()
         givenServerReturnsProfile()
 
@@ -49,7 +49,7 @@ class ReturningUserSkipsLoginTest : BaseAcceptanceTest() {
     @Test
     fun profileRefreshUsesSessionCookieInsteadOfSidQuery() {
         // GIVEN a stored session
-        givenStoredSession(profile = allGoodProfile())
+        givenStoredSession(profile = ProfileFixtures.allGoodProfile())
         givenStoredTariffPlans()
         givenServerReturnsProfile()
 
@@ -82,7 +82,7 @@ class ReturningUserSkipsLoginTest : BaseAcceptanceTest() {
     fun asksForNotificationPermissionWhenOpeningWithStoredSession() {
         // GIVEN a stored session and notifications are not allowed yet
         notificationsGranted = false
-        givenStoredSession(profile = allGoodProfile())
+        givenStoredSession(profile = ProfileFixtures.allGoodProfile())
         givenStoredTariffPlans()
         givenServerReturnsProfile()
 

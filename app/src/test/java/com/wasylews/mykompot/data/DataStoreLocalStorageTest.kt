@@ -20,13 +20,13 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.Serializer
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
+import com.wasylews.mykompot.ProfileFixtures
 import com.wasylews.mykompot.data.model.PaymentsSerializer
 import com.wasylews.mykompot.data.model.ProfileEntitySerializer
 import com.wasylews.mykompot.data.model.TariffPlansSerializer
 import com.wasylews.mykompot.domain.model.Payment
 import com.wasylews.mykompot.domain.model.PaymentSource
 import com.wasylews.mykompot.domain.model.Payments
-import com.wasylews.mykompot.domain.model.TariffPlan
 import com.wasylews.mykompot.domain.model.TariffPlans
 import com.wasylews.mykompot.presentation.profile
 import kotlinx.coroutines.CoroutineScope
@@ -130,7 +130,7 @@ class DataStoreLocalStorageTest {
     fun `corrupt tariff plans read as null`() = runTest {
         val plansFile = File(tmp.root, PLANS_FILE)
         val first = createLocalStorage(plansFile = plansFile)
-        first.saveTariffPlans(tariffPlans())
+        first.saveTariffPlans(TariffPlans(ProfileFixtures.tariffPlans()))
         closeStores()
 
         plansFile.writeText("{not json")
@@ -153,21 +153,21 @@ class DataStoreLocalStorageTest {
     fun `saving tariff plans stores them`() = runTest {
         val store = createLocalStorage()
 
-        store.saveTariffPlans(tariffPlans())
+        store.saveTariffPlans(TariffPlans(ProfileFixtures.tariffPlans()))
 
-        assertEquals(tariffPlans(), store.tariffPlansFlow().first())
+        assertEquals(TariffPlans(ProfileFixtures.tariffPlans()), store.tariffPlansFlow().first())
     }
 
     @Test
     fun `tariff plans survive a new store instance`() = runTest {
         val plansFile = File(tmp.root, PLANS_FILE)
         val first = createLocalStorage(plansFile = plansFile)
-        first.saveTariffPlans(tariffPlans())
+        first.saveTariffPlans(TariffPlans(ProfileFixtures.tariffPlans()))
         closeStores()
 
         val second = createLocalStorage(plansFile = plansFile)
 
-        assertEquals(tariffPlans(), second.tariffPlansFlow().first())
+        assertEquals(TariffPlans(ProfileFixtures.tariffPlans()), second.tariffPlansFlow().first())
     }
 
     @Test
@@ -265,14 +265,6 @@ class DataStoreLocalStorageTest {
         scopes.forEach { it.coroutineContext[Job]?.cancelAndJoin() }
         scopes.clear()
     }
-
-    private fun tariffPlans() = TariffPlans(
-        plans = listOf(
-            TariffPlan(id = "260GRN_50mb", name = "Econom 50", speed = 50, price = 260),
-            TariffPlan(id = "300GRN_100mb", name = "Standart 100", speed = 100, price = 300),
-            TariffPlan(id = "350GRN_300mb", name = "LUX 300", speed = 300, price = 350),
-        ),
-    )
 
     private fun payments() = Payments(
         items = listOf(

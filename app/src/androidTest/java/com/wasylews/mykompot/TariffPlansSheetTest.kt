@@ -44,7 +44,7 @@ class TariffPlansSheetTest : BaseAcceptanceTest() {
 
     @Test
     fun showsTariffPlansSheet() {
-        val plans = defaultTariffPlans()
+        val plans = ProfileFixtures.tariffPlans()
 
         // GIVEN a stored session, tariff catalog, and profile from server
         givenStoredSession()
@@ -65,7 +65,7 @@ class TariffPlansSheetTest : BaseAcceptanceTest() {
 
     @Test
     fun showsCachedTariffPlansWhenRefreshFails() {
-        val plans = defaultTariffPlans()
+        val plans = ProfileFixtures.tariffPlans()
 
         // GIVEN a stored session, cached tariff catalog, and the plans refresh fails
         givenStoredSession()
@@ -105,7 +105,7 @@ class TariffPlansSheetTest : BaseAcceptanceTest() {
 
     @Test
     fun retriesLoadingTariffPlans() {
-        val plans = defaultTariffPlans()
+        val plans = ProfileFixtures.tariffPlans()
 
         // GIVEN a stored session with no cached tariff plans and the plans refresh fails
         givenStoredSession()

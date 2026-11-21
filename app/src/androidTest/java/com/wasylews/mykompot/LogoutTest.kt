@@ -24,7 +24,7 @@ class LogoutTest : BaseAcceptanceTest() {
     @Test
     fun logoutClearsLocalStateAndReturnsToLogin() {
         // GIVEN a signed-in user with remembered credentials and cached portal data
-        givenStoredSession(sid = "old-session", profile = allGoodProfile())
+        givenStoredSession(sid = "old-session", profile = ProfileFixtures.allGoodProfile())
         givenStoredCredentials()
         givenStoredTariffPlans()
         givenStoredPayments(Payments(items = emptyList(), hasMore = false))
@@ -39,14 +39,14 @@ class LogoutTest : BaseAcceptanceTest() {
             // THEN only local session state is forgotten and the login form is shown
             assertShows(R.string.username)
             assertLogoutClearedLocalState()
-            assertStoredTariffPlans(defaultTariffPlans())
+            assertStoredTariffPlans(ProfileFixtures.tariffPlans())
         }
     }
 
     @Test
     fun logoutPreventsOldSessionCookieFromBeingReused() {
         // GIVEN a signed-in user
-        givenStoredSession(sid = "old-session", profile = allGoodProfile())
+        givenStoredSession(sid = "old-session", profile = ProfileFixtures.allGoodProfile())
         givenHomeResponses()
 
         launch().use {

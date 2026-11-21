@@ -19,8 +19,7 @@ package com.wasylews.mykompot.work
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import com.wasylews.mykompot.FakePaymentDueNotifiedStore
-import com.wasylews.mykompot.domain.model.Profile
-import com.wasylews.mykompot.domain.model.TariffPlan
+import com.wasylews.mykompot.ProfileFixtures
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -36,7 +35,7 @@ class PaymentDueReminderSchedulerTest : BaseWorkManagerSchedulerTest() {
 
     @Test
     fun enqueuesOneDailyPeriodicWork() {
-        scheduler().schedule(profile(nextPaymentDate = LocalDate.parse("2026-10-04")))
+        scheduler().schedule(ProfileFixtures.profile(nextPaymentDate = LocalDate.parse("2026-10-04")))
 
         assertDailyWork(WorkInfo.State.ENQUEUED)
     }
@@ -44,8 +43,8 @@ class PaymentDueReminderSchedulerTest : BaseWorkManagerSchedulerTest() {
     @Test
     fun repeatedScheduleKeepsSingleWork() {
         val scheduler = scheduler()
-        scheduler.schedule(profile(nextPaymentDate = LocalDate.parse("2026-10-04")))
-        scheduler.schedule(profile(nextPaymentDate = LocalDate.parse("2026-11-01")))
+        scheduler.schedule(ProfileFixtures.profile(nextPaymentDate = LocalDate.parse("2026-10-04")))
+        scheduler.schedule(ProfileFixtures.profile(nextPaymentDate = LocalDate.parse("2026-11-01")))
 
         val infos = workManager.getWorkInfosForUniqueWork(PaymentDueReminderSchedulerImpl.DAILY_WORK_NAME).get()
         assertEquals(1, infos.size)
@@ -57,10 +56,10 @@ class PaymentDueReminderSchedulerTest : BaseWorkManagerSchedulerTest() {
         val scheduler = scheduler()
         listOf(
             null,
-            profile(nextPaymentDate = LocalDate.parse("2026-10-04")).copy(isActive = false),
-            profile(nextPaymentDate = null),
+            ProfileFixtures.profile(nextPaymentDate = LocalDate.parse("2026-10-04")).copy(isActive = false),
+            ProfileFixtures.profile(nextPaymentDate = null),
         ).forEach { invalidProfile ->
-            scheduler.schedule(profile(nextPaymentDate = LocalDate.parse("2026-10-04")))
+            scheduler.schedule(ProfileFixtures.profile(nextPaymentDate = LocalDate.parse("2026-10-04")))
             scheduler.schedule(invalidProfile)
             assertDailyWork(WorkInfo.State.CANCELLED)
         }
@@ -74,7 +73,7 @@ class PaymentDueReminderSchedulerTest : BaseWorkManagerSchedulerTest() {
             .build()
         workManager.enqueue(legacy)
 
-        scheduler().schedule(profile(nextPaymentDate = LocalDate.parse("2026-10-04")))
+        scheduler().schedule(ProfileFixtures.profile(nextPaymentDate = LocalDate.parse("2026-10-04")))
 
         val infos = workManager.getWorkInfosByTag(PaymentDueReminderSchedulerImpl.LEGACY_REMINDER_TAG).get()
         assertTrue(infos.isNotEmpty())
@@ -84,7 +83,7 @@ class PaymentDueReminderSchedulerTest : BaseWorkManagerSchedulerTest() {
     @Test
     fun cancelClearsNotifiedLedger() = runBlocking {
         val scheduler = scheduler()
-        scheduler.schedule(profile(nextPaymentDate = LocalDate.parse("2026-10-01")))
+        scheduler.schedule(ProfileFixtures.profile(nextPaymentDate = LocalDate.parse("2026-10-01")))
         notifiedStore.markNotified("DUE_DAY|2026-10-01")
 
         scheduler.cancel()
@@ -99,10 +98,4 @@ class PaymentDueReminderSchedulerTest : BaseWorkManagerSchedulerTest() {
         assertEquals(state, infos.single().state)
         assertTrue(infos.single().tags.contains(PaymentDueReminderSchedulerImpl.REMINDER_TAG))
     }
-
-    private fun profile(nextPaymentDate: LocalDate?) = Profile(
-        isActive = true,
-        nextPaymentDate = nextPaymentDate,
-        tariffPlan = TariffPlan(id = "300GRN_100mb", name = "Standart 100", speed = 100, price = 300),
-    )
 }

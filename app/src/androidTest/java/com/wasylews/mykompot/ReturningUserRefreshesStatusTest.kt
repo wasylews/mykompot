@@ -28,7 +28,7 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
     @Test
     fun showsCachedStatusWhenServerFails() {
         // GIVEN a stored session, a cached profile, and the server fails
-        givenStoredSession(profile = allGoodProfile())
+        givenStoredSession(profile = ProfileFixtures.allGoodProfile())
         givenServerIsDown()
 
         launch().use {
@@ -45,7 +45,7 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
     @Test
     fun updatesStatusFromServer() {
         // GIVEN a stored session with an out-of-date cached profile
-        givenStoredSession(profile = paymentDueProfile())
+        givenStoredSession(profile = ProfileFixtures.paymentDueProfile())
         // AND the server returns the current profile
         givenServerReturnsProfile()
 
@@ -95,7 +95,7 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
     @Test
     fun doesNotShowRefreshIndicatorWhileRefreshingCachedStatusOnOpen() {
         // GIVEN a stored session with a cached profile and a slow server
-        givenStoredSession(profile = allGoodProfile())
+        givenStoredSession(profile = ProfileFixtures.allGoodProfile())
         givenServerReturnsProfile(delayMillis = 2_000)
 
         launch().use {
@@ -163,7 +163,7 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
     @Test
     fun showsLoginWhenSessionIsExpired() {
         // GIVEN a stored session
-        givenStoredSession(profile = allGoodProfile())
+        givenStoredSession(profile = ProfileFixtures.allGoodProfile())
         // AND the server treats it as unauthenticated
         givenHomeResponses(profileBody = HtmlFixtures.loginFailed())
 
@@ -177,7 +177,7 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
     @Test
     fun keepsCachedStatusWhenPortalReturnsGenericError() {
         // GIVEN a stored session with a cached profile
-        givenStoredSession(profile = allGoodProfile())
+        givenStoredSession(profile = ProfileFixtures.allGoodProfile())
         // AND the server returns a generic portal error page, not a login page
         givenHomeResponses(profileBody = HtmlFixtures.portalError())
 
@@ -223,7 +223,7 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
     @Test
     fun userPullDuringBackgroundRefreshReusesRunningJob() {
         // GIVEN a stored session with a cached profile and a slow background refresh
-        givenStoredSession(profile = allGoodProfile())
+        givenStoredSession(profile = ProfileFixtures.allGoodProfile())
         givenStoredTariffPlans()
         givenServerReturnsProfile(delayMillis = 3_000)
 
@@ -249,7 +249,7 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
     @Test
     fun keepsCachedStatusWhenPullToRefreshFails() {
         // GIVEN a stored session with a cached profile and a working server
-        givenStoredSession(profile = allGoodProfile())
+        givenStoredSession(profile = ProfileFixtures.allGoodProfile())
         givenServerReturnsProfile()
 
         launch().use {
