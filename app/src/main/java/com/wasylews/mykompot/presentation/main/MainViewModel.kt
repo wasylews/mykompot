@@ -22,44 +22,64 @@ import com.wasylews.mykompot.domain.LogOut
 import com.wasylews.mykompot.domain.ObserveSession
 import com.wasylews.mykompot.domain.RestoreSession
 import com.wasylews.mykompot.domain.model.SessionState
+import com.wasylews.mykompot.domain.repository.CredentialsStore
+import com.wasylews.mykompot.domain.repository.PortalRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
 
+enum class AppRootDestination {
+    Home,
+    Login,
+}
+
 @KoinViewModel
 class MainViewModel(
     observeSession: ObserveSession,
     private val logOutUseCase: LogOut,
-    restoreSession: RestoreSession,
+    private val restoreSession: RestoreSession,
+    credentialsStore: CredentialsStore,
+    portalRepository: PortalRepository,
 ) : ViewModel() {
+    private val hasCredentialsAtLaunch = credentialsStore.hasCredentials()
     private val sessionFlow = observeSession.sessionStateFlow()
         .shareIn(viewModelScope, SharingStarted.Eagerly, replay = 1)
     private val restoreFinished = MutableStateFlow(false)
 
-    val sessionState: StateFlow<SessionState> = combine(
+    val isLoggedIn: StateFlow<Boolean> = sessionFlow
+        .map { it == SessionState.LoggedIn }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.Eagerly,
+            portalRepository.hasActiveSession(),
+        )
+
+    val rootDestination: StateFlow<AppRootDestination> = combine(
         sessionFlow,
         restoreFinished,
     ) { session, finished ->
         when {
-            session == SessionState.LoggedIn -> SessionState.LoggedIn
-            !finished -> SessionState.Loading
-            else -> SessionState.LoggedOut
+            session == SessionState.LoggedIn -> AppRootDestination.Home
+            !finished && hasCredentialsAtLaunch -> AppRootDestination.Home
+            else -> AppRootDestination.Login
         }
-    }
-        .catch { emit(SessionState.LoggedOut) }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, SessionState.Loading)
+    }.stateIn(
+        viewModelScope,
+        SharingStarted.Eagerly,
+        initialRootDestination(portalRepository.hasActiveSession()),
+    )
 
     init {
         viewModelScope.launch {
             try {
-                if (sessionFlow.first() != SessionState.LoggedIn) {
+                if (sessionFlow.first() != SessionState.LoggedIn && hasCredentialsAtLaunch) {
                     restoreSession()
                 }
             } finally {
@@ -70,5 +90,10 @@ class MainViewModel(
 
     fun logOut() = viewModelScope.launch {
         logOutUseCase()
+    }
+
+    private fun initialRootDestination(hasActiveSession: Boolean): AppRootDestination = when {
+        hasActiveSession || hasCredentialsAtLaunch -> AppRootDestination.Home
+        else -> AppRootDestination.Login
     }
 }

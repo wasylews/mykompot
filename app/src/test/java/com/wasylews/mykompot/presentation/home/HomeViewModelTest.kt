@@ -18,11 +18,13 @@ package com.wasylews.mykompot.presentation.home
 
 import app.cash.turbine.test
 import com.wasylews.mykompot.R
+import com.wasylews.mykompot.domain.ObserveSession
 import com.wasylews.mykompot.domain.ObserveStatus
 import com.wasylews.mykompot.domain.RefreshStatus
 import com.wasylews.mykompot.domain.model.AccountStatus
 import com.wasylews.mykompot.domain.model.PortalFailure
 import com.wasylews.mykompot.domain.model.RefreshResult
+import com.wasylews.mykompot.domain.model.SessionState
 import com.wasylews.mykompot.presentation.BaseViewModelTest
 import com.wasylews.mykompot.presentation.FakeObserveStatusUseCase
 import com.wasylews.mykompot.presentation.FakeRefreshStatus
@@ -59,8 +61,9 @@ class HomeViewModelTest : BaseViewModelTest() {
 
     private fun createViewModel(
         observeStatus: ObserveStatus = FakeObserveStatusUseCase(allGoodStatus),
+        observeSession: ObserveSession = FakeObserveSession(SessionState.LoggedIn),
         refreshStatus: RefreshStatus = FakeRefreshStatus(),
-    ) = HomeViewModel(observeStatus, refreshStatus)
+    ) = HomeViewModel(observeStatus, observeSession, refreshStatus)
 
     @Test
     fun `shows cached content after refresh on init`() = runTest {
@@ -388,5 +391,40 @@ class HomeViewModelTest : BaseViewModelTest() {
         )
         assertFalse(vm.uiState.value.isRefreshing)
         assertEquals(1, refreshStatus.calls)
+    }
+
+    @Test
+    fun `waits for logged in session before refreshing`() = runTest {
+        val observeSession = FakeObserveSession(SessionState.LoggedOut)
+        val refreshStatus = FakeRefreshStatus()
+
+        createViewModel(observeSession = observeSession, refreshStatus = refreshStatus)
+        advanceUntilIdle()
+
+        assertEquals(0, refreshStatus.calls)
+
+        observeSession.setState(SessionState.LoggedIn)
+        advanceUntilIdle()
+
+        assertEquals(1, refreshStatus.calls)
+    }
+
+    @Test
+    fun `clears transient error state when session is logged out`() = runTest {
+        val observeSession = FakeObserveSession(SessionState.LoggedIn)
+        val refreshStatus = FakeRefreshStatus(RefreshResult.Failed(PortalFailure.Server))
+        val vm = createViewModel(
+            observeStatus = FakeObserveStatusUseCase(null),
+            observeSession = observeSession,
+            refreshStatus = refreshStatus,
+        )
+
+        advanceUntilIdle()
+        assertEquals(HomeContent.Unknown, vm.uiState.value.content)
+
+        observeSession.setState(SessionState.LoggedOut)
+        advanceUntilIdle()
+
+        assertEquals(HomeUiState(), vm.uiState.value)
     }
 }

@@ -22,11 +22,13 @@ import androidx.lifecycle.viewModelScope
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.LoadMorePayments
 import com.wasylews.mykompot.domain.ObservePayments
+import com.wasylews.mykompot.domain.ObserveSession
 import com.wasylews.mykompot.domain.RefreshPayments
 import com.wasylews.mykompot.domain.model.Payment
 import com.wasylews.mykompot.domain.model.PaymentSource
 import com.wasylews.mykompot.domain.model.Payments
 import com.wasylews.mykompot.domain.model.PaymentsActionResult
+import com.wasylews.mykompot.domain.model.SessionState
 import com.wasylews.mykompot.presentation.payments.PaymentMethod
 import com.wasylews.mykompot.presentation.payments.paymentMethods
 import com.wasylews.mykompot.presentation.toErrorId
@@ -37,6 +39,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
@@ -50,6 +53,7 @@ import kotlin.time.toJavaInstant
 @KoinViewModel
 class PaymentsViewModel(
     observePayments: ObservePayments,
+    observeSession: ObserveSession,
     private val refreshPayments: RefreshPayments,
     private val loadMorePaymentsUseCase: LoadMorePayments,
     private val clock: Clock = Clock.System,
@@ -83,9 +87,12 @@ class PaymentsViewModel(
         paymentsStreamErrorId,
     ) { errorId, streamErrorId -> errorId ?: streamErrorId }
 
-    // Destination-scoped: this ViewModel exists only while the logged-in session is active.
+    // Destination-scoped, but optimistic startup can show Home before session restore completes.
     init {
-        refresh()
+        viewModelScope.launch {
+            observeSession.sessionStateFlow().first { it == SessionState.LoggedIn }
+            refresh()
+        }
     }
 
     fun refresh() {

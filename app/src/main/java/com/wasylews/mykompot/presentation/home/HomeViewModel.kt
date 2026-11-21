@@ -19,10 +19,12 @@ package com.wasylews.mykompot.presentation.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wasylews.mykompot.R
+import com.wasylews.mykompot.domain.ObserveSession
 import com.wasylews.mykompot.domain.ObserveStatus
 import com.wasylews.mykompot.domain.RefreshStatus
 import com.wasylews.mykompot.domain.model.AccountStatus
 import com.wasylews.mykompot.domain.model.RefreshResult
+import com.wasylews.mykompot.domain.model.SessionState
 import com.wasylews.mykompot.presentation.toErrorId
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -31,6 +33,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
@@ -38,6 +41,7 @@ import org.koin.core.annotation.KoinViewModel
 @KoinViewModel
 class HomeViewModel(
     observeStatus: ObserveStatus,
+    observeSession: ObserveSession,
     private val refreshStatus: RefreshStatus,
 ) : ViewModel() {
     private val isRefreshing = MutableStateFlow(false)
@@ -55,10 +59,14 @@ class HomeViewModel(
             initialValue = null,
         )
 
-    // The ViewModel is owned by the logged-in navigation destination, so creation means a
-    // session has started and one bootstrap refresh is sufficient.
+    // The ViewModel is owned by the logged-in navigation destination, but optimistic startup can
+    // show Home before a remembered session is restored. Wait for a confirmed session so the
+    // initial refresh does not expire against a missing cookie and strand the skeleton.
     init {
-        refresh()
+        viewModelScope.launch {
+            observeSession.sessionStateFlow().first { it == SessionState.LoggedIn }
+            refresh()
+        }
     }
 
     fun refresh(userInitiated: Boolean = false) {
@@ -84,18 +92,23 @@ class HomeViewModel(
 
     val uiState: StateFlow<HomeUiState> = combine(
         latestStatus,
+        observeSession.sessionStateFlow(),
         isRefreshing,
         errorId,
-    ) { status, isRefreshing, errorId ->
-        HomeUiState(
-            content = when {
-                status != null -> status.toHomeContent()
-                errorId != null -> HomeContent.Unknown
-                else -> HomeContent.Loading
-            },
-            isRefreshing = isRefreshing,
-            errorId = errorId,
-        )
+    ) { status, sessionState, isRefreshing, errorId ->
+        if (sessionState != SessionState.LoggedIn) {
+            HomeUiState()
+        } else {
+            HomeUiState(
+                content = when {
+                    status != null -> status.toHomeContent()
+                    errorId != null -> HomeContent.Unknown
+                    else -> HomeContent.Loading
+                },
+                isRefreshing = isRefreshing,
+                errorId = errorId,
+            )
+        }
     }
         .stateIn(
             scope = viewModelScope,

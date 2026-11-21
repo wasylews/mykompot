@@ -18,9 +18,6 @@ package com.wasylews.mykompot.domain.model
 
 /** Authentication/session state observed by the app. */
 enum class SessionState {
-    /** Session state is not yet known. */
-    Loading,
-
     /** A session token is present. */
     LoggedIn,
 

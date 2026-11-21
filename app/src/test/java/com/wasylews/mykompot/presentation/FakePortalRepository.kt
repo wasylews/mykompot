@@ -71,6 +71,8 @@ class FakePortalRepository(
 
     override fun sessionFlow(): Flow<String?> = flowOf(session)
 
+    override fun hasActiveSession(): Boolean = !session.isNullOrEmpty()
+
     override fun tariffPlansFlow(): Flow<TariffPlans?> = flowOf(tariffPlans)
 
     override suspend fun refreshTariffPlans(): TariffPlansActionResult {

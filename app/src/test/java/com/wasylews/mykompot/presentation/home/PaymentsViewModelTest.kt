@@ -21,11 +21,13 @@ import com.wasylews.mykompot.PaymentFixtures
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.LoadMorePayments
 import com.wasylews.mykompot.domain.ObservePayments
+import com.wasylews.mykompot.domain.ObserveSession
 import com.wasylews.mykompot.domain.RefreshPayments
 import com.wasylews.mykompot.domain.model.PaymentSource
 import com.wasylews.mykompot.domain.model.Payments
 import com.wasylews.mykompot.domain.model.PaymentsActionResult
 import com.wasylews.mykompot.domain.model.PortalFailure
+import com.wasylews.mykompot.domain.model.SessionState
 import com.wasylews.mykompot.presentation.BaseViewModelTest
 import com.wasylews.mykompot.presentation.payments.paymentMethods
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -55,10 +57,12 @@ class PaymentsViewModelTest : BaseViewModelTest() {
 
     private fun createViewModel(
         observePayments: ObservePayments = FakeObservePayments(),
+        observeSession: ObserveSession = FakeObserveSession(SessionState.LoggedIn),
         refreshPayments: RefreshPayments = FakeRefreshPayments(),
         loadMorePayments: LoadMorePayments = FakeLoadMorePayments(),
     ) = PaymentsViewModel(
         observePayments = observePayments,
+        observeSession = observeSession,
         refreshPayments = refreshPayments,
         loadMorePaymentsUseCase = loadMorePayments,
         clock = testClock,
@@ -410,5 +414,21 @@ class PaymentsViewModelTest : BaseViewModelTest() {
         refreshPayments.resume(call = 2)
         advanceUntilIdle()
         assertFalse(vm.uiState.value.isLoading)
+    }
+
+    @Test
+    fun `waits for logged in session before refreshing`() = runTest {
+        val observeSession = FakeObserveSession(SessionState.LoggedOut)
+        val refreshPayments = FakeRefreshPayments()
+
+        createViewModel(observeSession = observeSession, refreshPayments = refreshPayments)
+        advanceUntilIdle()
+
+        assertEquals(0, refreshPayments.calls)
+
+        observeSession.setState(SessionState.LoggedIn)
+        advanceUntilIdle()
+
+        assertEquals(1, refreshPayments.calls)
     }
 }

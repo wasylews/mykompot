@@ -49,6 +49,7 @@ import java.time.format.DateTimeFormatter
  * caches (profile, session, payments) are cleared while tariff plans are kept. Generic portal
  * errors and parsing/network failures do not clear existing caches.
  */
+@Suppress("TooManyFunctions")
 @Singleton
 class PortalRepositoryImpl(
     private val dispatcher: CoroutineDispatcher,
@@ -143,6 +144,8 @@ class PortalRepositoryImpl(
     override fun profileFlow(): Flow<Profile?> = localStorage.profileFlow()
 
     override fun sessionFlow(): Flow<String?> = sessionCookieStore.sidFlow()
+
+    override fun hasActiveSession(): Boolean = !sessionCookieStore.sid().isNullOrEmpty()
 
     override fun tariffPlansFlow(): Flow<TariffPlans?> = localStorage.tariffPlansFlow()
 

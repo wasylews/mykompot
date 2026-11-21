@@ -62,6 +62,9 @@ interface PortalRepository {
     /** Observes the stored session token, or `null` when logged out/expired. */
     fun sessionFlow(): Flow<String?>
 
+    /** Returns whether a session token is currently stored. */
+    fun hasActiveSession(): Boolean
+
     /** Observes the cached tariff plans catalog, or `null` when unavailable. */
     fun tariffPlansFlow(): Flow<TariffPlans?>
 

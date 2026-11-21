@@ -17,113 +17,136 @@
 package com.wasylews.mykompot.presentation.main
 
 import app.cash.turbine.test
+import com.wasylews.mykompot.domain.FakeCredentialsStore
 import com.wasylews.mykompot.domain.LogOut
 import com.wasylews.mykompot.domain.ObserveSession
 import com.wasylews.mykompot.domain.RestoreSession
+import com.wasylews.mykompot.domain.model.Credentials
 import com.wasylews.mykompot.domain.model.SessionState
 import com.wasylews.mykompot.presentation.BaseViewModelTest
+import com.wasylews.mykompot.presentation.FakePortalRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MainViewModelTest : BaseViewModelTest() {
     @Test
-    fun `starts in loading then resolves to logged in`() = runTest {
-        val observeSession = FakeObserveSession()
-        val vm = MainViewModel(observeSession, FakeLogOut(), FakeRestoreSession())
-
-        vm.sessionState.test {
-            assertEquals(SessionState.Loading, awaitItem())
-
-            observeSession.setState(SessionState.LoggedIn)
-            advanceUntilIdle()
-
-            assertEquals(SessionState.LoggedIn, awaitItem())
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    @Test
-    fun `starts in loading then resolves to logged out`() = runTest {
-        val observeSession = FakeObserveSession()
-        val vm = MainViewModel(observeSession, FakeLogOut(), FakeRestoreSession())
-
-        vm.sessionState.test {
-            assertEquals(SessionState.Loading, awaitItem())
-
-            observeSession.setState(SessionState.LoggedOut)
-            advanceUntilIdle()
-
-            assertEquals(SessionState.LoggedOut, awaitItem())
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    @Test
-    fun `updates session state when session changes`() = runTest {
-        val observeSession = FakeObserveSession(SessionState.LoggedIn)
-        val vm = MainViewModel(observeSession, FakeLogOut(), FakeRestoreSession())
-
-        vm.sessionState.test {
-            assertEquals(SessionState.Loading, awaitItem())
-            advanceUntilIdle()
-            assertEquals(SessionState.LoggedIn, expectMostRecentItem())
-
-            observeSession.setState(SessionState.LoggedOut)
-            advanceUntilIdle()
-            assertEquals(SessionState.LoggedOut, awaitItem())
-
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    @Test
-    fun `waits for session restore before resolving logged out`() = runTest {
+    fun `shows login immediately when no session and no credentials`() = runTest {
         val observeSession = FakeObserveSession(SessionState.LoggedOut)
         val restoreSession = FakeRestoreSession()
-        val vm = MainViewModel(observeSession, FakeLogOut(), restoreSession)
+        val vm = MainViewModel(
+            observeSession = observeSession,
+            logOutUseCase = FakeLogOut(),
+            restoreSession = restoreSession,
+            credentialsStore = FakeCredentialsStore(),
+            portalRepository = FakePortalRepository(),
+        )
+
+        advanceUntilIdle()
+
+        assertEquals(AppRootDestination.Login, vm.rootDestination.value)
+        assertFalse(vm.isLoggedIn.value)
+        assertEquals(0, restoreSession.calls)
+    }
+
+    @Test
+    fun `shows home optimistically while restoring remembered credentials`() = runTest {
+        val observeSession = FakeObserveSession(SessionState.LoggedOut)
+        val restoreSession = FakeRestoreSession()
+        val vm = MainViewModel(
+            observeSession = observeSession,
+            logOutUseCase = FakeLogOut(),
+            restoreSession = restoreSession,
+            credentialsStore = FakeCredentialsStore().apply { save(Credentials("user", "password")) },
+            portalRepository = FakePortalRepository(),
+        )
+
+        assertEquals(AppRootDestination.Home, vm.rootDestination.value)
+        assertFalse(vm.isLoggedIn.value)
 
         advanceUntilIdle()
 
         assertEquals(1, restoreSession.calls)
-        assertEquals(SessionState.LoggedOut, vm.sessionState.value)
+        assertEquals(AppRootDestination.Login, vm.rootDestination.value)
     }
 
     @Test
-    fun `shows logged in after restore creates a session`() = runTest {
+    fun `shows home after restore creates a session`() = runTest {
         val observeSession = FakeObserveSession(SessionState.LoggedOut)
         val restoreSession = FakeRestoreSession().apply {
             onInvoke = { observeSession.setState(SessionState.LoggedIn) }
         }
-        val vm = MainViewModel(observeSession, FakeLogOut(), restoreSession)
+        val vm = MainViewModel(
+            observeSession = observeSession,
+            logOutUseCase = FakeLogOut(),
+            restoreSession = restoreSession,
+            credentialsStore = FakeCredentialsStore().apply { save(Credentials("user", "password")) },
+            portalRepository = FakePortalRepository(),
+        )
 
         advanceUntilIdle()
 
-        assertEquals(1, restoreSession.calls)
-        assertEquals(SessionState.LoggedIn, vm.sessionState.value)
+        assertEquals(AppRootDestination.Home, vm.rootDestination.value)
+        assertTrue(vm.isLoggedIn.value)
     }
 
     @Test
-    fun `skips restore when a session already exists`() = runTest {
-        val observeSession = FakeObserveSession(SessionState.LoggedIn)
+    fun `shows home immediately when session exists`() = runTest {
         val restoreSession = FakeRestoreSession()
-        val vm = MainViewModel(observeSession, FakeLogOut(), restoreSession)
+        val vm = MainViewModel(
+            observeSession = FakeObserveSession(SessionState.LoggedIn),
+            logOutUseCase = FakeLogOut(),
+            restoreSession = restoreSession,
+            credentialsStore = FakeCredentialsStore(),
+            portalRepository = FakePortalRepository(session = "sid"),
+        )
 
         advanceUntilIdle()
 
+        assertEquals(AppRootDestination.Home, vm.rootDestination.value)
+        assertTrue(vm.isLoggedIn.value)
         assertEquals(0, restoreSession.calls)
-        assertEquals(SessionState.LoggedIn, vm.sessionState.value)
+    }
+
+    @Test
+    fun `routes to login when confirmed session is lost`() = runTest {
+        val observeSession = FakeObserveSession(SessionState.LoggedIn)
+        val vm = MainViewModel(
+            observeSession = observeSession,
+            logOutUseCase = FakeLogOut(),
+            restoreSession = FakeRestoreSession(),
+            credentialsStore = FakeCredentialsStore(),
+            portalRepository = FakePortalRepository(session = "sid"),
+        )
+
+        vm.rootDestination.test {
+            assertEquals(AppRootDestination.Home, awaitItem())
+
+            observeSession.setState(SessionState.LoggedOut)
+            advanceUntilIdle()
+
+            assertEquals(AppRootDestination.Login, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test
     fun `logout invokes log out use case`() = runTest {
         val logOut = FakeLogOut()
-        val vm = MainViewModel(FakeObserveSession(), logOut, FakeRestoreSession())
+        val vm = MainViewModel(
+            observeSession = FakeObserveSession(SessionState.LoggedIn),
+            logOutUseCase = logOut,
+            restoreSession = FakeRestoreSession(),
+            credentialsStore = FakeCredentialsStore(),
+            portalRepository = FakePortalRepository(session = "sid"),
+        )
 
         vm.logOut()
         advanceUntilIdle()
@@ -142,7 +165,7 @@ class FakeLogOut : LogOut {
 
 class FakeRestoreSession : RestoreSession {
     var calls = 0
-    var onInvoke: () -> Unit = {}
+    var onInvoke: suspend () -> Unit = {}
 
     override suspend fun invoke() {
         calls++
@@ -151,7 +174,7 @@ class FakeRestoreSession : RestoreSession {
 }
 
 class FakeObserveSession(
-    state: SessionState = SessionState.Loading,
+    state: SessionState = SessionState.LoggedOut,
 ) : ObserveSession {
     private val stateFlow = MutableStateFlow(state)
 

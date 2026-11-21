@@ -21,10 +21,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -38,7 +36,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.core.net.toUri
@@ -50,7 +47,6 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.NotificationsPermission
-import com.wasylews.mykompot.domain.model.SessionState
 import com.wasylews.mykompot.presentation.home.HomeActions
 import com.wasylews.mykompot.presentation.home.HomeScreen
 import com.wasylews.mykompot.presentation.home.HomeViewModel
@@ -79,16 +75,17 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun MainContent(onPaymentMethodClick: (PaymentMethod) -> Unit) {
         val mainViewModel = koinViewModel<MainViewModel>()
-        val sessionState by mainViewModel.sessionState.collectAsStateWithLifecycle()
+        val rootDestination by mainViewModel.rootDestination.collectAsStateWithLifecycle()
+        val isLoggedIn by mainViewModel.isLoggedIn.collectAsStateWithLifecycle()
         // Login must outlive the destination switch it triggers: it saves "remember me"
         // credentials after the repository has already published the new session state.
         val loginViewModel = koinViewModel<LoginViewModel>()
         val notificationsPermission = koinInject<NotificationsPermission>()
 
-        val backStack = sessionDestinationBackStack(sessionState)
+        val backStack = sessionDestinationBackStack(rootDestination)
 
         NotificationPermissionPrompt(
-            isLoggedIn = sessionState == SessionState.LoggedIn,
+            isLoggedIn = isLoggedIn,
             notificationsPermission = notificationsPermission,
         )
 
@@ -96,7 +93,7 @@ class MainActivity : ComponentActivity() {
             modifier = Modifier.fillMaxSize(),
             containerColor = MaterialTheme.colorScheme.surface,
             topBar = {
-                if (sessionState == SessionState.LoggedIn) {
+                if (isLoggedIn) {
                     AppTopBar(onLogOut = mainViewModel::logOut)
                 }
             },
@@ -109,17 +106,6 @@ class MainActivity : ComponentActivity() {
                     rememberViewModelStoreNavEntryDecorator(),
                 ),
                 entryProvider = entryProvider {
-                    entry<AppDestination.Loading> {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(innerPadding),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            CircularProgressIndicator()
-                        }
-                    }
-
                     entry<AppDestination.Home> {
                         LoggedInContent(
                             modifier = Modifier
@@ -148,20 +134,22 @@ class MainActivity : ComponentActivity() {
      * session and refresh in init instead of observing session state.
      */
     @Composable
-    private fun sessionDestinationBackStack(sessionState: SessionState): SnapshotStateList<AppDestination> {
-        val backStack = remember { mutableStateListOf<AppDestination>(AppDestination.Loading) }
-        LaunchedEffect(sessionState) {
-            val destination = when (sessionState) {
-                SessionState.Loading -> AppDestination.Loading
-                SessionState.LoggedIn -> AppDestination.Home
-                SessionState.LoggedOut -> AppDestination.Login
-            }
-            if (backStack.singleOrNull() != destination) {
+    private fun sessionDestinationBackStack(rootDestination: AppRootDestination): SnapshotStateList<AppDestination> {
+        val destination = rootDestination.toAppDestination()
+        val backStack = remember { mutableStateListOf(destination) }
+        LaunchedEffect(rootDestination) {
+            val target = rootDestination.toAppDestination()
+            if (backStack.singleOrNull() != target) {
                 backStack.clear()
-                backStack.add(destination)
+                backStack.add(target)
             }
         }
         return backStack
+    }
+
+    private fun AppRootDestination.toAppDestination(): AppDestination = when (this) {
+        AppRootDestination.Home -> AppDestination.Home
+        AppRootDestination.Login -> AppDestination.Login
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
@@ -249,8 +237,6 @@ class MainActivity : ComponentActivity() {
 
 /** Root destinations derived from the session state. */
 internal sealed interface AppDestination : NavKey {
-    data object Loading : AppDestination
-
     data object Login : AppDestination
 
     data object Home : AppDestination
