@@ -24,9 +24,12 @@ import androidx.datastore.dataStoreFile
 import com.wasylews.mykompot.BuildConfig
 import com.wasylews.mykompot.data.AuthApi
 import com.wasylews.mykompot.data.EncryptedCredentialsStore
+import com.wasylews.mykompot.data.LoginPageTo401Interceptor
 import com.wasylews.mykompot.data.PlansApi
 import com.wasylews.mykompot.data.PortalApi
+import com.wasylews.mykompot.data.PortalAuthenticator
 import com.wasylews.mykompot.data.PortalCookieJar
+import com.wasylews.mykompot.data.PortalSessionTagInterceptor
 import com.wasylews.mykompot.data.SessionCookieStore
 import com.wasylews.mykompot.data.SharedPreferencesSessionCookieStore
 import com.wasylews.mykompot.data.model.PaymentsEntity
@@ -86,7 +89,18 @@ class DataModule {
 
     @Singleton
     @Named("portal")
-    fun providePortalOkHttpClient(cookieJar: CookieJar): OkHttpClient = okHttpClient(cookieJar)
+    fun providePortalOkHttpClient(
+        cookieJar: CookieJar,
+        sessionCookieStore: SessionCookieStore,
+        authenticator: PortalAuthenticator,
+    ): OkHttpClient = okHttpClient(cookieJar)
+        .newBuilder()
+        .addInterceptor(PortalSessionTagInterceptor(sessionCookieStore))
+        // Must be a network interceptor: OkHttp's retry layer (and therefore the authenticator)
+        // sits inside application interceptors and only reacts to 401s it observes itself.
+        .addNetworkInterceptor(LoginPageTo401Interceptor())
+        .authenticator(authenticator)
+        .build()
 
     @Singleton
     @Named("plans")

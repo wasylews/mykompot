@@ -16,8 +16,6 @@
 
 package com.wasylews.mykompot.data
 
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import okhttp3.Cookie
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.junit.Assert.assertEquals
@@ -69,20 +67,4 @@ class PortalCookieJarTest {
         .domain(portalUrl.host)
         .path("/")
         .build()
-}
-
-private class FakeSessionCookieStore : SessionCookieStore {
-    private val sid = MutableStateFlow<String?>(null)
-
-    override fun sid(): String? = sid.value
-
-    override fun saveSid(sid: String) {
-        this.sid.value = sid
-    }
-
-    override fun clear() {
-        sid.value = null
-    }
-
-    override fun sidFlow(): Flow<String?> = sid
 }

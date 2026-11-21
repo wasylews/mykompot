@@ -16,6 +16,7 @@
 
 package com.wasylews.mykompot.data
 
+import retrofit2.Call
 import retrofit2.Response
 import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
@@ -38,4 +39,15 @@ interface AuthApi {
         @Field("passwd") password: String,
         @Field("language") language: String,
     ): Response<ProfilePageResponse>
+
+    /**
+     * Blocking variant used by OkHttp's authenticator, which cannot call a suspend function.
+     */
+    @FormUrlEncoded
+    @POST("/index.cgi")
+    fun loginCall(
+        @Field("user") username: String,
+        @Field("passwd") password: String,
+        @Field("language") language: String,
+    ): Call<ProfilePageResponse>
 }

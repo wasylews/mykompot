@@ -288,7 +288,44 @@ abstract class BaseAcceptanceTest : KoinTest {
     }
 
     protected fun givenServerReturnsLoginSuccess(sid: String = "test-session") {
-        givenServerReturnsProfile(headers = mapOf("Set-Cookie" to "sid=$sid"))
+        dispatcher.loginResponseFactory = {
+            response(
+                body = HtmlFixtures.profile(),
+                headers = mapOf("Set-Cookie" to "sid=$sid"),
+            )
+        }
+    }
+
+    protected fun givenExpiredSessionWithAutoLogin(
+        oldSid: String = "old-session",
+        newSid: String = "new-session",
+    ) {
+        givenExpiredProfileResponses(oldSid, newSid)
+        givenServerReturnsLoginSuccess(newSid)
+    }
+
+    protected fun givenExpiredSessionWithInvalidCredentials(
+        oldSid: String = "old-session",
+        newSid: String = "new-session",
+    ) {
+        givenExpiredProfileResponses(oldSid, newSid)
+        dispatcher.loginResponseFactory = { response(body = HtmlFixtures.loginFailed()) }
+    }
+
+    private fun givenExpiredProfileResponses(
+        oldSid: String,
+        newSid: String,
+    ) {
+        dispatcher.profileResponseFactory = { request ->
+            if ("sid=$oldSid" in request.headers["Cookie"].orEmpty()) {
+                response(body = HtmlFixtures.loginFailed())
+            } else {
+                response(
+                    body = HtmlFixtures.profile(),
+                    headers = mapOf("Set-Cookie" to "sid=$newSid"),
+                )
+            }
+        }
     }
 
     protected fun givenServerIsDown(status: Int = 502) {
@@ -337,11 +374,28 @@ abstract class BaseAcceptanceTest : KoinTest {
     protected fun assertProfileRequestUsesSessionCookie(sid: String) {
         awaitRequestCondition(5_000) { countRequests { it.isProfileRefresh() } > 0 }
         val request = dispatcher.recordedRequests().first { it.isProfileRefresh() }
+        assertRequestUsesSessionCookie(request, sid)
+    }
+
+    protected fun assertMostRecentProfileRequestUsesSessionCookie(sid: String) {
+        awaitRequestCondition(5_000) { countRequests { it.isProfileRefresh() } > 0 }
+        val request = dispatcher.recordedRequests().last { it.isProfileRefresh() }
+        assertRequestUsesSessionCookie(request, sid)
+    }
+
+    private fun assertRequestUsesSessionCookie(
+        request: RecordedRequest,
+        sid: String,
+    ) {
         val cookies = request.headers["Cookie"].orEmpty()
         check("sid=$sid" in cookies) { "Expected Cookie header with sid=$sid but was: $cookies" }
         check(request.url.queryParameter("sid") == null) {
             "sid must not be sent as a query parameter: ${request.url}"
         }
+    }
+
+    protected fun assertLoginRequested(expected: Int = 1) {
+        assertRequestCount({ it.method == "POST" && it.url.encodedPath.contains("index.cgi") }, expected)
     }
 
     protected fun assertPaymentsRefreshRequested() {
@@ -396,9 +450,11 @@ abstract class BaseAcceptanceTest : KoinTest {
     }
 
     private fun RecordedRequest.isProfileRefresh(): Boolean = url.encodedPath.contains("index.cgi") &&
+        method == "GET" &&
         url.queryParameter(FEES_PAGE_QUERY_PARAM) != FEES_PAGE_INDEX
 
     private fun RecordedRequest.isPaymentsRefresh(): Boolean = url.encodedPath.contains("index.cgi") &&
+        method == "GET" &&
         url.queryParameter(FEES_PAGE_QUERY_PARAM) == FEES_PAGE_INDEX
 
     protected fun pullToRefresh() {
@@ -489,6 +545,7 @@ abstract class BaseAcceptanceTest : KoinTest {
     protected fun resetServerResponses() {
         dispatcher.clear()
         dispatcher.profileResponseFactory = { MockResponse.Builder().code(404).build() }
+        dispatcher.loginResponseFactory = { request -> dispatcher.profileResponseFactory(request) }
         dispatcher.plansResponseFactory = { MockResponse.Builder().body(HtmlFixtures.plans()).build() }
         dispatcher.feesResponseFactory = { _ -> MockResponse.Builder().body(HtmlFixtures.fees()).build() }
     }
@@ -515,7 +572,10 @@ abstract class BaseAcceptanceTest : KoinTest {
         fun recordedRequests(): List<RecordedRequest> = synchronized(recordedRequests) { recordedRequests.toList() }
 
         @Volatile
-        var profileResponseFactory: () -> MockResponse = { MockResponse.Builder().code(404).build() }
+        var profileResponseFactory: (RecordedRequest) -> MockResponse = { MockResponse.Builder().code(404).build() }
+
+        @Volatile
+        var loginResponseFactory: (RecordedRequest) -> MockResponse = { request -> profileResponseFactory(request) }
 
         @Volatile
         var plansResponseFactory: () -> MockResponse = { MockResponse.Builder().body(HtmlFixtures.plans()).build() }
@@ -555,11 +615,11 @@ abstract class BaseAcceptanceTest : KoinTest {
                             .body("Missing language")
                             .build()
                     } else {
-                        profileResponseFactory()
+                        loginResponseFactory(request)
                     }
                 }
 
-                path.contains("index.cgi") -> profileResponseFactory()
+                path.contains("index.cgi") -> profileResponseFactory(request)
 
                 else -> MockResponse.Builder().code(404).build()
             }

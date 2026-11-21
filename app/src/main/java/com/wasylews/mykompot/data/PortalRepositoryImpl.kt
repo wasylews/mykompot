@@ -117,6 +117,10 @@ class PortalRepositoryImpl(
                 return@withContext RefreshResult.Expired
             }
             val response = portalApi.fetchProfile()
+            if (response.code() == HTTP_UNAUTHORIZED) {
+                clearSessionCaches()
+                return@withContext RefreshResult.Expired
+            }
             if (!response.isSuccessful) return@withContext RefreshResult.Failed(PortalFailure.Server)
 
             val page = response.body() ?: return@withContext RefreshResult.Failed(PortalFailure.Parse)
@@ -205,7 +209,13 @@ class PortalRepositoryImpl(
             else -> {
                 val response = portalApi.fetchFees(pg)
                 when {
+                    response.code() == HTTP_UNAUTHORIZED -> {
+                        clearSessionCaches()
+                        PaymentsActionResult.Expired
+                    }
+
                     !response.isSuccessful -> PaymentsActionResult.Failed(PortalFailure.Server)
+
                     else -> handleFeesResponse(response.body(), append)
                 }
             }
@@ -280,6 +290,7 @@ class PortalRepositoryImpl(
 
     private companion object {
         const val STATUS_ACTIVE = "Enable"
+        const val HTTP_UNAUTHORIZED = 401
         const val PAGE_SIZE = 25
         const val PORTAL_LANGUAGE = "english"
         val FEES_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")

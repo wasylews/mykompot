@@ -40,7 +40,9 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
 import okio.IOException
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
+import retrofit2.Call
 import retrofit2.HttpException
 import retrofit2.Response
 import java.time.LocalDate
@@ -228,6 +230,28 @@ class PortalRepositoryImplTest {
             testScheduler = testScheduler,
             profile = profile(),
             api = FakePortalApi(loginPage()),
+        )
+
+        val result = repo.refresh()
+
+        assertEquals(RefreshResult.Expired, result)
+        assertEquals(1, api.fetchCalls)
+        repo.expectProfile(null)
+        repo.expectSession(null)
+    }
+
+    @Test
+    fun `refresh returns expired on 401`() = runTest {
+        val (repo, api) = refreshFixture(
+            testScheduler = testScheduler,
+            profile = profile(),
+            api = FakePortalApi(
+                response = activeProfileResponse(),
+                fetchResponse = Response.error(
+                    401,
+                    "Unauthorized".toResponseBody("text/plain".toMediaType()),
+                ),
+            ),
         )
 
         val result = repo.refresh()
@@ -907,6 +931,30 @@ class PortalRepositoryPaymentsTest {
     }
 
     @Test
+    fun `refreshPayments returns expired on 401`() = runTest {
+        val storage = FakeLocalStorage().apply {
+            saveSession("test-session")
+            saveProfile(profile())
+            savePayments(Payments(items = emptyList(), hasMore = false))
+        }
+        val api = FakePortalApi(
+            response = activeProfileResponse(),
+            feesResponse = Response.error(
+                401,
+                "Unauthorized".toResponseBody("text/plain".toMediaType()),
+            ),
+        )
+        val repo = createPortalRepository(testScheduler, portalApi = api, localStorage = storage)
+
+        val result = repo.refreshPayments()
+
+        assertEquals(PaymentsActionResult.Expired, result)
+        assertNull(storage.sessionFlow().first())
+        assertNull(storage.profileFlow().first())
+        assertNull(storage.paymentsFlow().first())
+    }
+
+    @Test
     fun `refreshPayments returns expired when session is missing`() = runTest {
         val api = FakePortalApi(response = activeProfileResponse())
         val repo = createPortalRepository(testScheduler, portalApi = api)
@@ -992,6 +1040,16 @@ private class FakePortalApi(
                 .build(),
         )
     }
+
+    override fun loginCall(
+        username: String,
+        password: String,
+        language: String,
+    ): Call<ProfilePageResponse> = FakeCall(response = {
+        lastLoginLanguage = language
+        exception?.let { throw it }
+        loginResponse ?: Response.success(response)
+    })
 
     override suspend fun fetchProfile(): Response<ProfilePageResponse> {
         fetchCalls++
