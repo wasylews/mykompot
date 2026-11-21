@@ -35,7 +35,6 @@ import kotlinx.coroutines.withContext
 import okio.IOException
 import org.koin.core.annotation.Singleton
 import retrofit2.HttpException
-import retrofit2.Response
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -55,6 +54,7 @@ class PortalRepositoryImpl(
     private val dispatcher: CoroutineDispatcher,
     private val api: PortalApi,
     private val localStorage: LocalStorage,
+    private val sessionCookieStore: SessionCookieStore,
 ) : PortalRepository {
     override suspend fun login(
         username: String,
@@ -69,9 +69,7 @@ class PortalRepositoryImpl(
             }
 
             val profile = page.toProfile() ?: return@withContext LoginResult.Failed(PortalFailure.Parse)
-            val sid = response.sid() ?: page.sid ?: return@withContext LoginResult.Failed(PortalFailure.Parse)
             localStorage.saveProfile(profile)
-            localStorage.saveSession(sid)
             LoginResult.Success(profile)
         } catch (_: HttpException) {
             LoginResult.Failed(PortalFailure.Server)
@@ -106,15 +104,6 @@ class PortalRepositoryImpl(
         )
     }
 
-    private fun Response<ProfilePageResponse>.sid(): String? = headers()
-        .values("Set-Cookie")
-        .firstNotNullOfOrNull { it.cookieValue(SID_COOKIE) }
-
-    private fun String.cookieValue(name: String): String? = substringAfter(
-        delimiter = "$name=",
-        missingDelimiterValue = "",
-    ).substringBefore(';').takeIf { it.isNotBlank() }
-
     override suspend fun refresh(): RefreshResult = withContext(dispatcher) {
         try {
             val session = sessionFlow().first()
@@ -122,7 +111,7 @@ class PortalRepositoryImpl(
                 clearSessionCaches()
                 return@withContext RefreshResult.Expired
             }
-            val response = api.fetchProfile(session)
+            val response = api.fetchProfile()
             if (!response.isSuccessful) return@withContext RefreshResult.Failed(PortalFailure.Server)
 
             val page = response.body() ?: return@withContext RefreshResult.Failed(PortalFailure.Parse)
@@ -133,11 +122,7 @@ class PortalRepositoryImpl(
             if (page.error != null) return@withContext RefreshResult.Failed(PortalFailure.Server)
 
             val profile = page.toProfile() ?: return@withContext RefreshResult.Failed(PortalFailure.Parse)
-            val sid = response.sid() ?: page.sid
             localStorage.saveProfile(profile)
-            if (sid != null) {
-                localStorage.saveSession(sid)
-            }
             RefreshResult.Updated(profile)
         } catch (_: HttpException) {
             RefreshResult.Failed(PortalFailure.Server)
@@ -148,7 +133,7 @@ class PortalRepositoryImpl(
 
     override fun profileFlow(): Flow<Profile?> = localStorage.profileFlow()
 
-    override fun sessionFlow(): Flow<String?> = localStorage.sessionFlow()
+    override fun sessionFlow(): Flow<String?> = sessionCookieStore.sidFlow()
 
     override fun tariffPlansFlow(): Flow<TariffPlans?> = localStorage.tariffPlansFlow()
 
@@ -213,7 +198,7 @@ class PortalRepositoryImpl(
             }
 
             else -> {
-                val response = api.fetchFees(session, pg)
+                val response = api.fetchFees(pg)
                 when {
                     !response.isSuccessful -> PaymentsActionResult.Failed(PortalFailure.Server)
                     else -> handleFeesResponse(response.body(), append)
@@ -277,7 +262,7 @@ class PortalRepositoryImpl(
 
     private suspend fun clearSessionCaches() {
         localStorage.clearProfile()
-        localStorage.clearSession()
+        sessionCookieStore.clear()
         localStorage.clearPayments()
     }
 
@@ -290,7 +275,6 @@ class PortalRepositoryImpl(
 
     private companion object {
         const val STATUS_ACTIVE = "Enable"
-        const val SID_COOKIE = "sid"
         const val PAGE_SIZE = 25
         const val PORTAL_LANGUAGE = "english"
         val FEES_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")

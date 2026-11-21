@@ -34,9 +34,9 @@ import retrofit2.http.Query
  * (authenticated pages are selected by the `index` query parameter). Plans are served from a
  * separate public `/plans/` page on [BuildConfig.PLANS_BASE_URL].
  *
- * Session state is carried by a `sid` token returned in `Set-Cookie` and/or page markup and passed
- * back as a `sid` query parameter. When a session is no longer valid, the portal responds with its
- * login page instead of the requested data.
+ * Session state is carried by a `sid` cookie returned in `Set-Cookie` and managed by a `CookieJar`.
+ * When a session is no longer valid, the portal responds with its login page instead of the
+ * requested data.
  *
  * The UI language of portal responses depends on the selected language; this client requests
  * English content (`language=english` and `Cookie: language=english`) so parsing can rely on stable
@@ -61,14 +61,10 @@ interface PortalApi {
 
     /**
      * Fetches the Internet/service profile page (`index=43`), which contains account status, tariff,
-     * and next payment information.
-     *
-     * @param sid active session token.
+     * and next payment information. Authentication is carried by the `sid` cookie.
      */
     @GET("/index.cgi?index=43")
-    suspend fun fetchProfile(
-        @Query("sid") sid: String,
-    ): Response<ProfilePageResponse>
+    suspend fun fetchProfile(): Response<ProfilePageResponse>
 
     /**
      * Fetches the public tariff plans page.
@@ -85,12 +81,12 @@ interface PortalApi {
     /**
      * Fetches the fees/payments history page (`index=41`).
      *
-     * @param sid active session token.
+     * Authentication is carried by the `sid` cookie.
+     *
      * @param pg pagination offset/count requested by the portal; `null` fetches the first page.
      */
     @GET("/index.cgi?index=41")
     suspend fun fetchFees(
-        @Query("sid") sid: String,
         @Query("pg") pg: Int? = null,
     ): Response<FeesPageResponse>
 }

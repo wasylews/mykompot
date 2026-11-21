@@ -39,6 +39,7 @@ import androidx.datastore.core.DataStore
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.wasylews.mykompot.data.LocalStorage
+import com.wasylews.mykompot.data.SessionCookieStore
 import com.wasylews.mykompot.data.model.PaymentsEntity
 import com.wasylews.mykompot.data.model.ProfileEntity
 import com.wasylews.mykompot.data.model.TariffPlansEntity
@@ -112,7 +113,7 @@ abstract class BaseAcceptanceTest : KoinTest {
         cancelAllNotifications()
         runBlocking {
             getKoin().get<DataStore<ProfileEntity?>>(named("profile")).updateData { null }
-            getKoin().get<DataStore<String?>>(named("session")).updateData { null }
+            getKoin().get<SessionCookieStore>().clear()
             getKoin().get<DataStore<TariffPlansEntity?>>(named("tariffPlans")).updateData { null }
             getKoin().get<DataStore<PaymentsEntity?>>(named("payments")).updateData { null }
         }
@@ -134,9 +135,8 @@ abstract class BaseAcceptanceTest : KoinTest {
         sid: String = "test-session",
         profile: Profile? = null,
     ) = runBlocking {
-        val storage = get<LocalStorage>()
-        storage.saveSession(sid)
-        if (profile != null) storage.saveProfile(profile)
+        get<SessionCookieStore>().saveSid(sid)
+        if (profile != null) get<LocalStorage>().saveProfile(profile)
     }
 
     protected fun givenStoredTariffPlans(plans: List<TariffPlan> = defaultTariffPlans()) = runBlocking {
@@ -257,7 +257,7 @@ abstract class BaseAcceptanceTest : KoinTest {
     ) {
         givenHomeResponses(
             profileBody = body,
-            profileHeaders = headers,
+            profileHeaders = mapOf("Set-Cookie" to "sid=test-session") + headers,
             profileDelayMillis = delayMillis,
         )
     }
@@ -307,6 +307,16 @@ abstract class BaseAcceptanceTest : KoinTest {
     protected fun assertProfileRefreshRequested() {
         expectedProfileRefreshes++
         assertRequestCount({ it.isProfileRefresh() }, expectedProfileRefreshes)
+    }
+
+    protected fun assertProfileRequestUsesSessionCookie(sid: String) {
+        awaitRequestCondition(5_000) { countRequests { it.isProfileRefresh() } > 0 }
+        val request = dispatcher.recordedRequests().first { it.isProfileRefresh() }
+        val cookies = request.headers["Cookie"].orEmpty()
+        check("sid=$sid" in cookies) { "Expected Cookie header with sid=$sid but was: $cookies" }
+        check(request.url.queryParameter("sid") == null) {
+            "sid must not be sent as a query parameter: ${request.url}"
+        }
     }
 
     protected fun assertPaymentsRefreshRequested() {
@@ -392,9 +402,8 @@ abstract class BaseAcceptanceTest : KoinTest {
     ): String = context.getString(res, *formatArgs)
 
     protected fun assertSessionCleared() = runBlocking {
-        val storage = get<LocalStorage>()
-        assertNull(storage.sessionFlow().first())
-        assertNull(storage.profileFlow().first())
+        assertNull(get<SessionCookieStore>().sidFlow().first())
+        assertNull(get<LocalStorage>().profileFlow().first())
     }
 
     protected fun assertNoNotificationPosted() {

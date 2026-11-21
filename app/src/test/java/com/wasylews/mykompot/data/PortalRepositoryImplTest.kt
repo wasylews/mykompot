@@ -31,6 +31,7 @@ import com.wasylews.mykompot.domain.model.TariffPlansActionResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.runTest
@@ -39,7 +40,6 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
 import okio.IOException
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Test
 import retrofit2.HttpException
 import retrofit2.Response
@@ -157,13 +157,12 @@ class PortalRepositoryImplTest {
     }
 
     @Test
-    fun `session flow emits the saved session`() = runTest {
-        val repo = createPortalRepository(testScheduler)
-        repo.login("user", "pass")
+    fun `session flow emits the stored session cookie`() = runTest {
+        val storage = FakeLocalStorage().apply { saveSession("test-session") }
+        val repo = createPortalRepository(testScheduler, localStorage = storage)
 
         repo.sessionFlow().test {
-            val session = awaitItem()
-            assertFalse(session.isNullOrEmpty())
+            assertEquals("test-session", awaitItem())
         }
     }
 
@@ -212,30 +211,6 @@ class PortalRepositoryImplTest {
         assertEquals(1, api.fetchCalls)
         repo.expectProfile(inactiveProfile())
         repo.expectSession("test-session")
-    }
-
-    @Test
-    fun `refresh persists rotated sid when server returns it`() = runTest {
-        val (repo, api) = refreshFixture(
-            testScheduler = testScheduler,
-            profile = profile(),
-            api = FakePortalApi(
-                activeProfileResponse(),
-                fetchResponse = Response.success(
-                    activeProfileResponse(),
-                    Headers.Builder()
-                        .add("Set-Cookie", "sid=rotated-session")
-                        .build(),
-                ),
-            ),
-        )
-
-        val result = repo.refresh()
-
-        assertEquals(RefreshResult.Updated(profile()), result)
-        assertEquals(1, api.fetchCalls)
-        repo.expectProfile(profile())
-        repo.expectSession("rotated-session")
     }
 
     @Test
@@ -379,21 +354,6 @@ class PortalRepositoryImplTest {
             FakePortalApi(
                 response = activeProfileResponse(),
                 loginResponse = Response.success(null),
-            ),
-        )
-
-        val result = repo.login("user", "pass")
-
-        assertEquals(LoginResult.Failed(PortalFailure.Parse), result)
-    }
-
-    @Test
-    fun `login returns parsing error when session id is missing`() = runTest {
-        val repo = createPortalRepository(
-            testScheduler,
-            FakePortalApi(
-                response = activeProfileResponse(),
-                loginResponse = Response.success(activeProfileResponse()),
             ),
         )
 
@@ -579,10 +539,12 @@ class PortalRepositoryImplTest {
         testScheduler: TestCoroutineScheduler,
         portalApi: PortalApi = FakePortalApi(activeProfileResponse()),
         localStorage: LocalStorage = FakeLocalStorage(),
+        sessionCookieStore: SessionCookieStore = LocalStorageSessionCookieStore(localStorage),
     ): PortalRepositoryImpl = PortalRepositoryImpl(
         dispatcher = StandardTestDispatcher(testScheduler),
         api = portalApi,
         localStorage = localStorage,
+        sessionCookieStore = sessionCookieStore,
     )
 
     private suspend fun refreshFixture(
@@ -948,10 +910,12 @@ class PortalRepositoryPaymentsTest {
         testScheduler: TestCoroutineScheduler,
         portalApi: PortalApi = FakePortalApi(activeProfileResponse()),
         localStorage: LocalStorage = FakeLocalStorage(),
+        sessionCookieStore: SessionCookieStore = LocalStorageSessionCookieStore(localStorage),
     ): PortalRepositoryImpl = PortalRepositoryImpl(
         dispatcher = StandardTestDispatcher(testScheduler),
         api = portalApi,
         localStorage = localStorage,
+        sessionCookieStore = sessionCookieStore,
     )
 
     private fun activeProfileResponse() = ProfilePageResponse(
@@ -1014,7 +978,7 @@ private class FakePortalApi(
         )
     }
 
-    override suspend fun fetchProfile(sid: String): Response<ProfilePageResponse> {
+    override suspend fun fetchProfile(): Response<ProfilePageResponse> {
         fetchCalls++
         fetchException?.let { throw it }
         return fetchResponse ?: Response.success(response)
@@ -1031,10 +995,7 @@ private class FakePortalApi(
         return plansResponse ?: Response.success(PlansPageResponse(emptyList()))
     }
 
-    override suspend fun fetchFees(
-        sid: String,
-        pg: Int?,
-    ): Response<FeesPageResponse> {
+    override suspend fun fetchFees(pg: Int?): Response<FeesPageResponse> {
         fetchFeesCalls++
         feesPgRequests += pg
         feesException?.let { throw it }
@@ -1042,6 +1003,19 @@ private class FakePortalApi(
             ?: feesResponse
             ?: Response.success(FeesPageResponse())
     }
+}
+
+/** Test adapter that keeps the repository seam backed by the existing fake storage. */
+private class LocalStorageSessionCookieStore(
+    private val storage: LocalStorage,
+) : SessionCookieStore {
+    override fun sid(): String? = runBlocking { storage.sessionFlow().first() }
+
+    override fun saveSid(sid: String) = runBlocking { storage.saveSession(sid) }
+
+    override fun clear() = runBlocking { storage.clearSession() }
+
+    override fun sidFlow(): Flow<String?> = storage.sessionFlow()
 }
 
 private class FakeLocalStorage : LocalStorage {

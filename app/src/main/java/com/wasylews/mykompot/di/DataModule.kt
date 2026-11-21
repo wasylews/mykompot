@@ -23,6 +23,9 @@ import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.dataStoreFile
 import com.wasylews.mykompot.BuildConfig
 import com.wasylews.mykompot.data.PortalApi
+import com.wasylews.mykompot.data.PortalCookieJar
+import com.wasylews.mykompot.data.SessionCookieStore
+import com.wasylews.mykompot.data.SharedPreferencesSessionCookieStore
 import com.wasylews.mykompot.data.model.PaymentsEntity
 import com.wasylews.mykompot.data.model.PaymentsSerializer
 import com.wasylews.mykompot.data.model.ProfileEntity
@@ -33,6 +36,7 @@ import com.wasylews.mykompot.data.model.TariffPlansSerializer
 import dev.burnoo.kspoon.Kspoon
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import okhttp3.CookieJar
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import org.koin.core.annotation.ComponentScan
@@ -52,15 +56,14 @@ class DataModule {
     fun providePortalApi(retrofit: Retrofit) = retrofit.create<PortalApi>()
 
     @Singleton
-    fun provideOkHttpClient(): OkHttpClient = OkHttpClient.Builder()
-        .addInterceptor { chain ->
-            chain.proceed(
-                chain.request()
-                    .newBuilder()
-                    .header("Cookie", "language=english")
-                    .build(),
-            )
-        }
+    fun provideSessionCookieStore(context: Context): SessionCookieStore = SharedPreferencesSessionCookieStore(context)
+
+    @Singleton
+    fun provideCookieJar(store: SessionCookieStore): CookieJar = PortalCookieJar(store)
+
+    @Singleton
+    fun provideOkHttpClient(cookieJar: CookieJar): OkHttpClient = OkHttpClient.Builder()
+        .cookieJar(cookieJar)
         .build()
 
     @Singleton

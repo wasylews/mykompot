@@ -47,6 +47,21 @@ class ReturningUserSkipsLoginTest : BaseAcceptanceTest() {
     }
 
     @Test
+    fun profileRefreshUsesSessionCookieInsteadOfSidQuery() {
+        // GIVEN a stored session
+        givenStoredSession(profile = allGoodProfile())
+        givenStoredTariffPlans()
+        givenServerReturnsProfile()
+
+        // WHEN I open the app
+        launch().use {
+            // THEN the profile request carries the session cookie, not a query parameter
+            assertShows(R.string.status_all_good)
+            assertProfileRequestUsesSessionCookie("test-session")
+        }
+    }
+
+    @Test
     fun showsPaymentDueStatus() {
         // GIVEN a saved session with a payment-due profile and refresh returns it
         givenPaymentDueHome()
