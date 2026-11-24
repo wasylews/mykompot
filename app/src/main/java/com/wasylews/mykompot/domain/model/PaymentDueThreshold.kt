@@ -19,14 +19,11 @@ package com.wasylews.mykompot.domain.model
 /**
  * Reminder thresholds relative to the next payment due date.
  *
- * @property daysBeforeDue number of days before the due date when the threshold applies;
- * negative values represent overdue reminders.
+ * @property daysBeforeDue number of days before the due date when the threshold applies.
  */
 enum class PaymentDueThreshold(
     val daysBeforeDue: Long,
 ) {
     THREE_DAYS_BEFORE(3),
-    ONE_DAY_BEFORE(1),
     DUE_DAY(0),
-    OVERDUE(-1),
 }

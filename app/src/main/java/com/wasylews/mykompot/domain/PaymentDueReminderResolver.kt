@@ -25,9 +25,8 @@ import java.time.temporal.ChronoUnit
 /**
  * Decides which payment-due notice, if any, applies to the cached profile right now.
  *
- * Only the heads-up and due-day notices are used; one-day-before and overdue are intentionally
- * omitted to avoid nagging. The decision is made at execution time so it survives time and
- * timezone changes without rescheduling work.
+ * Only the heads-up and due-day notices are used. The decision is made at execution time so it
+ * survives time and timezone changes without rescheduling work.
  */
 object PaymentDueReminderResolver {
     fun resolve(

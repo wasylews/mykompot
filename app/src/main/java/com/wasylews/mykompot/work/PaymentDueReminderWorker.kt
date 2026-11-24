@@ -70,7 +70,7 @@ class PaymentDueReminderWorker(
     }
 
     private fun postNotification(threshold: PaymentDueThreshold): Boolean {
-        val content = notificationContent(threshold) ?: return false
+        val content = notificationContent(threshold)
 
         val channel = NotificationChannel(
             PAYMENT_CHANNEL_ID,
@@ -102,7 +102,7 @@ class PaymentDueReminderWorker(
         return true
     }
 
-    private fun notificationContent(threshold: PaymentDueThreshold): NotificationContent? = when (threshold) {
+    private fun notificationContent(threshold: PaymentDueThreshold): NotificationContent = when (threshold) {
         PaymentDueThreshold.THREE_DAYS_BEFORE -> NotificationContent(
             titleRes = R.string.payment_due_in_three_days_title,
             textRes = R.string.payment_due_in_three_days_text,
@@ -114,8 +114,6 @@ class PaymentDueReminderWorker(
             textRes = R.string.payment_due_today_text,
             notificationId = NOTIFICATION_ID_DUE_DAY,
         )
-
-        else -> null
     }
 
     private data class NotificationContent(
