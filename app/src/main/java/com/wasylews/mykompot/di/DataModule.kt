@@ -42,6 +42,7 @@ import com.wasylews.mykompot.data.model.ProfileEntitySerializer
 import com.wasylews.mykompot.data.model.TariffPlansEntity
 import com.wasylews.mykompot.data.model.TariffPlansSerializer
 import com.wasylews.mykompot.domain.repository.CredentialsStore
+import com.wasylews.mykompot.work.PaymentDueReminderWorker
 import dev.burnoo.kspoon.Kspoon
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -129,6 +130,10 @@ class DataModule {
 
     @Singleton
     fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
+
+    @Singleton
+    @Named("paymentChannelId")
+    fun providePaymentChannelId(): String = PaymentDueReminderWorker.PAYMENT_CHANNEL_ID
 
     @Singleton
     @Named("profile")

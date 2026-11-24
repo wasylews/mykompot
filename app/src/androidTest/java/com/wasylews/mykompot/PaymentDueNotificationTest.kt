@@ -33,22 +33,21 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.FixMethodOrder
 import org.junit.Test
-import org.junit.runners.MethodSorters
 import org.koin.androidx.workmanager.factory.KoinWorkerFactory
 import org.koin.core.context.loadKoinModules
 import org.koin.core.context.unloadKoinModules
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.koin.test.get
 import java.time.LocalDate
 import java.time.ZoneId
 import kotlin.time.Instant
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class PaymentDueNotificationTest : BaseAcceptanceTest() {
     private var appInForeground = false
     private var zone: ZoneId = ZoneId.of("UTC")
+    private lateinit var channelId: String
 
     private val testModule = module {
         single<AppForegroundState> {
@@ -57,22 +56,24 @@ class PaymentDueNotificationTest : BaseAcceptanceTest() {
             }
         }
         single<ZoneId> { zone }
+        single<String>(named("paymentChannelId")) { channelId }
     }
 
     @Before
     fun setUpEnvironment() {
         appInForeground = false
         zone = ZoneId.of("UTC")
+        // Channel importance is sticky even after deletion, so each test gets its own channel id.
+        channelId = "payment_reminders_${System.nanoTime()}"
         clock.set(Instant.parse("2026-10-01T10:00:00Z"))
-        // Channel importance is sticky even after deletion; start every test from a clean slate.
-        notificationManager().deleteNotificationChannel(PAYMENT_CHANNEL_ID)
+        notificationManager().deleteNotificationChannel(channelId)
         loadKoinModules(testModule)
     }
 
     @After
     fun tearDownEnvironment() {
         unloadKoinModules(testModule)
-        notificationManager().deleteNotificationChannel(PAYMENT_CHANNEL_ID)
+        notificationManager().deleteNotificationChannel(channelId)
     }
 
     @Test
@@ -197,9 +198,9 @@ class PaymentDueNotificationTest : BaseAcceptanceTest() {
     }
 
     @Test
-    fun zSkipsReminderWhenChannelIsDisabled() {
+    fun skipsReminderWhenChannelIsDisabled() {
         notificationManager().createNotificationChannel(
-            NotificationChannel(PAYMENT_CHANNEL_ID, "disabled", NotificationManager.IMPORTANCE_NONE),
+            NotificationChannel(channelId, "disabled", NotificationManager.IMPORTANCE_NONE),
         )
         givenStoredSession(profile = ProfileFixtures.profile(nextPaymentDate = TODAY))
 
@@ -238,6 +239,5 @@ class PaymentDueNotificationTest : BaseAcceptanceTest() {
 
     private companion object {
         val TODAY: LocalDate = LocalDate.of(2026, 10, 1)
-        const val PAYMENT_CHANNEL_ID = "payment_reminders"
     }
 }

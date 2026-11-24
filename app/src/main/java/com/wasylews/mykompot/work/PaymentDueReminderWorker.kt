@@ -35,6 +35,7 @@ import com.wasylews.mykompot.domain.model.PaymentDueThreshold
 import com.wasylews.mykompot.presentation.main.MainActivity
 import kotlinx.coroutines.flow.first
 import org.koin.android.annotation.KoinWorker
+import org.koin.core.annotation.Named
 import java.time.ZoneId
 import kotlin.time.Clock
 import kotlin.time.toJavaInstant
@@ -51,6 +52,7 @@ class PaymentDueReminderWorker(
     private val notificationsPermission: NotificationsPermission,
     private val clock: Clock,
     private val zoneId: ZoneId,
+    @Named("paymentChannelId") private val channelId: String,
 ) : CoroutineWorker(appContext, params) {
     override suspend fun doWork(): Result {
         val profile = localStorage.profileFlow().first()
@@ -73,12 +75,12 @@ class PaymentDueReminderWorker(
         val content = notificationContent(threshold)
 
         val channel = NotificationChannel(
-            PAYMENT_CHANNEL_ID,
+            channelId,
             applicationContext.getString(R.string.payment_reminder_channel_name),
             NotificationManager.IMPORTANCE_DEFAULT,
         )
         notificationManager.createNotificationChannel(channel)
-        if (!notificationManager.canPostTo(PAYMENT_CHANNEL_ID)) return false
+        if (!notificationManager.canPostTo(channelId)) return false
 
         val intent = Intent(applicationContext, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -90,7 +92,7 @@ class PaymentDueReminderWorker(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
-        val notification = NotificationCompat.Builder(applicationContext, PAYMENT_CHANNEL_ID)
+        val notification = NotificationCompat.Builder(applicationContext, channelId)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(applicationContext.getString(content.titleRes))
             .setContentText(applicationContext.getString(content.textRes))
@@ -122,9 +124,9 @@ class PaymentDueReminderWorker(
         val notificationId: Int,
     )
 
-    private companion object {
+    companion object {
         const val PAYMENT_CHANNEL_ID = "payment_reminders"
-        const val NOTIFICATION_ID_THREE_DAYS = 2001
-        const val NOTIFICATION_ID_DUE_DAY = 2003
+        private const val NOTIFICATION_ID_THREE_DAYS = 2001
+        private const val NOTIFICATION_ID_DUE_DAY = 2003
     }
 }
