@@ -25,11 +25,10 @@ import com.wasylews.mykompot.domain.ObserveTariffPlans
 import com.wasylews.mykompot.domain.RefreshTariffPlans
 import com.wasylews.mykompot.domain.model.TariffPlan
 import com.wasylews.mykompot.domain.model.TariffPlansActionResult
-import kotlinx.coroutines.CancellationException
+import com.wasylews.mykompot.presentation.catchAsNull
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -93,10 +92,7 @@ class TariffPlansViewModel(
 
     val uiState: StateFlow<TariffPlansUiState> = combine(
         latestPlans,
-        observeStatus.statusFlow().catch { error ->
-            if (error is CancellationException) throw error
-            emit(null)
-        },
+        observeStatus.statusFlow().catchAsNull(),
         isVisible,
         isLoading,
         loadErrorId,

@@ -29,15 +29,14 @@ import com.wasylews.mykompot.domain.model.PaymentSource
 import com.wasylews.mykompot.domain.model.Payments
 import com.wasylews.mykompot.domain.model.PaymentsActionResult
 import com.wasylews.mykompot.domain.model.SessionState
+import com.wasylews.mykompot.presentation.catchAsNull
 import com.wasylews.mykompot.presentation.payments.PaymentMethod
 import com.wasylews.mykompot.presentation.payments.paymentMethods
 import com.wasylews.mykompot.presentation.toErrorId
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
@@ -71,11 +70,7 @@ class PaymentsViewModel(
     private val monobankMethod = paymentMethods.first { it.titleRes == R.string.payment_method_monobank }
 
     private val latestPayments = observePayments()
-        .catch { error ->
-            if (error is CancellationException) throw error
-            paymentsStreamErrorId.value = R.string.error_server
-            emit(null)
-        }
+        .catchAsNull { paymentsStreamErrorId.value = R.string.error_server }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,

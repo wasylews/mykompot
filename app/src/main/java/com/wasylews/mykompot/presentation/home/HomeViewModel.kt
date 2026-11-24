@@ -25,13 +25,12 @@ import com.wasylews.mykompot.domain.RefreshStatus
 import com.wasylews.mykompot.domain.model.AccountStatus
 import com.wasylews.mykompot.domain.model.RefreshResult
 import com.wasylews.mykompot.domain.model.SessionState
+import com.wasylews.mykompot.presentation.catchAsNull
 import com.wasylews.mykompot.presentation.toErrorId
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
@@ -49,10 +48,7 @@ class HomeViewModel(
     private var refreshJob: Job? = null
 
     private val latestStatus = observeStatus.statusFlow()
-        .catch { error ->
-            if (error is CancellationException) throw error
-            emit(null)
-        }
+        .catchAsNull()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,

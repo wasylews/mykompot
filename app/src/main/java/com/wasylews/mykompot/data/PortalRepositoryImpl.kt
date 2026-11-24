@@ -32,9 +32,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
-import okio.IOException
 import org.koin.core.annotation.Singleton
-import retrofit2.HttpException
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -78,10 +76,8 @@ class PortalRepositoryImpl(
             page.sid?.trim()?.takeIf { it.isNotEmpty() }?.let(sessionCookieStore::saveSid)
             localStorage.saveProfile(profile)
             LoginResult.Success(profile)
-        } catch (_: HttpException) {
-            LoginResult.Failed(PortalFailure.Server)
-        } catch (_: IOException) {
-            LoginResult.Failed(PortalFailure.Network)
+        } catch (expectedError: Exception) {
+            LoginResult.Failed(expectedError.toPortalFailure())
         }
     }
 
@@ -130,10 +126,8 @@ class PortalRepositoryImpl(
             val profile = page.toProfile() ?: return@withContext RefreshResult.Failed(PortalFailure.Parse)
             localStorage.saveProfile(profile)
             RefreshResult.Updated(profile)
-        } catch (_: HttpException) {
-            RefreshResult.Failed(PortalFailure.Server)
-        } catch (_: IOException) {
-            RefreshResult.Failed(PortalFailure.Network)
+        } catch (expectedError: Exception) {
+            RefreshResult.Failed(expectedError.toPortalFailure())
         }
     }
 
@@ -179,10 +173,8 @@ class PortalRepositoryImpl(
                 ),
             )
             TariffPlansActionResult.Success
-        } catch (_: HttpException) {
-            TariffPlansActionResult.Failed(PortalFailure.Server)
-        } catch (_: IOException) {
-            TariffPlansActionResult.Failed(PortalFailure.Network)
+        } catch (expectedError: Exception) {
+            TariffPlansActionResult.Failed(expectedError.toPortalFailure())
         }
     }
 
@@ -213,10 +205,8 @@ class PortalRepositoryImpl(
 
             else -> handleFeesResponse(response.body(), pg, append)
         }
-    } catch (_: HttpException) {
-        PaymentsActionResult.Failed(PortalFailure.Server)
-    } catch (_: IOException) {
-        PaymentsActionResult.Failed(PortalFailure.Network)
+    } catch (expectedError: Exception) {
+        PaymentsActionResult.Failed(expectedError.toPortalFailure())
     }
 
     private suspend fun handleFeesResponse(
