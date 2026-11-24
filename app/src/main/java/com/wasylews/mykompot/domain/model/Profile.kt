@@ -29,4 +29,7 @@ data class Profile(
     val isActive: Boolean,
     val nextPaymentDate: LocalDate?,
     val tariffPlan: TariffPlan,
-)
+) {
+    /** Stable identifier of the current tariff plan. */
+    val currentTariffPlanId: String get() = tariffPlan.id
+}

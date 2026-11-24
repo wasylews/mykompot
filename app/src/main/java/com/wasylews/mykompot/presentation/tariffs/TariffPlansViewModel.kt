@@ -98,7 +98,7 @@ class TariffPlansViewModel(
         loadErrorId,
     ) { tariffPlans, status, isVisible, isLoading, loadErrorId ->
         val list = tariffPlans?.plans.orEmpty()
-        val selectedPlanIndex = status?.profile?.tariffPlan?.id?.let { id ->
+        val selectedPlanIndex = status?.profile?.currentTariffPlanId?.let { id ->
             list.indexOfFirst { it.id == id }.takeIf { it >= 0 }
         }
         TariffPlansUiState(
