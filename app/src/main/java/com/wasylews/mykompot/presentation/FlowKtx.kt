@@ -22,9 +22,7 @@ import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 
 /** Emits [null] when the upstream flow fails, after notifying [onError]. Cancellation is not caught. */
-internal fun <T> Flow<T>.catchAsNull(
-    onError: (Throwable) -> Unit = {},
-): Flow<T?> = flow<T?> {
+internal fun <T> Flow<T>.catchAsNull(onError: (Throwable) -> Unit = {}): Flow<T?> = flow<T?> {
     emitAll(this@catchAsNull)
 }.catch { error ->
     onError(error)

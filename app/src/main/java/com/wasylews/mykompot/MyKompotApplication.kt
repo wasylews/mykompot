@@ -29,7 +29,9 @@ import org.koin.core.component.get
 import org.koin.plugin.module.dsl.startKoin
 
 @KoinApplication
-class MyKompotApplication : Application(), KoinComponent {
+class MyKompotApplication :
+    Application(),
+    KoinComponent {
     override fun onCreate() {
         super.onCreate()
         startKoin<MyKompotApplication> {

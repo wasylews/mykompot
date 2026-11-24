@@ -56,8 +56,7 @@ class PaymentDueReminderSchedulerImpl(
             }
     }
 
-    private fun needsReminders(profile: Profile?): Boolean =
-        profile?.isActive == true && profile.nextPaymentDate != null
+    private fun needsReminders(profile: Profile?): Boolean = profile?.isActive == true && profile.nextPaymentDate != null
 
     private fun enqueueDailyWork() {
         val request = PeriodicWorkRequestBuilder<PaymentDueReminderWorker>(

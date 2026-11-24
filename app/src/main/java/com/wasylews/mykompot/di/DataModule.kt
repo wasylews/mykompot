@@ -137,8 +137,7 @@ class DataModule {
 
     @Singleton
     @Named("profile")
-    fun provideProfileDataStore(context: Context): DataStore<ProfileEntity?> =
-        dataStore(context, "profile.json", ProfileEntitySerializer)
+    fun provideProfileDataStore(context: Context): DataStore<ProfileEntity?> = dataStore(context, "profile.json", ProfileEntitySerializer)
 
     @Singleton
     @Named("tariffPlans")
@@ -147,8 +146,7 @@ class DataModule {
 
     @Singleton
     @Named("payments")
-    fun providePaymentsDataStore(context: Context): DataStore<PaymentsEntity?> =
-        dataStore(context, "payments.json", PaymentsSerializer)
+    fun providePaymentsDataStore(context: Context): DataStore<PaymentsEntity?> = dataStore(context, "payments.json", PaymentsSerializer)
 
     @Singleton
     @Named("paymentDueNotified")

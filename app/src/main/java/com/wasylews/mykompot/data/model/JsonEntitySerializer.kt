@@ -43,7 +43,10 @@ abstract class JsonEntitySerializer<T : Any>(
         throw CorruptionException(corruptionMessage, e)
     }
 
-    override suspend fun writeTo(t: T?, output: OutputStream) {
+    override suspend fun writeTo(
+        t: T?,
+        output: OutputStream,
+    ) {
         @Suppress("BlockingMethodInNonBlockingContext") // DataStore calls this on its IO scope
         output.write(json.encodeToString(serializer, t).encodeToByteArray())
     }

@@ -70,7 +70,9 @@ class MainViewModel(
             // dispatcher. A restored sid can therefore exist before the flow reports it; routing
             // must not publish Login during that gap.
             session == SessionState.LoggedIn || portalRepository.hasActiveSession() -> AppRootDestination.Home
+
             !finished && hasCredentialsAtLaunch -> AppRootDestination.Home
+
             else -> AppRootDestination.Login
         }
     }.stateIn(
