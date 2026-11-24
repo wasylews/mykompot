@@ -29,43 +29,33 @@ class RefreshStatusUseCaseTest {
     private val profile = ProfileFixtures.profile(nextPaymentDate = LocalDate.parse("2026-10-04"))
 
     @Test
-    fun `refreshes status and schedules reminders when updated`() = runTest {
+    fun `returns updated status`() = runTest {
         val repository = FakePortalRepository(refreshResult = RefreshResult.Updated(profile), profile = profile)
-        val paymentScheduler = FakePaymentDueReminderScheduler()
-        val useCase = RefreshStatusUseCase(repository, paymentScheduler)
+        val useCase = RefreshStatusUseCase(repository)
 
         val result = useCase()
 
         assertEquals(RefreshResult.Updated(profile), result)
         assertEquals(1, repository.refreshCalls)
-        assertEquals(1, paymentScheduler.scheduleCalls)
-        assertEquals(profile, paymentScheduler.lastScheduledProfile)
-        assertEquals(0, paymentScheduler.cancelCalls)
     }
 
     @Test
-    fun `cancels reminders when session expires`() = runTest {
+    fun `returns expired status`() = runTest {
         val repository = FakePortalRepository(refreshResult = RefreshResult.Expired)
-        val paymentScheduler = FakePaymentDueReminderScheduler()
-        val useCase = RefreshStatusUseCase(repository, paymentScheduler)
+        val useCase = RefreshStatusUseCase(repository)
 
         val result = useCase()
 
         assertEquals(RefreshResult.Expired, result)
-        assertEquals(0, paymentScheduler.scheduleCalls)
-        assertEquals(1, paymentScheduler.cancelCalls)
     }
 
     @Test
-    fun `does not change reminders when refresh fails`() = runTest {
+    fun `returns failure`() = runTest {
         val repository = FakePortalRepository(refreshResult = RefreshResult.Failed(PortalFailure.Network))
-        val paymentScheduler = FakePaymentDueReminderScheduler()
-        val useCase = RefreshStatusUseCase(repository, paymentScheduler)
+        val useCase = RefreshStatusUseCase(repository)
 
         val result = useCase()
 
         assertEquals(RefreshResult.Failed(PortalFailure.Network), result)
-        assertEquals(0, paymentScheduler.scheduleCalls)
-        assertEquals(0, paymentScheduler.cancelCalls)
     }
 }

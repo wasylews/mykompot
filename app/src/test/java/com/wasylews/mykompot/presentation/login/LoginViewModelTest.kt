@@ -20,7 +20,6 @@ import app.cash.turbine.test
 import com.wasylews.mykompot.ProfileFixtures
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.FakeCredentialsStore
-import com.wasylews.mykompot.domain.FakePaymentDueReminderScheduler
 import com.wasylews.mykompot.domain.model.Credentials
 import com.wasylews.mykompot.domain.model.LoginResult
 import com.wasylews.mykompot.domain.model.PortalFailure
@@ -44,10 +43,9 @@ class LoginViewModelTest : BaseViewModelTest() {
     private val profile = ProfileFixtures.profile(nextPaymentDate = LocalDate.parse("2026-10-04"))
 
     @Test
-    fun `successful login completes without error and schedules reminders`() = runTest {
+    fun `successful login completes without error`() = runTest {
         // GIVEN
-        val paymentScheduler = FakePaymentDueReminderScheduler()
-        val vm = loginViewModel(successLogin(profile), paymentScheduler, profile = profile)
+        val vm = loginViewModel(successLogin(profile), profile = profile)
 
         // WHEN
         vm.login()
@@ -56,8 +54,6 @@ class LoginViewModelTest : BaseViewModelTest() {
         // THEN
         assertFalse(vm.uiState.value.isLoading)
         assertNull(vm.uiState.value.errorId)
-        assertEquals(1, paymentScheduler.scheduleCalls)
-        assertEquals(profile, paymentScheduler.lastScheduledProfile)
     }
 
     @Test
@@ -66,7 +62,6 @@ class LoginViewModelTest : BaseViewModelTest() {
         val repository = FakePortalRepository(successLogin(profile), profile = profile)
         val vm = LoginViewModel(
             repository,
-            FakePaymentDueReminderScheduler(),
             FakeCredentialsStore(),
         ).apply {
             usernameState.edit { replace(0, length, "user") }
@@ -161,12 +156,8 @@ class LoginViewModelTest : BaseViewModelTest() {
     @Test
     fun `empty credentials are rejected without starting login`() = runTest {
         // GIVEN
-        val paymentScheduler = FakePaymentDueReminderScheduler()
-        val vm = LoginViewModel(
-            FakePortalRepository(successLogin(profile), profile = profile),
-            paymentScheduler,
-            FakeCredentialsStore(),
-        )
+        val repository = FakePortalRepository(successLogin(profile), profile = profile)
+        val vm = LoginViewModel(repository, FakeCredentialsStore())
 
         // WHEN
         vm.login()
@@ -177,7 +168,7 @@ class LoginViewModelTest : BaseViewModelTest() {
         assertFalse(vm.isPasswordValid)
         assertFalse(vm.uiState.value.isLoading)
         assertNull(vm.uiState.value.errorId)
-        assertEquals(0, paymentScheduler.scheduleCalls)
+        assertEquals(0, repository.loginCalls)
     }
 
     @Test
@@ -199,7 +190,7 @@ class LoginViewModelTest : BaseViewModelTest() {
     }
 
     @Test
-    fun `login failure maps to error, can be cleared, and does not schedule reminders`() = runTest {
+    fun `login failure maps to error and can be cleared`() = runTest {
         val cases = listOf(
             LoginResult.InvalidCredentials to R.string.error_invalid_credentials,
             LoginResult.Failed(PortalFailure.Network) to R.string.error_no_connection,
@@ -209,8 +200,7 @@ class LoginViewModelTest : BaseViewModelTest() {
 
         cases.forEach { (result, expectedError) ->
             // GIVEN
-            val paymentScheduler = FakePaymentDueReminderScheduler()
-            val vm = loginViewModel(result, paymentScheduler)
+            val vm = loginViewModel(result)
 
             // WHEN
             vm.login()
@@ -219,7 +209,6 @@ class LoginViewModelTest : BaseViewModelTest() {
             // THEN
             assertEquals(expectedError, vm.uiState.value.errorId)
             assertFalse(vm.uiState.value.isLoading)
-            assertEquals(0, paymentScheduler.scheduleCalls)
 
             vm.clearError()
             assertNull(vm.uiState.value.errorId)
@@ -228,12 +217,10 @@ class LoginViewModelTest : BaseViewModelTest() {
 
     private fun loginViewModel(
         result: LoginResult,
-        paymentScheduler: FakePaymentDueReminderScheduler = FakePaymentDueReminderScheduler(),
         profile: Profile? = this.profile,
         credentialsStore: CredentialsStore = FakeCredentialsStore(),
     ): LoginViewModel = LoginViewModel(
         FakePortalRepository(result, profile = profile),
-        paymentScheduler,
         credentialsStore,
     ).apply {
         usernameState.edit { replace(0, length, "user") }

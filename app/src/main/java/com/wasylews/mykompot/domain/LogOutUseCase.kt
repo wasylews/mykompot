@@ -25,16 +25,14 @@ fun interface LogOut {
     suspend operator fun invoke()
 }
 
-/** Forgets the local session, remembered credentials and payment reminders. */
+/** Forgets the local session and remembered credentials. */
 @Factory
 class LogOutUseCase(
     private val repository: PortalRepository,
     private val credentialsStore: CredentialsStore,
-    private val paymentDueReminderScheduler: PaymentDueReminderScheduler,
 ) : LogOut {
     override suspend fun invoke() {
         repository.logOut()
         credentialsStore.clear()
-        paymentDueReminderScheduler.cancel()
     }
 }

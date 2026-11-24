@@ -25,17 +25,15 @@ import org.junit.Test
 
 class LogOutUseCaseTest {
     @Test
-    fun `logout clears portal state, forgets credentials and cancels reminders`() = runTest {
+    fun `logout clears portal state and forgets credentials`() = runTest {
         val repository = FakePortalRepository()
         val credentialsStore = FakeCredentialsStore().apply {
             save(Credentials("user", "pass"))
         }
-        val paymentScheduler = FakePaymentDueReminderScheduler()
 
-        LogOutUseCase(repository, credentialsStore, paymentScheduler)()
+        LogOutUseCase(repository, credentialsStore)()
 
         assertEquals(1, repository.logOutCalls)
         assertNull(credentialsStore.read())
-        assertEquals(1, paymentScheduler.cancelCalls)
     }
 }

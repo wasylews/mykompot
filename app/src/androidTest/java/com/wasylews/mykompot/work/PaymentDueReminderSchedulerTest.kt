@@ -20,7 +20,17 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import com.wasylews.mykompot.FakePaymentDueNotifiedStore
 import com.wasylews.mykompot.ProfileFixtures
-import kotlinx.coroutines.runBlocking
+import com.wasylews.mykompot.data.LocalStorage
+import com.wasylews.mykompot.domain.model.Payments
+import com.wasylews.mykompot.domain.model.Profile
+import com.wasylews.mykompot.domain.model.TariffPlans
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -28,69 +38,117 @@ import org.junit.Test
 import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class PaymentDueReminderSchedulerTest : BaseWorkManagerSchedulerTest() {
     private val notifiedStore = FakePaymentDueNotifiedStore()
+    private val localStorage = FakeLocalStorage()
 
-    private fun scheduler() = PaymentDueReminderSchedulerImpl(workManager, notifiedStore)
+    private fun scheduler() = PaymentDueReminderSchedulerImpl(workManager, localStorage, notifiedStore)
 
     @Test
-    fun enqueuesOneDailyPeriodicWork() {
-        scheduler().schedule(ProfileFixtures.profile(nextPaymentDate = LocalDate.parse("2026-10-04")))
+    fun enqueuesOneDailyPeriodicWorkWhenProfileCanNeedReminders() = runTest {
+        val job = launch { scheduler().start() }
+
+        localStorage.saveProfile(dueProfile())
+        advanceUntilIdle()
 
         assertDailyWork(WorkInfo.State.ENQUEUED)
+        job.cancel()
     }
 
     @Test
-    fun repeatedScheduleKeepsSingleWork() {
-        val scheduler = scheduler()
-        scheduler.schedule(ProfileFixtures.profile(nextPaymentDate = LocalDate.parse("2026-10-04")))
-        scheduler.schedule(ProfileFixtures.profile(nextPaymentDate = LocalDate.parse("2026-11-01")))
+    fun keepsSingleWorkWhenProfileChanges() = runTest {
+        val job = launch { scheduler().start() }
+
+        localStorage.saveProfile(dueProfile(LocalDate.parse("2026-10-04")))
+        advanceUntilIdle()
+        localStorage.saveProfile(dueProfile(LocalDate.parse("2026-11-01")))
+        advanceUntilIdle()
 
         val infos = workManager.getWorkInfosForUniqueWork(PaymentDueReminderSchedulerImpl.DAILY_WORK_NAME).get()
         assertEquals(1, infos.size)
         assertEquals(WorkInfo.State.ENQUEUED, infos.single().state)
+        job.cancel()
     }
 
     @Test
-    fun cancelsDailyWorkWhenProfileCannotNeedReminders() {
-        val scheduler = scheduler()
-        listOf(
+    fun cancelsDailyWorkWhenProfileCannotNeedReminders() = runTest {
+        val job = launch { scheduler().start() }
+
+        listOf<Profile?>(
             null,
-            ProfileFixtures.profile(nextPaymentDate = LocalDate.parse("2026-10-04")).copy(isActive = false),
-            ProfileFixtures.profile(nextPaymentDate = null),
+            dueProfile().copy(isActive = false),
+            dueProfile(nextPaymentDate = null),
         ).forEach { invalidProfile ->
-            scheduler.schedule(ProfileFixtures.profile(nextPaymentDate = LocalDate.parse("2026-10-04")))
-            scheduler.schedule(invalidProfile)
+            localStorage.saveProfile(dueProfile())
+            advanceUntilIdle()
+            localStorage.setProfile(invalidProfile)
+            advanceUntilIdle()
+
             assertDailyWork(WorkInfo.State.CANCELLED)
         }
+        job.cancel()
     }
 
     @Test
-    fun cancelsLegacyOneShotReminders() {
+    fun cancelsLegacyOneShotReminders() = runTest {
         val legacy = OneTimeWorkRequestBuilder<PaymentDueReminderWorker>()
             .setInitialDelay(10, TimeUnit.MINUTES)
             .addTag(PaymentDueReminderSchedulerImpl.LEGACY_REMINDER_TAG)
             .build()
         workManager.enqueue(legacy)
+        val job = launch { scheduler().start() }
 
-        scheduler().schedule(ProfileFixtures.profile(nextPaymentDate = LocalDate.parse("2026-10-04")))
+        localStorage.saveProfile(dueProfile())
+        advanceUntilIdle()
 
         val infos = workManager.getWorkInfosByTag(PaymentDueReminderSchedulerImpl.LEGACY_REMINDER_TAG).get()
         assertTrue(infos.isNotEmpty())
         assertTrue(infos.all { it.state == WorkInfo.State.CANCELLED })
+        job.cancel()
     }
 
     @Test
-    fun cancelClearsNotifiedLedger() = runBlocking {
-        val scheduler = scheduler()
-        scheduler.schedule(ProfileFixtures.profile(nextPaymentDate = LocalDate.parse("2026-10-01")))
-        notifiedStore.markNotified("DUE_DAY|2026-10-01")
+    fun clearsNotifiedLedgerWhenProfileCannotNeedReminders() = runTest {
+        val job = launch { scheduler().start() }
+        val ledgerKey = "DUE_DAY|2026-10-04"
 
-        scheduler.cancel()
+        listOf<Profile?>(
+            null,
+            dueProfile().copy(isActive = false),
+            dueProfile(nextPaymentDate = null),
+        ).forEach { invalidProfile ->
+            localStorage.saveProfile(dueProfile())
+            advanceUntilIdle()
+            notifiedStore.markNotified(ledgerKey)
+            assertTrue(notifiedStore.isNotified(ledgerKey))
 
-        assertDailyWork(WorkInfo.State.CANCELLED)
-        assertFalse(notifiedStore.isNotified("DUE_DAY|2026-10-01"))
+            localStorage.setProfile(invalidProfile)
+            advanceUntilIdle()
+
+            assertFalse(notifiedStore.isNotified(ledgerKey))
+            assertDailyWork(WorkInfo.State.CANCELLED)
+        }
+        job.cancel()
     }
+
+    @Test
+    fun doesNotCreateWorkWhenNoProfileIsStoredAtStartup() = runTest {
+        val job = launch { scheduler().start() }
+
+        advanceUntilIdle()
+
+        val infos = workManager.getWorkInfosForUniqueWork(PaymentDueReminderSchedulerImpl.DAILY_WORK_NAME).get()
+        assertTrue(infos.isEmpty())
+        job.cancel()
+    }
+
+    private suspend fun FakeLocalStorage.setProfile(profile: Profile?) {
+        if (profile == null) clearProfile() else saveProfile(profile)
+    }
+
+    private fun dueProfile(nextPaymentDate: LocalDate? = LocalDate.parse("2026-10-04")) =
+        ProfileFixtures.profile(nextPaymentDate = nextPaymentDate)
 
     private fun assertDailyWork(state: WorkInfo.State) {
         val infos = workManager.getWorkInfosForUniqueWork(PaymentDueReminderSchedulerImpl.DAILY_WORK_NAME).get()
@@ -98,4 +156,28 @@ class PaymentDueReminderSchedulerTest : BaseWorkManagerSchedulerTest() {
         assertEquals(state, infos.single().state)
         assertTrue(infos.single().tags.contains(PaymentDueReminderSchedulerImpl.REMINDER_TAG))
     }
+}
+
+private class FakeLocalStorage : LocalStorage {
+    private val profile = MutableStateFlow<Profile?>(null)
+
+    override suspend fun saveProfile(profile: Profile) {
+        this.profile.value = profile
+    }
+
+    override fun profileFlow(): Flow<Profile?> = profile.asStateFlow()
+
+    override suspend fun clearProfile() {
+        profile.value = null
+    }
+
+    override fun tariffPlansFlow(): Flow<TariffPlans?> = MutableStateFlow(null)
+
+    override suspend fun saveTariffPlans(tariffPlans: TariffPlans) = Unit
+
+    override fun paymentsFlow(): Flow<Payments?> = MutableStateFlow(null)
+
+    override suspend fun savePayments(payments: Payments) = Unit
+
+    override suspend fun clearPayments() = Unit
 }

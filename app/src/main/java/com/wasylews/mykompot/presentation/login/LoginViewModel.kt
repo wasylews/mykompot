@@ -22,7 +22,6 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wasylews.mykompot.R
-import com.wasylews.mykompot.domain.PaymentDueReminderScheduler
 import com.wasylews.mykompot.domain.model.Credentials
 import com.wasylews.mykompot.domain.model.LoginResult
 import com.wasylews.mykompot.domain.repository.CredentialsStore
@@ -38,7 +37,6 @@ import org.koin.core.annotation.KoinViewModel
 @KoinViewModel
 class LoginViewModel(
     private val repository: PortalRepository,
-    private val paymentDueReminderScheduler: PaymentDueReminderScheduler,
     private val credentialsStore: CredentialsStore,
 ) : ViewModel() {
     private val inputValidationRegex = """\w+""".toRegex()
@@ -71,7 +69,6 @@ class LoginViewModel(
                 if (rememberMe) {
                     credentialsStore.save(credentials)
                 }
-                paymentDueReminderScheduler.schedule(result.profile)
                 null
             }
 

@@ -36,12 +36,11 @@ fun interface RestoreSession {
 class RestoreSessionUseCase(
     private val credentialsStore: CredentialsStore,
     private val repository: PortalRepository,
-    private val paymentDueReminderScheduler: PaymentDueReminderScheduler,
 ) : RestoreSession {
     override suspend fun invoke() {
         val credentials = credentialsStore.read() ?: return
-        when (val result = repository.login(credentials)) {
-            is LoginResult.Success -> paymentDueReminderScheduler.schedule(result.profile)
+        when (repository.login(credentials)) {
+            is LoginResult.Success -> Unit
             LoginResult.InvalidCredentials -> credentialsStore.clear()
             is LoginResult.Failed -> Unit
         }

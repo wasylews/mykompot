@@ -28,31 +28,26 @@ import org.junit.Test
 
 class RestoreSessionUseCaseTest {
     @Test
-    fun `restores remembered credentials and schedules reminders`() = runTest {
+    fun `restores remembered credentials`() = runTest {
         val credentials = Credentials("user", "pass")
         val credentialsStore = FakeCredentialsStore().apply { save(credentials) }
         val profile = profile()
         val repository = FakePortalRepository(result = successLogin(profile))
-        val scheduler = FakePaymentDueReminderScheduler()
 
-        RestoreSessionUseCase(credentialsStore, repository, scheduler).invoke()
+        RestoreSessionUseCase(credentialsStore, repository).invoke()
 
         assertEquals(1, repository.loginCalls)
         assertEquals(credentials, repository.lastLogin)
-        assertEquals(1, scheduler.scheduleCalls)
-        assertEquals(profile, scheduler.lastScheduledProfile)
         assertEquals(credentials, credentialsStore.read())
     }
 
     @Test
     fun `does nothing without remembered credentials`() = runTest {
         val repository = FakePortalRepository()
-        val scheduler = FakePaymentDueReminderScheduler()
 
-        RestoreSessionUseCase(FakeCredentialsStore(), repository, scheduler).invoke()
+        RestoreSessionUseCase(FakeCredentialsStore(), repository).invoke()
 
         assertEquals(0, repository.loginCalls)
-        assertEquals(0, scheduler.scheduleCalls)
     }
 
     @Test
@@ -61,13 +56,11 @@ class RestoreSessionUseCaseTest {
             save(Credentials("bad-user", "bad-pass"))
         }
         val repository = FakePortalRepository(result = LoginResult.InvalidCredentials)
-        val scheduler = FakePaymentDueReminderScheduler()
 
-        RestoreSessionUseCase(credentialsStore, repository, scheduler).invoke()
+        RestoreSessionUseCase(credentialsStore, repository).invoke()
 
         assertEquals(1, repository.loginCalls)
         assertEquals(null, credentialsStore.read())
-        assertEquals(0, scheduler.scheduleCalls)
     }
 
     @Test
@@ -75,12 +68,10 @@ class RestoreSessionUseCaseTest {
         val credentials = Credentials("user", "pass")
         val credentialsStore = FakeCredentialsStore().apply { save(credentials) }
         val repository = FakePortalRepository(result = LoginResult.Failed(PortalFailure.Network))
-        val scheduler = FakePaymentDueReminderScheduler()
 
-        RestoreSessionUseCase(credentialsStore, repository, scheduler).invoke()
+        RestoreSessionUseCase(credentialsStore, repository).invoke()
 
         assertEquals(1, repository.loginCalls)
         assertEquals(credentials, credentialsStore.read())
-        assertEquals(0, scheduler.scheduleCalls)
     }
 }

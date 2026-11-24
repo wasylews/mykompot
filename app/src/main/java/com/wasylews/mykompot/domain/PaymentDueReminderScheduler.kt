@@ -16,13 +16,12 @@
 
 package com.wasylews.mykompot.domain
 
-import com.wasylews.mykompot.domain.model.Profile
-
-/** Starts or stops the daily background check for payment-due reminders. */
+/** Keeps payment-due reminders in sync with the cached profile. */
 interface PaymentDueReminderScheduler {
-    /** Keeps the daily check running while [profile] can need reminders. */
-    fun schedule(profile: Profile?)
-
-    /** Stops the daily check and forgets which reminders were already posted. */
-    suspend fun cancel()
+    /**
+     * Starts observing the cached profile.
+     *
+     * Observation ends when the calling coroutine's scope is cancelled.
+     */
+    suspend fun start()
 }

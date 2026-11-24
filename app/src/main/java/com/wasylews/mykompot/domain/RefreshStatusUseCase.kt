@@ -20,32 +20,15 @@ import com.wasylews.mykompot.domain.model.RefreshResult
 import com.wasylews.mykompot.domain.repository.PortalRepository
 import org.koin.core.annotation.Factory
 
-/** Refreshes account status/profile and updates related background schedules. */
+/** Refreshes account status from the portal. */
 fun interface RefreshStatus {
     suspend operator fun invoke(): RefreshResult
 }
 
-/**
- * Refreshes profile data from [PortalRepository] and keeps payment reminders in sync.
- */
+/** Refreshes profile data from [PortalRepository]. */
 @Factory
 class RefreshStatusUseCase(
     private val repository: PortalRepository,
-    private val paymentDueReminderScheduler: PaymentDueReminderScheduler,
 ) : RefreshStatus {
-    override suspend fun invoke(): RefreshResult = when (val result = repository.refresh()) {
-        is RefreshResult.Updated -> {
-            paymentDueReminderScheduler.schedule(result.profile)
-            result
-        }
-
-        RefreshResult.Expired -> {
-            paymentDueReminderScheduler.cancel()
-            result
-        }
-
-        is RefreshResult.Failed -> {
-            result
-        }
-    }
+    override suspend fun invoke(): RefreshResult = repository.refresh()
 }
