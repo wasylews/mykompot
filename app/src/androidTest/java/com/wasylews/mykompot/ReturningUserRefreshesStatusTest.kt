@@ -38,7 +38,7 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
             // AND a non-blocking refresh error with a way to retry without losing the status
             assertShowsRefreshError(R.string.error_server)
             assertShows(R.string.retry)
-            assertRefreshRequested()
+            assertProfileRefreshRequested()
         }
     }
 
@@ -52,7 +52,7 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
         launch().use {
             // THEN the content updates to the server profile
             assertShows(R.string.status_all_good)
-            assertRefreshRequested()
+            assertProfileRefreshRequested()
         }
     }
 
@@ -70,7 +70,7 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
             assertShows(R.string.tariff)
             composeRule.onNodeWithTag(STATUS_TARIFF_NAME_TEST_TAG, useUnmergedTree = true).assertExists()
             composeRule.onNodeWithTag(STATUS_TARIFF_PRICE_TEST_TAG, useUnmergedTree = true).assertExists()
-            assertRefreshRequested()
+            assertProfileRefreshRequested()
         }
     }
 
@@ -88,7 +88,7 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
 
             // AND the status once the server responds
             assertShows(R.string.status_all_good)
-            assertRefreshRequested()
+            assertProfileRefreshRequested()
         }
     }
 
@@ -116,7 +116,7 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
             // THEN I see the suspended status without a next charge date
             assertShows(R.string.status_suspended)
             assertDoesNotShow(R.string.due)
-            assertRefreshRequested()
+            assertProfileRefreshRequested()
         }
     }
 
@@ -134,7 +134,7 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
             // AND the unknown status with the failure reason once refresh fails with no cache
             assertShows(R.string.status_unknown)
             assertShowsRefreshError(R.string.error_server)
-            assertRefreshRequested()
+            assertProfileRefreshRequested()
         }
     }
 
@@ -149,7 +149,7 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
             assertShowsHomeLoading()
             assertDoesNotShow(R.string.status_unknown)
             assertShows(R.string.status_unknown)
-            assertRefreshRequested()
+            assertProfileRefreshRequested()
 
             // WHEN the server is back and I tap retry
             givenServerReturnsProfile()
@@ -170,7 +170,7 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
         launch().use {
             // THEN I am taken back to login
             assertShows(R.string.username)
-            assertRefreshRequested()
+            assertProfileRefreshRequested()
         }
     }
 
@@ -188,7 +188,7 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
             assertDoesNotShow(R.string.username)
             // AND a non-blocking refresh error
             assertShowsRefreshError(R.string.error_server)
-            assertRefreshRequested()
+            assertProfileRefreshRequested()
         }
     }
 
@@ -202,7 +202,7 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
             // THEN I see the unknown status after the failed background refresh
             assertShowsHomeLoading()
             assertShows(R.string.status_unknown)
-            assertRefreshRequested()
+            assertProfileRefreshRequested()
             assertPaymentsRefreshRequested()
 
             // WHEN the server recovers and I pull to refresh
@@ -214,7 +214,7 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
             assertNoRefreshIndicator()
 
             // AND both the status and payments are refreshed again
-            assertRefreshRequested()
+            assertProfileRefreshRequested()
             assertPaymentsRefreshRequested()
             assertShows(R.string.status_all_good)
         }
@@ -230,7 +230,7 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
         launch().use {
             assertShows(R.string.status_all_good)
             assertNoRefreshIndicator()
-            assertRefreshRequested()
+            assertProfileRefreshRequested()
             assertPaymentsRefreshRequested()
 
             // WHEN I pull while the background refresh is still running
@@ -255,7 +255,7 @@ class ReturningUserRefreshesStatusTest : BaseAcceptanceTest() {
         launch().use {
             // THEN I see the refreshed status
             assertShows(R.string.status_all_good)
-            assertRefreshRequested()
+            assertProfileRefreshRequested()
 
             // WHEN the server fails and I pull to refresh
             givenServerIsUnreachable()

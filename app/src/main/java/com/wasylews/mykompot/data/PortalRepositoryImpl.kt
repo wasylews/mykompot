@@ -303,7 +303,6 @@ class PortalRepositoryImpl(
         const val STATUS_ACTIVE = "Enable"
         const val HTTP_UNAUTHORIZED = 401
         const val PAGE_SIZE = 25
-        const val PORTAL_LANGUAGE = "english"
         val FEES_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
     }
 }

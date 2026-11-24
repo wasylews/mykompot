@@ -16,29 +16,7 @@
 
 package com.wasylews.mykompot.data.model
 
-import androidx.datastore.core.CorruptionException
-import androidx.datastore.core.Serializer
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.json.Json
-import java.io.InputStream
-import java.io.OutputStream
-
-object PaymentDueNotifiedSerializer : Serializer<PaymentDueNotifiedEntity?> {
-    override val defaultValue: PaymentDueNotifiedEntity? = null
-
-    private val json = Json { ignoreUnknownKeys = true }
-
-    override suspend fun readFrom(input: InputStream): PaymentDueNotifiedEntity? = try {
-        json.decodeFromString<PaymentDueNotifiedEntity?>(input.readBytes().decodeToString())
-    } catch (e: SerializationException) {
-        throw CorruptionException("Unable to read payment reminder ledger.", e)
-    }
-
-    override suspend fun writeTo(
-        t: PaymentDueNotifiedEntity?,
-        output: OutputStream,
-    ) {
-        @Suppress("BlockingMethodInNonBlockingContext") // DataStore calls this on its IO scope
-        output.write(json.encodeToString<PaymentDueNotifiedEntity?>(t).encodeToByteArray())
-    }
-}
+object PaymentDueNotifiedSerializer : JsonEntitySerializer<PaymentDueNotifiedEntity>(
+    PaymentDueNotifiedEntity.serializer(),
+    "Unable to read payment reminder ledger.",
+)

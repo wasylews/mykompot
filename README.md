@@ -1,6 +1,6 @@
 # MyKompot
 
-MyKompot is an unofficial Android client for the [Kompot](https://kompot.uz.ua) ISP customer portal. It lets you sign in, check account status and tariff details, review payment history, open payment methods, and receive payment/session reminders.
+MyKompot is an unofficial Android client for the [Kompot](https://kompot.uz.ua) ISP customer portal. It lets you sign in, check account status and tariff details, review payment history, open payment methods, and receive payment reminders.
 
 ## Screenshots
 
@@ -22,7 +22,7 @@ MyKompot is an unofficial Android client for the [Kompot](https://kompot.uz.ua) 
 - **Tariff details** and available plans
 - **Payments history** with pagination and pull-to-refresh
 - **Quick payment actions** (Privat24, monobank, EasyPay)
-- **Reminders & notifications** for upcoming/overdue payments and expired sessions (with permission)
+- **Reminders & notifications** for upcoming payments (with permission)
 - **Cached/offline-friendly data** with refresh from the portal when available
 
 ## Tech stack
@@ -31,7 +31,7 @@ MyKompot is an unofficial Android client for the [Kompot](https://kompot.uz.ua) 
 - Koin (DI)
 - Retrofit + Kspoon (HTML scraping/parsing)
 - DataStore (local persistence)
-- WorkManager (background/session and reminder scheduling)
+- WorkManager (background payment reminder scheduling)
 
 ## Build
 

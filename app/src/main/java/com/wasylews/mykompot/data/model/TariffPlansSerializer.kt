@@ -16,29 +16,7 @@
 
 package com.wasylews.mykompot.data.model
 
-import androidx.datastore.core.CorruptionException
-import androidx.datastore.core.Serializer
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.json.Json
-import java.io.InputStream
-import java.io.OutputStream
-
-object TariffPlansSerializer : Serializer<TariffPlansEntity?> {
-    override val defaultValue: TariffPlansEntity? = null
-
-    private val json = Json { ignoreUnknownKeys = true }
-
-    override suspend fun readFrom(input: InputStream): TariffPlansEntity? = try {
-        json.decodeFromString<TariffPlansEntity?>(input.readBytes().decodeToString())
-    } catch (e: SerializationException) {
-        throw CorruptionException("Unable to read the stored tariff plans.", e)
-    }
-
-    override suspend fun writeTo(
-        t: TariffPlansEntity?,
-        output: OutputStream,
-    ) {
-        @Suppress("BlockingMethodInNonBlockingContext") // DataStore calls this on its IO scope
-        output.write(json.encodeToString<TariffPlansEntity?>(t).encodeToByteArray())
-    }
-}
+object TariffPlansSerializer : JsonEntitySerializer<TariffPlansEntity>(
+    TariffPlansEntity.serializer(),
+    "Unable to read the stored tariff plans.",
+)

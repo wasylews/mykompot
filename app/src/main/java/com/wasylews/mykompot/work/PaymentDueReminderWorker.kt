@@ -91,7 +91,7 @@ class PaymentDueReminderWorker(
         )
 
         val notification = NotificationCompat.Builder(applicationContext, PAYMENT_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(applicationContext.getString(content.titleRes))
             .setContentText(applicationContext.getString(content.textRes))
             .setContentIntent(pendingIntent)

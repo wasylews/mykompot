@@ -48,13 +48,7 @@ internal fun BaseAcceptanceTest.givenLoginResponse(
     body: String = "",
     status: Int = 200,
     headers: Map<String, String> = emptyMap(),
-) {
-    val builder = MockResponse.Builder()
-        .code(status)
-        .body(body)
-    headers.forEach { (name, value) -> builder.addHeader(name, value) }
-    dispatcher.enqueueLogin(builder.build())
-}
+) = dispatcher.enqueueLogin(response(body, status, headers))
 
 internal fun BaseAcceptanceTest.givenHomeResponses(
     profileBody: String = HtmlFixtures.profile(),
@@ -182,10 +176,6 @@ internal fun BaseAcceptanceTest.givenFeesPages(
             response(body = page1)
         }
     }
-}
-
-internal fun BaseAcceptanceTest.assertRefreshRequested() {
-    assertProfileRefreshRequested()
 }
 
 internal fun BaseAcceptanceTest.assertProfileRefreshRequested() {

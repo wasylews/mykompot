@@ -74,7 +74,7 @@ class ReturningUserSkipsLoginTest : BaseAcceptanceTest() {
             composeRule.waitUntilExactlyOneExists(hasText(due, ignoreCase = true), 5_000)
             composeRule.onNodeWithText(due, ignoreCase = true).assertIsDisplayed()
             assertLoginFormIsHidden()
-            assertRefreshRequested()
+            assertProfileRefreshRequested()
         }
     }
 

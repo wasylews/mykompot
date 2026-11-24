@@ -72,5 +72,8 @@ internal fun BaseAcceptanceTest.assertNotificationPosted(
     }
 
     assertNotNull("Expected a notification to be posted", posted)
+    val smallIcon = posted?.getSmallIcon()
+    assertNotNull("Expected notification to have a small icon", smallIcon)
+    assertEquals(R.drawable.ic_notification, smallIcon?.resId)
     assertNotNull("Expected notification to open the app", posted?.contentIntent)
 }

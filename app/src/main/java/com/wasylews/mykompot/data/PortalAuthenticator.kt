@@ -26,6 +26,8 @@ import org.koin.core.annotation.Singleton
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
+internal const val PORTAL_LANGUAGE = "english"
+
 /** Marker that stops OkHttp from authenticating a request a second time. */
 internal object PortalReauthAttempt
 
@@ -95,9 +97,5 @@ class PortalAuthenticator(
                 }
             }
         }
-    }
-
-    private companion object {
-        const val PORTAL_LANGUAGE = "english"
     }
 }

@@ -19,6 +19,7 @@ package com.wasylews.mykompot.di
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
+import androidx.datastore.core.Serializer
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.dataStoreFile
 import com.wasylews.mykompot.BuildConfig
@@ -131,36 +132,34 @@ class DataModule {
 
     @Singleton
     @Named("profile")
-    fun provideProfileDataStore(context: Context): DataStore<ProfileEntity?> = DataStoreFactory.create(
-        serializer = ProfileEntitySerializer,
-        corruptionHandler = ReplaceFileCorruptionHandler { null },
-        produceFile = { context.dataStoreFile("profile.json") },
-    )
+    fun provideProfileDataStore(context: Context): DataStore<ProfileEntity?> =
+        dataStore(context, "profile.json", ProfileEntitySerializer)
 
     @Singleton
     @Named("tariffPlans")
-    fun provideTariffPlansDataStore(context: Context): DataStore<TariffPlansEntity?> = DataStoreFactory.create(
-        serializer = TariffPlansSerializer,
-        corruptionHandler = ReplaceFileCorruptionHandler { null },
-        produceFile = { context.dataStoreFile("tariff_plans.json") },
-    )
+    fun provideTariffPlansDataStore(context: Context): DataStore<TariffPlansEntity?> =
+        dataStore(context, "tariff_plans.json", TariffPlansSerializer)
 
     @Singleton
     @Named("payments")
-    fun providePaymentsDataStore(context: Context): DataStore<PaymentsEntity?> = DataStoreFactory.create(
-        serializer = PaymentsSerializer,
-        corruptionHandler = ReplaceFileCorruptionHandler { null },
-        produceFile = { context.dataStoreFile("payments.json") },
-    )
+    fun providePaymentsDataStore(context: Context): DataStore<PaymentsEntity?> =
+        dataStore(context, "payments.json", PaymentsSerializer)
 
     @Singleton
     @Named("paymentDueNotified")
-    fun providePaymentDueNotifiedDataStore(context: Context): DataStore<PaymentDueNotifiedEntity?> = DataStoreFactory.create(
-        serializer = PaymentDueNotifiedSerializer,
-        corruptionHandler = ReplaceFileCorruptionHandler { null },
-        produceFile = { context.dataStoreFile("payment_due_notified.json") },
-    )
+    fun providePaymentDueNotifiedDataStore(context: Context): DataStore<PaymentDueNotifiedEntity?> =
+        dataStore(context, "payment_due_notified.json", PaymentDueNotifiedSerializer)
 }
+
+private fun <T : Any> dataStore(
+    context: Context,
+    fileName: String,
+    serializer: Serializer<T?>,
+): DataStore<T?> = DataStoreFactory.create(
+    serializer = serializer,
+    corruptionHandler = ReplaceFileCorruptionHandler { null },
+    produceFile = { context.dataStoreFile(fileName) },
+)
 
 internal fun okHttpClient(cookieJar: CookieJar): OkHttpClient = OkHttpClient.Builder()
     .cookieJar(cookieJar)

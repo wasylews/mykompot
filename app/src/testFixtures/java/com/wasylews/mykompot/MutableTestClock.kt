@@ -19,10 +19,9 @@ package com.wasylews.mykompot
 import java.time.LocalDate
 import java.time.ZoneId
 import kotlin.time.Clock
-import kotlin.time.Duration
 import kotlin.time.Instant
 
-/** A [Clock] whose time tests can set or advance explicitly. */
+/** A [Clock] whose time tests can set explicitly. */
 class MutableTestClock(
     private var current: Instant,
 ) : Clock {
@@ -30,10 +29,6 @@ class MutableTestClock(
 
     fun set(instant: Instant) {
         current = instant
-    }
-
-    fun advanceBy(duration: Duration) {
-        current = current.plus(duration)
     }
 
     companion object {

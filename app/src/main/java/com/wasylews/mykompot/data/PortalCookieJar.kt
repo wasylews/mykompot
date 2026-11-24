@@ -63,6 +63,5 @@ class PortalCookieJar(
     private companion object {
         const val LANGUAGE_COOKIE = "language"
         const val SID_COOKIE = "sid"
-        const val PORTAL_LANGUAGE = "english"
     }
 }
