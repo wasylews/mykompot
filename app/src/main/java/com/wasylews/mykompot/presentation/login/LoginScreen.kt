@@ -74,6 +74,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.wasylews.mykompot.R
+import com.wasylews.mykompot.ui.theme.BACKGROUND_DARK_ARGB
+import com.wasylews.mykompot.ui.theme.BACKGROUND_LIGHT_ARGB
 import com.wasylews.mykompot.ui.theme.MyKompotTheme
 import com.wasylews.mykompot.ui.theme.Spacing
 
@@ -284,13 +286,13 @@ private fun LoginButton(
 @androidx.compose.ui.tooling.preview.Preview(
     name = "Light",
     showBackground = true,
-    backgroundColor = 0xFFF4F3FB,
+    backgroundColor = BACKGROUND_LIGHT_ARGB,
     uiMode = android.content.res.Configuration.UI_MODE_NIGHT_NO,
 )
 @androidx.compose.ui.tooling.preview.Preview(
     name = "Dark",
     showBackground = true,
-    backgroundColor = 0xFF0E0D13,
+    backgroundColor = BACKGROUND_DARK_ARGB,
     uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES,
 )
 @Composable

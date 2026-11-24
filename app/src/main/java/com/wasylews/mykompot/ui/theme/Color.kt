@@ -35,7 +35,11 @@ val OnTertiaryLight = Color(0xFFFFFFFF)
 val TertiaryContainerLight = Color(0xFFD7F3DD)
 val OnTertiaryContainerLight = Color(0xFF0E5A2A)
 
-val BackgroundLight = Color(0xFFF4F3FB)
+/** ARGB values for theme backgrounds, for APIs that require constants such as preview annotations. */
+const val BACKGROUND_LIGHT_ARGB = 0xFFF4F3FB
+const val BACKGROUND_DARK_ARGB = 0xFF0E0D13
+
+val BackgroundLight = Color(BACKGROUND_LIGHT_ARGB)
 val OnBackgroundLight = Color(0xFF1E1B28)
 val SurfaceLight = Color(0xFFFBFAFF)
 val OnSurfaceLight = Color(0xFF1E1B28)
@@ -69,7 +73,7 @@ val OnTertiaryDark = Color(0xFF103520)
 val TertiaryContainerDark = Color(0xFF103520)
 val OnTertiaryContainerDark = Color(0xFFB9F7CA)
 
-val BackgroundDark = Color(0xFF0E0D13)
+val BackgroundDark = Color(BACKGROUND_DARK_ARGB)
 val OnBackgroundDark = Color(0xFFE8E3F1)
 val SurfaceDark = Color(0xFF1B1923)
 val OnSurfaceDark = Color(0xFFE8E3F1)

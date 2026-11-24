@@ -59,6 +59,8 @@ import androidx.compose.ui.unit.sp
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.model.AccountStatus
 import com.wasylews.mykompot.ui.components.Shimmer
+import com.wasylews.mykompot.ui.theme.BackgroundDark
+import com.wasylews.mykompot.ui.theme.BackgroundLight
 import com.wasylews.mykompot.ui.theme.LocalStatusPalettes
 import com.wasylews.mykompot.ui.theme.MyKompotTheme
 import com.wasylews.mykompot.ui.theme.Spacing
@@ -441,7 +443,7 @@ fun StatusCardStatesPreview(
     @PreviewParameter(HomeUiStatePreviewParameterProvider::class) state: HomeUiState,
 ) {
     Row(modifier = Modifier.fillMaxWidth()) {
-        listOf(false to Color(0xFFF4F3FB), true to Color(0xFF0E0D13)).forEach { (dark, bg) ->
+        listOf(false to BackgroundLight, true to BackgroundDark).forEach { (dark, bg) ->
             MyKompotTheme(darkTheme = dark, dynamicColor = false) {
                 Surface(
                     modifier = Modifier.weight(1f),

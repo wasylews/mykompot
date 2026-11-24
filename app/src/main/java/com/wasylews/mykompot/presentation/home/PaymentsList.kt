@@ -42,7 +42,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
@@ -59,6 +58,8 @@ import androidx.compose.ui.unit.dp
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.presentation.home.ktx.groupedCardBorder
 import com.wasylews.mykompot.presentation.payments.paymentMethods
+import com.wasylews.mykompot.ui.theme.BackgroundDark
+import com.wasylews.mykompot.ui.theme.BackgroundLight
 import com.wasylews.mykompot.ui.theme.MyKompotTheme
 import com.wasylews.mykompot.ui.theme.Spacing
 
@@ -434,7 +435,7 @@ fun PaymentsListStatesPreview(
     @PreviewParameter(PaymentsUiStatePreviewParameterProvider::class) state: PaymentsUiState,
 ) {
     Row(modifier = Modifier.fillMaxWidth()) {
-        listOf(false to Color(0xFFF4F3FB), true to Color(0xFF0E0D13)).forEach { (dark, bg) ->
+        listOf(false to BackgroundLight, true to BackgroundDark).forEach { (dark, bg) ->
             MyKompotTheme(darkTheme = dark, dynamicColor = false) {
                 Surface(
                     modifier = Modifier.weight(1f),

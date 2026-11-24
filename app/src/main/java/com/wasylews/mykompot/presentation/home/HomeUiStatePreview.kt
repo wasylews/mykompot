@@ -23,6 +23,8 @@ import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.model.AccountStatus
 import com.wasylews.mykompot.domain.model.Profile
 import com.wasylews.mykompot.domain.model.TariffPlan
+import com.wasylews.mykompot.ui.theme.BACKGROUND_DARK_ARGB
+import com.wasylews.mykompot.ui.theme.BACKGROUND_LIGHT_ARGB
 import java.time.LocalDate
 
 internal val previewAllGoodState = HomeUiState(
@@ -101,13 +103,13 @@ class HomeUiStatePreviewParameterProvider : PreviewParameterProvider<HomeUiState
 @Preview(
     name = "Light",
     showBackground = true,
-    backgroundColor = 0xFFF4F3FB,
+    backgroundColor = BACKGROUND_LIGHT_ARGB,
     uiMode = Configuration.UI_MODE_NIGHT_NO,
 )
 @Preview(
     name = "Dark",
     showBackground = true,
-    backgroundColor = 0xFF0E0D13,
+    backgroundColor = BACKGROUND_DARK_ARGB,
     uiMode = Configuration.UI_MODE_NIGHT_YES,
 )
 internal annotation class PreviewLightDark

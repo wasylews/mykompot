@@ -36,7 +36,6 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -46,6 +45,8 @@ import androidx.compose.ui.unit.dp
 import com.wasylews.mykompot.R
 import com.wasylews.mykompot.domain.model.TariffPlan
 import com.wasylews.mykompot.ui.components.Shimmer
+import com.wasylews.mykompot.ui.theme.BackgroundDark
+import com.wasylews.mykompot.ui.theme.BackgroundLight
 import com.wasylews.mykompot.ui.theme.MyKompotTheme
 import com.wasylews.mykompot.ui.theme.Spacing
 
@@ -281,7 +282,7 @@ private fun TariffPlansContentStatesPreview(
     @PreviewParameter(TariffPlansUiStatePreviewParameterProvider::class) state: TariffPlansUiState,
 ) {
     Row(modifier = Modifier.fillMaxWidth()) {
-        listOf(false to Color(0xFFF4F3FB), true to Color(0xFF0E0D13)).forEach { (dark, bg) ->
+        listOf(false to BackgroundLight, true to BackgroundDark).forEach { (dark, bg) ->
             MyKompotTheme(darkTheme = dark, dynamicColor = false) {
                 Surface(
                     modifier = Modifier.weight(1f),

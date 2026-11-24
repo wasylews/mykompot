@@ -31,7 +31,6 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -41,6 +40,8 @@ import com.wasylews.mykompot.presentation.payments.PaymentMethodsUiState
 import com.wasylews.mykompot.presentation.payments.paymentMethods
 import com.wasylews.mykompot.presentation.tariffs.TariffPlansBottomSheet
 import com.wasylews.mykompot.presentation.tariffs.TariffPlansUiState
+import com.wasylews.mykompot.ui.theme.BackgroundDark
+import com.wasylews.mykompot.ui.theme.BackgroundLight
 import com.wasylews.mykompot.ui.theme.MyKompotTheme
 import com.wasylews.mykompot.ui.theme.Spacing
 
@@ -167,7 +168,7 @@ fun HomeScreenStatesPreview(
     @PreviewParameter(HomeUiStatePreviewParameterProvider::class) state: HomeUiState,
 ) {
     Row(modifier = Modifier.fillMaxWidth()) {
-        listOf(false to Color(0xFFF4F3FB), true to Color(0xFF0E0D13)).forEach { (dark, bg) ->
+        listOf(false to BackgroundLight, true to BackgroundDark).forEach { (dark, bg) ->
             MyKompotTheme(darkTheme = dark, dynamicColor = false) {
                 androidx.compose.material3.Surface(
                     modifier = Modifier.weight(1f),
