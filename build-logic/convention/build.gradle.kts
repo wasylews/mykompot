@@ -34,7 +34,7 @@ kotlin {
 }
 
 dependencies {
-    compileOnly(libs.detekt.gradlePlugin)
+    implementation(libs.detekt.gradlePlugin)
     compileOnly(libs.spotless.gradlePlugin)
 }
 
