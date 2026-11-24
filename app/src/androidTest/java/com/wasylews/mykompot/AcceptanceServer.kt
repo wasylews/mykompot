@@ -44,7 +44,7 @@ internal fun BaseAcceptanceTest.resetServerResponses() {
     dispatcher.feesResponseFactory = { _ -> MockResponse.Builder().body(HtmlFixtures.fees()).build() }
 }
 
-internal fun BaseAcceptanceTest.givenServerResponse(
+internal fun BaseAcceptanceTest.givenLoginResponse(
     body: String = "",
     status: Int = 200,
     headers: Map<String, String> = emptyMap(),
@@ -53,7 +53,7 @@ internal fun BaseAcceptanceTest.givenServerResponse(
         .code(status)
         .body(body)
     headers.forEach { (name, value) -> builder.addHeader(name, value) }
-    dispatcher.enqueue(builder.build())
+    dispatcher.enqueueLogin(builder.build())
 }
 
 internal fun BaseAcceptanceTest.givenHomeResponses(

@@ -100,7 +100,7 @@ abstract class BaseAcceptanceTest : KoinTest {
     protected fun launch(): ActivityScenario<MainActivity> = ActivityScenario.launch(MainActivity::class.java)
 
     internal class TestDispatcher : Dispatcher() {
-        private val queuedResponses = ArrayDeque<MockResponse>()
+        private val queuedLoginResponses = ArrayDeque<MockResponse>()
         private val recordedRequests = mutableListOf<RecordedRequest>()
 
         fun recordedRequests(): List<RecordedRequest> = synchronized(recordedRequests) { recordedRequests.toList() }
@@ -119,19 +119,23 @@ abstract class BaseAcceptanceTest : KoinTest {
             MockResponse.Builder().body(HtmlFixtures.fees()).build()
         }
 
-        fun enqueue(response: MockResponse) {
-            synchronized(queuedResponses) { queuedResponses.addLast(response) }
+        fun enqueueLogin(response: MockResponse) {
+            synchronized(queuedLoginResponses) { queuedLoginResponses.addLast(response) }
         }
 
         fun clear() {
-            synchronized(queuedResponses) { queuedResponses.clear() }
+            synchronized(queuedLoginResponses) { queuedLoginResponses.clear() }
             synchronized(recordedRequests) { recordedRequests.clear() }
         }
 
         override fun dispatch(request: RecordedRequest): MockResponse {
             synchronized(recordedRequests) { recordedRequests.add(request) }
-            synchronized(queuedResponses) {
-                if (queuedResponses.isNotEmpty()) return queuedResponses.removeFirst()
+            // Queued responses describe login attempts. Other requests (notably the public plans
+            // page fetched during optimistic startup) must not consume them.
+            if (request.method == "POST" && request.url.encodedPath.contains("/index.cgi")) {
+                synchronized(queuedLoginResponses) {
+                    if (queuedLoginResponses.isNotEmpty()) return queuedLoginResponses.removeFirst()
+                }
             }
             val path = request.url.encodedPath
             val index = request.url.queryParameter(FEES_PAGE_QUERY_PARAM)

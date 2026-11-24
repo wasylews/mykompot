@@ -103,8 +103,8 @@ class SignInFlowTest : BaseAcceptanceTest() {
     fun forgetsRememberedCredentialsWhenLoginFails() {
         // GIVEN remembered credentials that cannot be restored while the server is unavailable
         givenStoredCredentials(username = "old-user", password = "old-pass")
-        givenServerResponse(status = 502)
-        givenServerResponse(body = HtmlFixtures.loginFailed())
+        givenLoginResponse(status = 502)
+        givenLoginResponse(body = HtmlFixtures.loginFailed())
 
         launch().use {
             // WHEN I try to log in again and the portal rejects the credentials
@@ -119,7 +119,7 @@ class SignInFlowTest : BaseAcceptanceTest() {
     @Test
     fun signInFailsWithInvalidCredentials() {
         // GIVEN server is up
-        givenServerResponse(body = HtmlFixtures.loginFailed())
+        givenLoginResponse(body = HtmlFixtures.loginFailed())
 
         launch().use {
             // WHEN I log in with wrong credentials
@@ -161,7 +161,7 @@ class SignInFlowTest : BaseAcceptanceTest() {
     @Test
     fun signInFailsWhenResponseCannotBeParsed() {
         // GIVEN server returns a successful response without a parseable profile
-        givenServerResponse(
+        givenLoginResponse(
             body = "<html></html>",
             headers = mapOf("Set-Cookie" to "sid=test-session"),
         )
