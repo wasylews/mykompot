@@ -23,11 +23,14 @@ import com.wasylews.mykompot.domain.ObserveSession
 import com.wasylews.mykompot.domain.RestoreSession
 import com.wasylews.mykompot.domain.model.Credentials
 import com.wasylews.mykompot.domain.model.SessionState
+import com.wasylews.mykompot.domain.repository.PortalRepository
 import com.wasylews.mykompot.presentation.BaseViewModelTest
 import com.wasylews.mykompot.presentation.FakePortalRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -118,22 +121,53 @@ class MainViewModelTest : BaseViewModelTest() {
     @Test
     fun `routes to login when confirmed session is lost`() = runTest {
         val observeSession = FakeObserveSession(SessionState.LoggedIn)
+        val portalRepository = MutableSessionRepository("sid")
         val vm = MainViewModel(
             observeSession = observeSession,
             logOutUseCase = FakeLogOut(),
             restoreSession = FakeRestoreSession(),
             credentialsStore = FakeCredentialsStore(),
-            portalRepository = FakePortalRepository(session = "sid"),
+            portalRepository = portalRepository,
         )
 
         vm.rootDestination.test {
             assertEquals(AppRootDestination.Home, awaitItem())
 
+            portalRepository.setSession(null)
             observeSession.setState(SessionState.LoggedOut)
             advanceUntilIdle()
 
             assertEquals(AppRootDestination.Login, awaitItem())
             cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `does not flash login when restored session reaches the flow after restore returns`() = runTest {
+        val observeSession = FakeObserveSession(SessionState.LoggedOut)
+        val portalRepository = MutableSessionRepository()
+        val restoreSession = FakeRestoreSession().apply {
+            onInvoke = {
+                // The sid store is updated synchronously, but the session flow reaches routing on
+                // the next dispatcher turn (login runs on IO, routing collects on Main).
+                portalRepository.setSession("restored-session")
+                launch { observeSession.setState(SessionState.LoggedIn) }
+            }
+        }
+        val vm = MainViewModel(
+            observeSession = observeSession,
+            logOutUseCase = FakeLogOut(),
+            restoreSession = restoreSession,
+            credentialsStore = FakeCredentialsStore().apply { save(Credentials("user", "password")) },
+            portalRepository = portalRepository,
+        )
+
+        vm.rootDestination.test {
+            assertEquals(AppRootDestination.Home, awaitItem())
+
+            advanceUntilIdle()
+
+            expectNoEvents()
         }
     }
 
@@ -183,4 +217,19 @@ class FakeObserveSession(
     }
 
     override fun sessionStateFlow(): Flow<SessionState> = stateFlow
+}
+
+/** Portal repository whose sid store and observed flow can change independently, like restore. */
+private class MutableSessionRepository(
+    session: String? = null,
+) : PortalRepository by FakePortalRepository() {
+    private val sid = MutableStateFlow(session)
+
+    fun setSession(value: String?) {
+        sid.value = value
+    }
+
+    override fun sessionFlow(): Flow<String?> = sid.asStateFlow()
+
+    override fun hasActiveSession(): Boolean = !sid.value.isNullOrEmpty()
 }

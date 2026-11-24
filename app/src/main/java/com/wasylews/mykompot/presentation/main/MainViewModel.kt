@@ -66,7 +66,10 @@ class MainViewModel(
         restoreFinished,
     ) { session, finished ->
         when {
-            session == SessionState.LoggedIn -> AppRootDestination.Home
+            // The sid store is updated synchronously, while sessionFlow observes it on this
+            // dispatcher. A restored sid can therefore exist before the flow reports it; routing
+            // must not publish Login during that gap.
+            session == SessionState.LoggedIn || portalRepository.hasActiveSession() -> AppRootDestination.Home
             !finished && hasCredentialsAtLaunch -> AppRootDestination.Home
             else -> AppRootDestination.Login
         }
