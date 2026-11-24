@@ -16,6 +16,7 @@
 
 package com.wasylews.mykompot.domain.repository
 
+import com.wasylews.mykompot.domain.model.Credentials
 import com.wasylews.mykompot.domain.model.LoginResult
 import com.wasylews.mykompot.domain.model.Payments
 import com.wasylews.mykompot.domain.model.PaymentsActionResult
@@ -36,10 +37,7 @@ interface PortalRepository {
     /**
      * Authenticates with the portal and, on success, stores the session and profile.
      */
-    suspend fun login(
-        username: String,
-        password: String,
-    ): LoginResult
+    suspend fun login(credentials: Credentials): LoginResult
 
     /**
      * Refreshes the current account profile from the portal using the stored session.

@@ -40,7 +40,7 @@ class RestoreSessionUseCase(
 ) : RestoreSession {
     override suspend fun invoke() {
         val credentials = credentialsStore.read() ?: return
-        when (val result = repository.login(credentials.username, credentials.password)) {
+        when (val result = repository.login(credentials)) {
             is LoginResult.Success -> paymentDueReminderScheduler.schedule(result.profile)
             LoginResult.InvalidCredentials -> credentialsStore.clear()
             is LoginResult.Failed -> Unit

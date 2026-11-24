@@ -60,14 +60,16 @@ class LoginViewModel(
     fun login() = viewModelScope.launch {
         if (!isUsernameValid || !isPasswordValid) return@launch
 
-        val username = usernameState.text.toString()
-        val password = passwordState.text.toString()
+        val credentials = Credentials(
+            username = usernameState.text.toString(),
+            password = passwordState.text.toString(),
+        )
         val rememberMe = _uiState.value.rememberMe
         _uiState.update { it.copy(isLoading = true, errorId = null) }
-        val errorId = when (val result = repository.login(username, password)) {
+        val errorId = when (val result = repository.login(credentials)) {
             is LoginResult.Success -> {
                 if (rememberMe) {
-                    credentialsStore.save(Credentials(username, password))
+                    credentialsStore.save(credentials)
                 }
                 paymentDueReminderScheduler.schedule(result.profile)
                 null

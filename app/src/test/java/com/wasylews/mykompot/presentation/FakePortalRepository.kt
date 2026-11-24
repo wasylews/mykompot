@@ -16,6 +16,7 @@
 
 package com.wasylews.mykompot.presentation
 
+import com.wasylews.mykompot.domain.model.Credentials
 import com.wasylews.mykompot.domain.model.LoginResult
 import com.wasylews.mykompot.domain.model.Payments
 import com.wasylews.mykompot.domain.model.PaymentsActionResult
@@ -42,19 +43,16 @@ class FakePortalRepository(
 ) : PortalRepository {
     private val tariffPlans = tariffPlans?.let { TariffPlans(it) }
     var loginCalls = 0
-    var lastLogin: Pair<String, String>? = null
+    var lastLogin: Credentials? = null
     var refreshCalls = 0
     var logOutCalls = 0
     var refreshTariffPlansCalls = 0
     var refreshPaymentsCalls = 0
     var loadMorePaymentsCalls = 0
 
-    override suspend fun login(
-        username: String,
-        password: String,
-    ): LoginResult {
+    override suspend fun login(credentials: Credentials): LoginResult {
         loginCalls++
-        lastLogin = username to password
+        lastLogin = credentials
         return result
     }
 

@@ -16,6 +16,7 @@
 
 package com.wasylews.mykompot.data
 
+import com.wasylews.mykompot.domain.model.Credentials
 import com.wasylews.mykompot.domain.model.LoginResult
 import com.wasylews.mykompot.domain.model.PortalFailure
 import com.wasylews.mykompot.domain.model.Profile
@@ -36,7 +37,7 @@ class PortalRepositoryLoginTest {
     fun `login with wrong credentials`() = runTest {
         val repo = createPortalRepository(testScheduler, FakePortalApi(loginPage()))
 
-        val result = repo.login("user", "pass")
+        val result = repo.login(Credentials("user", "pass"))
 
         assertEquals(LoginResult.InvalidCredentials, result)
     }
@@ -45,7 +46,7 @@ class PortalRepositoryLoginTest {
     fun `login with a generic portal error is a server failure`() = runTest {
         val repo = createPortalRepository(testScheduler, FakePortalApi(genericError()))
 
-        val result = repo.login("user", "pass")
+        val result = repo.login(Credentials("user", "pass"))
 
         assertEquals(LoginResult.Failed(PortalFailure.Server), result)
     }
@@ -55,7 +56,7 @@ class PortalRepositoryLoginTest {
         val api = FakePortalApi(activeProfileResponse())
         val repo = createPortalRepository(testScheduler, api)
 
-        val result = repo.login("user", "pass")
+        val result = repo.login(Credentials("user", "pass"))
 
         assertEquals(LoginResult.Success(profile()), result)
         assertEquals("english", api.lastLoginLanguage)
@@ -66,7 +67,7 @@ class PortalRepositoryLoginTest {
         val api = FakePortalApi(activeProfileResponse().copy(sid = "html-session"))
         val repo = createPortalRepository(testScheduler, api)
 
-        val result = repo.login("user", "pass")
+        val result = repo.login(Credentials("user", "pass"))
 
         assertEquals(LoginResult.Success(profile()), result)
         repo.expectSession("html-session")
@@ -76,7 +77,7 @@ class PortalRepositoryLoginTest {
     fun `network error`() = runTest {
         val portalApi = FakePortalApi(activeProfileResponse(), exception = IOException())
         val repo = createPortalRepository(testScheduler, portalApi)
-        val result = repo.login("user", "pass")
+        val result = repo.login(Credentials("user", "pass"))
 
         assertEquals(LoginResult.Failed(PortalFailure.Network), result)
     }
@@ -91,7 +92,7 @@ class PortalRepositoryLoginTest {
         )
         val portalApi = FakePortalApi(activeProfileResponse(), exception = HttpException(response))
         val repo = createPortalRepository(testScheduler, portalApi)
-        val result = repo.login("user", "pass")
+        val result = repo.login(Credentials("user", "pass"))
 
         assertEquals(LoginResult.Failed(PortalFailure.Server), result)
     }
@@ -99,7 +100,7 @@ class PortalRepositoryLoginTest {
     @Test
     fun `profile flow emits the saved profile`() = runTest {
         val repo = createPortalRepository(testScheduler)
-        repo.login("user", "pass")
+        repo.login(Credentials("user", "pass"))
 
         repo.expectProfile(profile())
     }
@@ -118,7 +119,7 @@ class PortalRepositoryLoginTest {
         }
         val repo = createPortalRepository(testScheduler, localStorage = storage)
 
-        repo.login("user", "pass")
+        repo.login(Credentials("user", "pass"))
 
         repo.expectProfile(
             profile().copy(
@@ -145,7 +146,7 @@ class PortalRepositoryLoginTest {
             ),
         )
 
-        repo.login("user", "pass")
+        repo.login(Credentials("user", "pass"))
 
         repo.expectProfile(
             Profile(
@@ -171,7 +172,7 @@ class PortalRepositoryLoginTest {
             ),
         )
 
-        val result = repo.login("user", "pass")
+        val result = repo.login(Credentials("user", "pass"))
 
         assertEquals(LoginResult.Failed(PortalFailure.Parse), result)
     }

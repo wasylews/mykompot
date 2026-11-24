@@ -38,7 +38,7 @@ class RestoreSessionUseCaseTest {
         RestoreSessionUseCase(credentialsStore, repository, scheduler).invoke()
 
         assertEquals(1, repository.loginCalls)
-        assertEquals(credentials.username to credentials.password, repository.lastLogin)
+        assertEquals(credentials, repository.lastLogin)
         assertEquals(1, scheduler.scheduleCalls)
         assertEquals(profile, scheduler.lastScheduledProfile)
         assertEquals(credentials, credentialsStore.read())

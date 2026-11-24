@@ -61,6 +61,27 @@ class LoginViewModelTest : BaseViewModelTest() {
     }
 
     @Test
+    fun `login passes entered credentials as a single value`() = runTest {
+        // GIVEN
+        val repository = FakePortalRepository(successLogin(profile), profile = profile)
+        val vm = LoginViewModel(
+            repository,
+            FakePaymentDueReminderScheduler(),
+            FakeCredentialsStore(),
+        ).apply {
+            usernameState.edit { replace(0, length, "user") }
+            passwordState.edit { replace(0, length, "pass") }
+        }
+
+        // WHEN
+        vm.login()
+        advanceUntilIdle()
+
+        // THEN
+        assertEquals(Credentials("user", "pass"), repository.lastLogin)
+    }
+
+    @Test
     fun `successful opt-in login stores credentials`() = runTest {
         // GIVEN
         val store = FakeCredentialsStore()

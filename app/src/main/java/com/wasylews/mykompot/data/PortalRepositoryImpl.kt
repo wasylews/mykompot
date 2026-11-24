@@ -16,6 +16,7 @@
 
 package com.wasylews.mykompot.data
 
+import com.wasylews.mykompot.domain.model.Credentials
 import com.wasylews.mykompot.domain.model.LoginResult
 import com.wasylews.mykompot.domain.model.Payment
 import com.wasylews.mykompot.domain.model.PaymentSource
@@ -57,12 +58,9 @@ class PortalRepositoryImpl(
     private val localStorage: LocalStorage,
     private val sessionCookieStore: SessionCookieStore,
 ) : PortalRepository {
-    override suspend fun login(
-        username: String,
-        password: String,
-    ): LoginResult = withContext(dispatcher) {
+    override suspend fun login(credentials: Credentials): LoginResult = withContext(dispatcher) {
         return@withContext try {
-            val response = authApi.login(username, password, PORTAL_LANGUAGE)
+            val response = authApi.login(credentials.username, credentials.password, PORTAL_LANGUAGE)
             if (!response.isSuccessful) return@withContext LoginResult.Failed(PortalFailure.Server)
             val page = response.body() ?: return@withContext LoginResult.Failed(PortalFailure.Parse)
             if (page.isLoginPage) {
